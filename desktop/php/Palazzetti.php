@@ -58,7 +58,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
 							<label class="col-sm-3 control-label">{{Nom du Palazzetti}}</label>
 							<div class="col-sm-3">
 								<input type="text" class="eqLogicAttr form-control" data-l1key="id" style="display : none;" />
-								<input type="text" class="eqLogicAttr form-control" data-l1key="name" placeholder="{{Nom de l'équipement Palazzetti}}" />
+								<input type="text" class="eqLogicAttr form-control" data-l1key="name" placeholder="{{Nom de l'équipement template}}" />
 							</div>
 						</div>
 						<div class="form-group">
@@ -67,11 +67,9 @@ $eqLogics = eqLogic::byType($plugin->getId());
 								<select id="sel_object" class="eqLogicAttr form-control" data-l1key="object_id">
 									<option value="">{{Aucun}}</option>
 									<?php
-										$options = '';
-										foreach ((jeeObject::buildTree(null, false)) as $object) {
-											$options .= '<option value="' . $object->getId() . '">' . str_repeat('&nbsp;&nbsp;', $object->getConfiguration("parentNumber")) . $object->getName() . '</option>';
-										}
-										echo $options;
+									foreach ((jeeObject::buildTree(null, false)) as $object) {
+											echo '<option value="' . $object->getId() . '">' . str_repeat('&nbsp;&nbsp;', $object->getConfiguration('parentNumber')) . $object->getName() . '</option>';
+								    }
 									?>
 								</select>
 							</div>
@@ -98,28 +96,22 @@ $eqLogics = eqLogic::byType($plugin->getId());
 						<div class="form-group">
 							<label class="col-sm-3 control-label">{{Adresse IP}}</label>
 							<div class="col-sm-3">
-								<input class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="addressip" type="text" placeholder="{{Saisir l'adresse IP}}">
+								<input class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="addressip" type="text" placeholder="{{saisir l'adresse IP}}">
 							</div>
 						</div>
                         <div class="form-group">
                             <label class="col-sm-3 control-label"></label>
                             <div class="col-sm-9">
-                                <label class="checkbox-inline"><input id="deamoncheck" type="checkbox" class="eqLogicAttr" data-l1key="configuration" data-l2key="ModeHIGH" />{{Poêle mode HIGH}}</label>
+                                <label class="checkbox-inline"><input id="deamoncheck" type="checkbox" class="eqLogicAttr" data-l1key="configuration" data-l2key="Cbox" />{{Poêle BEATRICE}}</label>
                             </div>
                         </div>
                         <div class="form-group">
-                            <label class="col-sm-3 control-label"></label>
-                            <div class="col-sm-9">
-                                <label class="checkbox-inline"><input id="deamoncheck" type="checkbox" class="eqLogicAttr" data-l1key="configuration" data-l2key="PalaControl" />{{PalaControl}}</label>
-                            </div>
+                          <label class="col-sm-3 control-label help" data-help="{{Cocher la case pour utiliser le widget associé au type de l'appareil.}}</br>{{Laissez décoché pour laisser le core générer le widget par défaut.}}">{{Widget équipement}}
+                          </label>
+                          <div class="col-sm-8">
+                            <input type="checkbox" class="eqLogicAttr form-control" id="widgetTemplate" data-l1key="configuration" data-l2key="widgetTemplate" />
+                          </div>
                         </div>
-						<div class="form-group">
-							<label class="col-sm-3 control-label help">{{Template de widget}} <sup><i class="fa fa-question-circle tooltips" title="{{Cochez la case pour utiliser le widget de l'équipement}}"></i>
-							</sup></label>
-							<div class="col-sm-3">
-								<input type="checkbox" class="eqLogicAttr form-control" id="widgetTemplate" data-l1key="configuration" data-l2key="widgetTemplate"/>
-							</div>
-						</div>
 					</fieldset>
 				</form>
 			</div>
@@ -129,14 +121,15 @@ $eqLogics = eqLogic::byType($plugin->getId());
 						<tr>
 							<th>{{Nom}}</th>
 							<th>{{Type}}</th>
-							<th>{{Paramètres}}</th>
+							<th>{{Commande}}</th>
+							<th>{{Parametres}}</th>
 							<th>{{Action}}</th>
 						</tr>
 					</thead>
 					<tbody>
 					</tbody>
 				</table>
-				<a class="btn btn-success btn-sm cmdAction pull-right" data-action="add" style="margin-top:5px;"><i class="fas fa-plus-circle"></i> {{Ajouter une Commande}}</a><br /><br />
+				<a class="btn btn-success btn-sm cmdAction pull-right" data-action="add" style="margin-top:5px;"><i class="fas fa-plus-circle"></i> {{Ajouter une commande}}</a><br /><br />
 			</div>
 		</div>
 	</div>

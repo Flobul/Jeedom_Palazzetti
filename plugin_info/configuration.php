@@ -44,14 +44,5 @@ $plugin = plugin::byId('smartthings');
 				</select>
 			</div>
 		</div>
-		<div class="form-group">
-			<label class="col-lg-4 control-label">{{Désactivation automatique de l'appareil}}
-<sup><i class="fas fa-question-circle tooltipstered" title="{{Permet de désactiver l'équipement en cas de non réponse 3 fois consécutives.}}"></i></sup>
-			</label>
-			<div class="col-lg-4">
-				<input type="checkbox" class="configKey form-control" data-l1key="autoDisable" >
-				</input>
-			</div>
-		</div>
 	</fieldset>
 </form>
