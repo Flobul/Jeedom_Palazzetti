@@ -1,12 +1,12 @@
 <?php
-/* 
+/*
  */
 /* * ***************************Includes********************************* */
 require_once dirname(__FILE__) . '/../../../../core/php/core.inc.php';
 
 class Palazzetti extends eqLogic
 {
-  
+
 	public static function cron()
 	{
 		$autorefresh = config::byKey('autorefresh', 'Palazzetti');
@@ -21,7 +21,6 @@ class Palazzetti extends eqLogic
 							try {
 								$Palazzetti->getInformations();
 							} catch (Exception $exc) {
-								
 							}
 						}
 					}
@@ -33,11 +32,11 @@ class Palazzetti extends eqLogic
 		}
 		log::add(__CLASS__, 'debug', __FUNCTION__ . __(' : fin', __FILE__));
 	}
-  
+
   	// avant création équipement
     public function postInsert()
     {
-		config::save("*/15 * * * *", 'autorefresh', 'Palazzetti');      
+		config::save("*/15 * * * *", 'autorefresh', 'Palazzetti');
     }
 
 	public function preUpdate()
@@ -96,7 +95,7 @@ class Palazzetti extends eqLogic
             return false;
         }
 
-        foreach ($cmdConfig as $command => $config) {
+        foreach ($cmdConfig as $config) {
             $cmd = null;
 			foreach ($this->getCmd() as $liste_cmd) {
                 if ((isset($config['logicalId']) && $liste_cmd->getLogicalId() == $config['logicalId'])
@@ -117,7 +116,6 @@ class Palazzetti extends eqLogic
 	/** méthode de récupération des fichiers de configuration **/
 	public function loadCmdFromConf($type) {
 
-		$return = array();
 		if (!is_file(dirname(__FILE__) . '/../../core/config/' . $type . '.json')) {
 			log::add(__CLASS__, 'debug', 'Fichier introuvable : ' . dirname(__FILE__) . '/config/' . $type . '.json');
 			return false;
@@ -190,6 +188,8 @@ class Palazzetti extends eqLogic
 			case 1:
 				$value = 'ON';
 				break;
+      default:
+  			$value = $num;
 		}
 		return $value;
 	}
@@ -203,6 +203,8 @@ class Palazzetti extends eqLogic
 			case 1:
 				$value = 'ON';
 				break;
+      default:
+  			$value = $num;
 		}
 		return $value;
 	}
@@ -278,7 +280,7 @@ class Palazzetti extends eqLogic
 		}
 		$DATA = $this->makeRequest($cmdString);
 
-		if ($DATA == false) {
+		if (!$DATA) {
 			return 'ERROR';
 		}
 		// verification succes du traitement
@@ -339,7 +341,7 @@ class Palazzetti extends eqLogic
 			case 'SET+CSST':
 				break;
 				// affectation programme
-				// options +JOUR+TRANCHE+PH 
+				// options +JOUR+TRANCHE+PH
 			case 'SET+CDAY':
 				break;
 				// informations automate
@@ -454,7 +456,7 @@ class Palazzetti extends eqLogic
                 $replace['#fan_' . $key . '#'] = $value;
             }
         }
-      
+
 		$nbAll = $this->getCmd(null, 'INbAllumage');
 		$replace['#nbAll#'] = is_object($nbAll) ? $nbAll->execCmd() : '';
 		$replace['#nbAll_id#'] = is_object($nbAll) ? $nbAll->getId() : '';
@@ -543,26 +545,26 @@ class Palazzetti extends eqLogic
 
 		// recuperation de l'heure
 		$DATA = $this->makeRequest('GET+TIME');
-		if ($DATA != false) {
+		if ($DATA) {
             $this->updateCmd('ITime', json_encode($DATA->DATA));
 		}
 
 		// recuperation de toutes les informations réseau
 		$DATA = $this->makeRequest('GET+STDT');
-		if ($DATA != false) {
+		if ($DATA) {
             $this->updateCmd('IName', $DATA->DATA->LABEL);
             $this->updateCmd('INetwork', json_encode($DATA->DATA));
 		}
 
 		// recuperation des programmes horaires
 		$DATA = $this->makeRequest('GET+CHRD');
-		if ($DATA != false) {
+		if ($DATA) {
             $this->updateCmd('IPH', json_encode($DATA->DATA));
 		}
 
 		// recuperation des infos compteurs
 		$DATA = $this->makeRequest('GET+CNTR');
-		if ($DATA != false) {
+		if ($DATA) {
             $this->updateCmd('INbAllumage', $DATA->DATA->IGN);
             $this->updateCmd('INbAllumageFailed', $DATA->DATA->IGNERRORS);
             $this->updateCmd('IHeuresAlimElec', str_replace(':','.',$DATA->DATA->POWERTIME));
@@ -572,34 +574,34 @@ class Palazzetti extends eqLogic
             $this->updateCmd('IQuantite', $DATA->DATA->PQT);
         } else {
             $DATA = $this->makeRequest('EXT+ADRD+2066+1');
-            if ($DATA != false) {
+            if ($DATA) {
                 $this->updateCmd('INbAllumage', $DATA->DATA->ADDR_2066);
             }
             $DATA = $this->makeRequest('EXT+ADRD+207C+1');
-            if ($DATA != false) {
+            if ($DATA) {
                 $this->updateCmd('INbAllumageFailed', $DATA->DATA->ADDR_207C);
             }
             $DATA = $this->makeRequest('EXT+ADRD+206A+1');
-            if ($DATA != false) {
+            if ($DATA) {
                 $this->updateCmd('IHeuresAlimElec', str_replace(':','.',$DATA->DATA->ADDR_206A));
             }
             $DATA = $this->makeRequest('EXT+ADRD+2070+1');
-            if ($DATA != false) {
+            if ($DATA) {
                 $this->updateCmd('IHeuresChauffe', str_replace(':','.',$DATA->DATA->ADDR_2070));
             }
             $DATA = $this->makeRequest('EXT+ADRD+207A+1');
-            if ($DATA != false) {
+            if ($DATA) {
                 $this->updateCmd('IHeuresSurChauffe', str_replace(':','.',$DATA->DATA->ADDR_207A));
             }
             $DATA = $this->makeRequest('EXT+ADRD+2076+1');
-            if ($DATA != false) {
+            if ($DATA) {
                 $this->updateCmd('IHeuresDepuisEntretien', str_replace(':','.',$DATA->DATA->ADDR_2076));
             }
         }
 
 		// recuperation de toutes les informations
 		$DATA = $this->makeRequest('GET+ALLS');
-		if ($DATA != false) {
+		if ($DATA) {
 			// mise à jour force du feu
             $this->updateCmd('IPower', $DATA->DATA->PWR);
             $this->updateCmd('IConsigne', $DATA->DATA->SETP);
@@ -628,7 +630,7 @@ class PalazzettiCmd extends cmd
 {
 
 
-	/*     * *************************Attributs****************************** 
+	/*     * *************************Attributs******************************
 	public static $_widgetPossibility = array('custom' => false);
 
 /*     * *********************Methode d'instance************************* */
@@ -649,5 +651,5 @@ class PalazzettiCmd extends cmd
 		    $eqLogic->sendCommand($this, $_options);
         }
 	}
-  
+
 }
