@@ -412,8 +412,8 @@
         $('#idTempConsignePlus#id#').off().on('click', function () {
           var max = ('#consigne_maxValue#' == '') ? Number.MAX_VALUE : parseFloat('#consigne_maxValue#')
           var step = (isNaN(parseFloat('#consigne_step#'))) ? 1 : parseFloat('#consigne_step#')
-          if (parseFloat($('#idTempConsigne#id#').val()) <= max - step ) {
-            jeedom.cmd.update['#consigne_id#']({display_value:parseFloat($('#idTempConsigne#id#').val()) + step})
+          if (parseFloat($('#idTempConsigne#id#').value()) <= max - step ) {
+            jeedom.cmd.update['#consigne_id#']({display_value:parseFloat($('#idTempConsigne#id#').value()) + step})
             $('#idTempConsigne#id#').trigger('change')
           }
         })
@@ -421,8 +421,8 @@
         $('#idTempConsigneMoins#id#').off().on('click', function () {
           var min = ('#consigne_minValue#' == '') ? Number.MIN_VALUE : parseFloat('#consigne_minValue#')
           var step = (isNaN(parseFloat('#consigne_step#'))) ? 1 : parseFloat('#consigne_step#')
-          if (parseFloat($('#idTempConsigne#id#').val()) >= min + step) {
-            jeedom.cmd.update['#consigne_id#']({display_value:parseFloat($('#idTempConsigne#id#').val()) - step})
+          if (parseFloat($('#idTempConsigne#id#').value()) >= min + step) {
+            jeedom.cmd.update['#consigne_id#']({display_value:parseFloat($('#idTempConsigne#id#').value()) - step})
             $('#idTempConsigne#id#').trigger('change')
           }
         })
@@ -432,7 +432,7 @@
             clearTimeout(timerHandle#uid#)
           }
           timerHandle#uid# = setTimeout(function() {
-            jeedom.cmd.execute({id:'#consigneSet_id#', value: {slider: $('#idTempConsigne#id#').val().replace("#consigne_unite#", "").replace(" ", "")}})
+            jeedom.cmd.execute({id:'#consigneSet_id#', value: {slider: $('#idTempConsigne#id#').value().replace("#consigne_unite#", "").replace(" ", "")}})
           }, 1000)
         })
 
