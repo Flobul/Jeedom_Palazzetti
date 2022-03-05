@@ -640,10 +640,7 @@ class PalazzettiCmd extends cmd
 
 /*     * *********************Methode d'instance************************* */
 
-    public function dontRemoveCmd()
-    {
-        return true;
-    }
+
 
     public function execute($_options = null)
     {
