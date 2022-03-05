@@ -5,36 +5,36 @@
         </span>
 		</strong>
 	</center>
-	<div class="center plugin-all" id="idActions#id#">
+	<div class="classActionPage#id#" id="idActions#id#">
 		<i class="fas fa-info-circle pull-right classTitreIcon#uid# classPage#id# cursor" title="Vers la page informations générales"></i>	
-        <div class="content-xs">
+        <div class="classActions#id#">
 				<div type="button" class="classBtnOnOff#id#" id="idBtnOnOff#id#"></div>
 				<div class="status#id#"></div><br/>
-				<div class="temp_ambiante#id#"><span id="idTempAmbiance#id#" class="cmd history cursor" data-cmd_id="#temperature_id#"></span> <br/> T° ambiante</div>
-				<div class="temp_ambiante#id#"><span id="idTempGranules#id#" class="cmd history cursor" data-cmd_id="#temperature2_id#"></span> <br/> T° granulés</div>
-				<div class="temp_ambiante#id#"><span id="idTempCombustion#id#" class="cmd history cursor" data-cmd_id="#temperature3_id#"></span> <br/> T° combustion</div>
+				<div class="classGroupTemp#id#"><span id="idTempAmbiance#id#" class="cmd history cursor" data-cmd_id="#temperature_id#"></span> <br/> T° ambiante</div>
+				<div class="classGroupTemp#id#"><span id="idTempGranules#id#" class="cmd history cursor" data-cmd_id="#temperature2_id#"></span> <br/> T° granulés</div>
+				<div class="classGroupTemp#id#"><span id="idTempCombustion#id#" class="cmd history cursor" data-cmd_id="#temperature3_id#"></span> <br/> T° combustion</div>
 
-				<div class="group_container">
-					<div class="consigne_title"><i class="fas fa-thermometer-half"></i> consigne</div>
-					<div class="consigne_all">
-						<span type="button" class="cursor consigne-moins" id="idTempConsigneMoins#id#">-</span>
-						<span class="consigne cmd history cursor" id="idTempConsigne#id#" data-cmd_id="#consigne_id#"></span>
-						<span type="button" class="cursor consigne-plus" id="idTempConsignePlus#id#">+</span>
+				<div class="classGroupConsigne#id#">
+					<div class="classConsigneTitle#id#"><i class="fas fa-thermometer-half"></i> consigne</div>
+					<div class="classConsigneAction#id#">
+						<span type="button" class="cursor btnConsigne#id#" id="idTempConsigneMoins#id#">-</span>
+						<span class="classConsigneCmd#id# cmd history cursor" id="idTempConsigne#id#" data-cmd_id="#consigne_id#"></span>
+						<span type="button" class="cursor btnConsigne#id#" id="idTempConsignePlus#id#">+</span>
 					</div>
 				</div>
-				<div class="group_container">
-					<div class="consigne_title"><i class="fas fa-fire-alt"></i> puissance</div>
-					<div class="consigne_all">
+				<div class="classGroupConsigne#id#">
+					<div class="classConsigneTitle#id#"><i class="fas fa-fire-alt"></i> puissance</div>
+					<div class="classConsigneAction#id#">
 						<span type="button" class="cursor btnConsigne#id#" id="idPowerMoins#id#">-</span>
-						<span class="consigne cmd history cursor" id="idPower#id#" data-cmd_id="#power_id#"></span>
+						<span class="classConsigneCmd#id# cmd history cursor" id="idPower#id#" data-cmd_id="#power_id#"></span>
 						<span type="button" class="cursor btnConsigne#id#" id="idPowerPlus#id#">+</span>
 					</div>
 				</div>
-				<div class="group_container">
-					<div class="consigne_title"><i class="fas fa-fan"></i> ventilation</div>
-					<div class="consigne_all">
+				<div class="classGroupConsigne#id#">
+					<div class="classConsigneTitle#id#"><i class="fas fa-fan"></i> ventilation</div>
+					<div class="classConsigneAction#id#">
 						<span type="button" class="cursor btnConsigne#id#" id="idVentilationMoins#id#">-</span>
-						<span class="consigne cmd history cursor" id="idVentilation#id#" data-cmd_id="#fan_id#"></span>
+						<span class="classConsigneCmd#id# cmd history cursor" id="idVentilation#id#" data-cmd_id="#fan_id#"></span>
 						<span type="button" class="cursor btnConsigne#id#" id="idVentilationPlus#id#">+</span>
 					</div>
 				</div>
@@ -43,8 +43,7 @@
 	</div>
 	<div id="idInfos#id#" style="display:none">
 		<i class="fas fa-undo classTitreIcon#uid# classPage#id# pull-right cursor" title="Retour à la page principale"></i>
-        <div id="idInfoValue#id#"></div>
-        <table class="table table-condensed" id="table_Palazzetti_info">
+        <table class="table table-condensed" id="idTablePalazzettiInfo#id#">
             <thead>
                 <tr>
                     <th>Nom</th>
@@ -65,27 +64,27 @@
                 </tr>
 	            <tr style="display:#consigne_display#">
                     <td>Température de consigne</td>
-                    <td><span class="cmd" data-cmd_id="#consigne_id#"></span></td> 
+                    <td><span class="cmd cursor history" data-cmd_id="#consigne_id#"></span></td> 
                 </tr>
 	            <tr style="display:#temperature_display#">
                     <td>Température ambiante</td>
-                    <td><span class="cmd" data-cmd_id="#temperature_id#"></span></td> 
+                    <td><span class="cmd cursor history" data-cmd_id="#temperature_id#"></span></td> 
                 </tr>
 	            <tr style="display:#temperature2_display#">
                     <td>Température granulés</td>
-                    <td><span class="cmd" data-cmd_id="#temperature2_id#"></span></td> 
+                    <td><span class="cmd cursor history" data-cmd_id="#temperature2_id#"></span></td> 
                 </tr>
 	            <tr style="display:#temperature3_display#">
                     <td>Température combustion</td>
-                    <td><span class="cmd" data-cmd_id="#temperature2_id#"></span></td> 
+                    <td><span class="cmd cursor history" data-cmd_id="#temperature2_id#"></span></td> 
                 </tr>
 	            <tr style="display:#fan_display#">
                     <td>Force ventilateur</td>
-                    <td><span class="cmd" data-cmd_id="#fan_id#"></span></td> 
+                    <td><span class="cmd cursor history" data-cmd_id="#fan_id#"></span></td> 
                 </tr>
 	            <tr style="display:#power_display#">
                     <td>Force du feu</td>
-                    <td><span class="cmd" data-cmd_id="#power_id#"></span></td> 
+                    <td><span class="cmd cursor history" data-cmd_id="#power_id#"></span></td> 
                 </tr>
 	            <tr style="display:#status_display#">
                     <td>État du poêle</td>
@@ -93,197 +92,182 @@
                 </tr>
 	            <tr style="display:#nbAll_display#">
                     <td>Nombre d'allumages</td>
-                    <td><span class="cmd" data-cmd_id="#nbAll_id#"></span></td> 
+                    <td><span class="cmd cursor history" data-cmd_id="#nbAll_id#"></span></td> 
                 </tr>
 	            <tr style="display:#hae_display#">
                     <td>Nombre d'heures alimentation électrique</td>
-                    <td><span class="cmd" data-cmd_id="#hae_id#"></span></td> 
+                    <td><span class="cmd cursor history" data-cmd_id="#hae_id#"></span></td> 
                 </tr>
 	            <tr style="display:#hc_display#">
                     <td>Nombre d'heures de chauffe</td>
-                    <td><span class="cmd" data-cmd_id="#hc_id#"></span></td> 
+                    <td><span class="cmd cursor history" data-cmd_id="#hc_id#"></span></td> 
                 </tr>
 	            <tr style="display:#hsc_display#">
                     <td>Nombre d'heures de surchauffe</td>
-                    <td><span class="cmd" data-cmd_id="#hsc_id#"></span></td> 
+                    <td><span class="cmd cursor history" data-cmd_id="#hsc_id#"></span></td> 
                 </tr>
 	            <tr style="display:#hde_display#">
                     <td>Nombre d'heures depuis entretien</td>
-                    <td><span class="cmd" data-cmd_id="#hde_id#"></span></td> 
+                    <td><span class="cmd cursor history" data-cmd_id="#hde_id#"></span></td> 
                 </tr>
 	            <tr style="display:#hae_display#">
                     <td>Nombre d'allumages échoués</td>
-                    <td><span class="cmd" data-cmd_id="#hae_id#"></span></td> 
+                    <td><span class="cmd cursor history" data-cmd_id="#hae_id#"></span></td> 
                 </tr>
 	            <tr style="display:#pqt_display#">
                     <td>Quantité de pellets consommé</td>
-                    <td><span class="cmd" data-cmd_id="#pqt_id#"></span></td> 
+                    <td><span class="cmd cursor history" data-cmd_id="#pqt_id#"></span></td> 
                 </tr>
 	            <tr>
                     <td colspan="2" style="background-color:#444">Connection box</td>
                 </tr>
-                <tr>
-                    <td>Version plzbridge</td>
-                    <td><span class="cmd" data-cmd_id="#network_id#" data-network="plzbridge"></span></td>
-                </tr>
-                <tr>
-                    <td>Version sendmsg</td>
-                    <td><span class="cmd" data-cmd_id="#network_id#" data-network="sendmsg"></span></td>
-                </tr>
-                <tr>
-                    <td>Version SYSTEM</td>
-                    <td><span class="cmd" data-cmd_id="#network_id#" data-network="SYSTEM"></span></td>
-                </tr>
-                <tr>
-                    <td>Version firmware</td>
-                    <td><span class="cmd" data-cmd_id="#network_id#" data-network="VER"></span></td>
-                </tr>
-                <tr>
-                    <td>Date firmware</td>
-                    <td><span class="cmd" data-cmd_id="#network_id#" data-network="FWDATE"></span></td>
-                </tr>
-                <tr>
-                    <td>Modèle</td>
-                    <td><span class="cmd" data-cmd_id="#network_id#" data-network="MOD"></span></td>
-                </tr>
-                <tr>
-                    <td colspan="2" style="background-color:#333">Local ethernet</td>
-                </tr>
-                <tr>
-                    <td>Serveur DNS</td>
-                    <td><span class="cmd" data-cmd_id="#network_id#" data-network="DNS"></span></td>
-                </tr>
-                <tr>
-                    <td>Adresse IP</td>
-                    <td><span class="cmd" data-cmd_id="#network_id#" data-network="EADR"></span></td>
-                </tr>
-                <tr>
-                    <td>Broadcast</td>
-                    <td><span class="cmd" data-cmd_id="#network_id#" data-network="EBCST"></span></td>
-                </tr>
-                <tr>
-                    <td>Masque sous-réseau</td>
-                    <td><span class="cmd" data-cmd_id="#network_id#" data-network="EMSK"></span></td>
-                </tr>
-                <tr>
-                    <td>Adresse mac</td>
-                    <td><span class="cmd" data-cmd_id="#network_id#" data-network="EMAC"></span></td>
-                </tr>
-                <tr>
-                    <td>Mode</td>
-                    <td><span class="cmd" data-cmd_id="#network_id#" data-network="PR"></span></td>
-                </tr>
-                <tr>
-                    <td>Passerelle</td>
-                    <td><span class="cmd" data-cmd_id="#network_id#" data-network="EGW"></span></td>
-                </tr>
+                <div style="display:#network_display#">
+                    <tr>
+                        <td>Version plzbridge</td>
+                        <td><span class="cmd" data-cmd_id="#network_id#" data-network="plzbridge"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Version sendmsg</td>
+                        <td><span class="cmd" data-cmd_id="#network_id#" data-network="sendmsg"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Version SYSTEM</td>
+                        <td><span class="cmd" data-cmd_id="#network_id#" data-network="SYSTEM"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Version firmware</td>
+                        <td><span class="cmd" data-cmd_id="#network_id#" data-network="VER"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Modèle</td>
+                        <td><span class="cmd" data-cmd_id="#network_id#" data-network="MOD"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Core</td>
+                        <td><span class="cmd" data-cmd_id="#network_id#" data-network="CORE"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Date firmware</td>
+                        <td><span class="cmd" data-cmd_id="#network_id#" data-network="FWDATE"></span></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="background-color:#333">Local ethernet</td>
+                    </tr>
+                    <tr>
+                        <td>Adresse IP</td>
+                        <td><span class="cmd" data-cmd_id="#network_id#" data-network="EADR"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Masque sous-réseau</td>
+                        <td><span class="cmd" data-cmd_id="#network_id#" data-network="EMSK"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Serveur DNS</td>
+                        <td><span class="cmd" data-cmd_id="#network_id#" data-network="DNS"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Passerelle</td>
+                        <td><span class="cmd" data-cmd_id="#network_id#" data-network="EGW"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Broadcast</td>
+                        <td><span class="cmd" data-cmd_id="#network_id#" data-network="EBCST"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Adresse mac</td>
+                        <td><span class="cmd" data-cmd_id="#network_id#" data-network="EMAC"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Mode</td>
+                        <td><span class="cmd" data-cmd_id="#network_id#" data-network="PR"></span></td>
+                    </tr>
 
-                <tr>
-                    <td colspan="2" style="background-color:#333">Local wifi</td>
-                </tr>
-                <tr>
-                    <td>Adresse IP</td>
-                    <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_ADDR"></span></td>
-                </tr>
-                <tr>
-                    <td>Broadcast</td>
-                    <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_BCAST"></span></td>
-                </tr>
-                <tr>
-                    <td>Masque sous-réseau</td>
-                    <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_MASK"></span></td>
-                </tr>
-                <tr>
-                    <td>Adresse mac</td>
-                    <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_MAC"></span></td>
-                </tr>
-                <tr>
-                    <td>Mode</td>
-                    <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_PROTO"></span></td>
-                </tr>
-                <tr>
-                    <td>Passerelle</td>
-                    <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_GW"></span></td>
-                </tr>
-                <tr>
-                    <td>Mode wifi</td>
-                    <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_MODE"></span></td>
-                </tr>
-                <tr>
-                    <td>Canal</td>
-                    <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_CH"></span></td>
-                </tr>
-                <tr>
-                    <td>SSID</td>
-                    <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_SSID"></span></td>
-                </tr>
-                <tr>
-                    <td>Type de cryptage</td>
-                    <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_ENC"></span></td>
-                </tr>
-
+                    <tr>
+                        <td colspan="2" style="background-color:#333">Local wifi</td>
+                    </tr>
+                    <tr>
+                        <td>Adresse IP</td>
+                        <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_ADDR"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Masque sous-réseau</td>
+                        <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_MASK"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Passerelle</td>
+                        <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_GW"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Broadcast</td>
+                        <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_BCAST"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Adresse mac</td>
+                        <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_MAC"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Mode</td>
+                        <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_PROTO"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Mode wifi</td>
+                        <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_MODE"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Canal</td>
+                        <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_CH"></span></td>
+                    </tr>
+                    <tr>
+                        <td>SSID</td>
+                        <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_SSID"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Type de cryptage</td>
+                        <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_ENC"></span></td>
+                    </tr>
+                </div>
             </tbody>
         </table>
 	</div>
 	<style>
-		.plugin-all
+      
+        .classTitreIcon#uid# {
+            position: absolute;
+            right: 0;
+            z-index: 4;
+        }
+
+		.classActionPage#id#
 		{
-			display:flex;
-			text-align:center;
 			text-transform:uppercase;
 			font-family:roboto;
 		}
-		.container {
-			width:90%
-			margin:auto;
-		}
+      
+        .classActions#id# {
+            text-align:center;
+            width: 100%;
+            position: absolute;  
+        }
+
 		.status#id#
 		{
 			text-align:center
 		}
-		.temp_ambiante#id#
+
+		.classGroupTemp#id#
 		{
             width:100px;
 			font-size:12px;
             display:inline-block;
 		}
-		.temp_consigne
-		{
-			float:right;
-			font-size:12px;
-			color: #f65858;
-		}
-		.group_container
+
+		.classGroupConsigne#id#
 		{
 			padding-top:20px;
 			clear:both;
 		}
-		.consigne_all
-		{
-			display:flex;
-			margin:10px;
-		}
-		.consigne
-		{
-			font-family: 'Roboto';
-			text-align:center;
-			margin:auto;
-			font-size: 28px;
-			font-weight:bold;
-		}
-		.consigne-moins
-		{
-			margin:auto;
-			font-size:24px;
-			font-weight:bold;
-		}
-		.consigne-plus
-		{
-			margin:auto;
-			font-size:24px;
-			font-weight:bold;
-		}
-		.consigne_title
+
+		.classConsigneTitle#id#
 		{
 			font-family:roboto;
 			text-align:center;
@@ -293,21 +277,36 @@
 			clear:both;
 		}
 
+		.classConsigneAction#id#
+		{
+			display:flex;
+			margin:10px;
+		}
+
+		.classConsigneCmd#id#
+		{
+			font-family: 'Roboto';
+			text-align:center;
+			margin:auto;
+			font-size: 28px;
+			font-weight:bold;
+		}
+
 		.btnConsigne#id#
 		{
 			margin:auto;
 			font-size:24px;
 			font-weight:bold;
 		}
-      
+
         .successColor#id# {
             background-color:var(--al-success-color) !important;
         }
-      
+
         .dangerColor#id# {
             background-color:var(--al-danger-color) !important;
         }
-      
+
         .classBtnOnOff#id# {
             border-radius: var(--border-radius) !important;
             font-size: 12px;
@@ -326,13 +325,13 @@
             background-image: none;
             color:var(--linkHoverLight-color) !important;
         }
-      
+
         .classBtnOnOff#id#:hover {
             opacity:.65;
             color: var(--linkHoverLight-color) !important;
         }
-      
-        .temp_ambiante#id# span.cmd {
+
+        .classGroupTemp#id# span.cmd {
             font-size: 18px;
             font-weight: 100;
         }
@@ -351,14 +350,13 @@
         $('.classPage#id#').on('click', function() {
             $('#idInfos#id#').toggle();
             $('#idActions#id#').toggle();
-			//$('#idInfoValue#id#').load('index.php?v=d&plugin=Palazzetti&modal=informations&id=#id#');
         });
 
         jeedom.cmd.update['#heure_id#'] = function(_options) {
             try {
                 var date = JSON.parse(_options.display_value);
-                $('.cmd[data-cmd_id=#heure_id#][data-time="heure"]').html(date.STOVE_DATETIME)
-                $('.cmd[data-cmd_id=#heure_id#][data-time="jour"]').html(dayNames#id#[(parseInt(date.STOVE_WDAY) - 1)])
+                $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#heure_id#][data-time="heure"]').html(date.STOVE_DATETIME)
+                $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#heure_id#][data-time="jour"]').html(dayNames#id#[(parseInt(date.STOVE_WDAY) - 1)])
             } catch (e) {
             }
         }
@@ -371,7 +369,7 @@
 			    $('#idBtnOnOff#id#').addClass('dangerColor#id#').removeClass('successColor#id#').text('Arrêter'); 
             }
             $('.status#id#').html(statusCode#id#[_options.display_value]);
-            $('.cmd[data-cmd_id=#status_id#]').html(statusCode#id#[_options.display_value]);
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#status_id#]').html(statusCode#id#[_options.display_value]);
         }
 		jeedom.cmd.update['#status_id#']({display_value: '#status#'});
 		
@@ -386,28 +384,28 @@
         jeedom.cmd.update['#temperature_id#'] = function(_options) {
             $('#idTempAmbiance#id#').html(_options.display_value + ' <sup>#temperature_unite#</sup>');
             $('#idTempAmbiance#id#').attr('title', 'Date de collecte : '+_options.collectDate+'<br/>Date de valeur : '+_options.valueDate);
-            $('.cmd[data-cmd_id=#temperature_id#]').html(_options.display_value + ' <sup>#temperature_unite#</sup>');
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#temperature_id#]').html(_options.display_value + ' <sup>#temperature_unite#</sup>');
         }
 		jeedom.cmd.update['#temperature_id#']({display_value: '#temperature#', valueDate: '#temperature_valueDate#', collectDate: '#temperature_collectDate#'});
 
         jeedom.cmd.update['#temperature2_id#'] = function(_options) {
             $('#idTempGranules#id#').html(_options.display_value + ' <sup>#temperature2_unite#</sup>');
             $('#idTempGranules#id#').attr('title', 'Date de collecte : '+_options.collectDate+'<br/>Date de valeur : '+_options.valueDate);
-            $('.cmd[data-cmd_id=#temperature2_id#]').html(_options.display_value + ' <sup>#temperature2_unite#</sup>');
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#temperature2_id#]').html(_options.display_value + ' <sup>#temperature2_unite#</sup>');
         }
 		jeedom.cmd.update['#temperature2_id#']({display_value: '#temperature2#', valueDate: '#temperature2_valueDate#', collectDate: '#temperature2_collectDate#'});
 
         jeedom.cmd.update['#temperature3_id#'] = function(_options) {
             $('#idTempCombustion#id#').html(_options.display_value + ' <sup>#temperature3_unite#</sup>');
             $('#idTempCombustion#id#').attr('title', 'Date de collecte : '+_options.collectDate+'<br/>Date de valeur : '+_options.valueDate);
-            $('.cmd[data-cmd_id=#temperature3_id#]').html(_options.display_value + ' <sup>#temperature3_unite#</sup>');
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#temperature3_id#]').html(_options.display_value + ' <sup>#temperature3_unite#</sup>');
         }
 		jeedom.cmd.update['#temperature3_id#']({display_value: '#temperature3#', valueDate: '#temperature3_valueDate#', collectDate: '#temperature3_collectDate#'});
       
         jeedom.cmd.update['#consigne_id#'] = function(_options) {
             $('#idTempConsigne#id#').html(_options.display_value + ' <sup>#consigne_unite#</sup>');
             $('#idTempConsigne#id#').attr('title', 'Date de collecte : '+_options.collectDate+'<br/>Date de valeur : '+_options.valueDate);
-            $('.consigne[data-cmd_id=#consigne_id#]').html(_options.display_value + ' <sup>#consigne_unite#</sup>');
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#consigne_id#]').html(_options.display_value + ' <sup>#consigne_unite#</sup>');
         }
 		jeedom.cmd.update['#consigne_id#']({display_value: '#consigne#', valueDate: '#consigne_valueDate#', collectDate: '#consigne_collectDate#'});
 
@@ -441,12 +439,12 @@
         jeedom.cmd.update['#power_id#'] = function(_options) {
             $('#idPower#id#').html(_options.display_value);
             if (parseInt(_options.display_value) == 5) {
-				$('#idPowerPlus').addClass('disabled');
+				$('#idPowerPlus#id#').addClass('disabled');
             }
-            if (parseInt(_options.display_value) == 0) {
-             	$('#idPowerMoins').addClass('disabled');
+            if (parseInt(_options.display_value) == 1) {
+             	$('#idPowerMoins#id#').addClass('disabled');
             }
-            $('.consigne[data-cmd_id=#power_id#]').html(_options.display_value);
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#power_id#]').html(_options.display_value);
         }
 		jeedom.cmd.update['#power_id#']({display_value: '#power#'});
 
@@ -478,7 +476,6 @@
         })
 		
         jeedom.cmd.update['#fan_id#'] = function(_options) {
-          console.log(_options)
             if (_options.display_value == 0) {
                 $('#idVentilation#id#').html('OFF');
                 $('#idVentilationPlus#id#').addClass('disabled');
@@ -491,7 +488,9 @@
                 $('#idVentilation#id#').html(_options.display_value);
             }
             $('#idVentilation#id#').data('value',_options.display_value);
-            $('.consigne[data-cmd_id=#fan_id#]').html(_options.display_value);
+            $('#idVentilation#id#').html(_options.display_value);
+          console.log($('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#fan_id#]'))
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#fan_id#]').html(_options.display_value);
         }
 		jeedom.cmd.update['#fan_id#']({display_value: '#fan#'});
 
@@ -523,40 +522,46 @@
         })
 
         jeedom.cmd.update['#nbAll_id#'] = function(_options) {
-            $('.cmd[data-cmd_id=#nbAll_id#]').html(_options.display_value);
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#nbAll_id#]').html(_options.display_value + ' #nbAll_unit#');
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#nbAll_id#]').attr('title', 'Date de collecte : '+_options.collectDate+'<br/>Date de valeur : '+_options.valueDate);
         }
-		jeedom.cmd.update['#nbAll_id#']({display_value: '#nbAll#'});
+		jeedom.cmd.update['#nbAll_id#']({display_value: '#nbAll#', collectDate: '#nbAll_collectDate#', valueDate: '#nbAll_valueDate#'});
 
         jeedom.cmd.update['#hae_id#'] = function(_options) {
-            $('.cmd[data-cmd_id=#hae_id#]').html(_options.display_value);
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hae_id#]').html(_options.display_value + ' #hae_unit#');
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hae_id#]').attr('title', 'Date de collecte : '+_options.collectDate+'<br/>Date de valeur : '+_options.valueDate);
         }
-		jeedom.cmd.update['#hae_id#']({display_value: '#hae#'});
+		jeedom.cmd.update['#hae_id#']({display_value: '#hae#', collectDate: '#hae_collectDate#', valueDate: '#hae_valueDate#'});
 
         jeedom.cmd.update['#hc_id#'] = function(_options) {
-            $('.cmd[data-cmd_id=#hc_id#]').html(_options.display_value);
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hc_id#]').html(_options.display_value + ' #hc_unit#');
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hc_id#]').attr('title', 'Date de collecte : '+_options.collectDate+'<br/>Date de valeur : '+_options.valueDate);
         }
-		jeedom.cmd.update['#hc_id#']({display_value: '#hc#'});
+		jeedom.cmd.update['#hc_id#']({display_value: '#hc#', collectDate: '#hc_collectDate#', valueDate: '#hc_valueDate#'});
 
         jeedom.cmd.update['#hsc_id#'] = function(_options) {
-            $('.cmd[data-cmd_id=#hsc_id#]').html(_options.display_value);
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hsc_id#]').html(_options.display_value + ' #hsc_unit#');
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hsc_id#]').attr('title', 'Date de collecte : '+_options.collectDate+'<br/>Date de valeur : '+_options.valueDate);
         }
-		jeedom.cmd.update['#hsc_id#']({display_value: '#hsc#'});
+		jeedom.cmd.update['#hsc_id#']({display_value: '#hsc#', collectDate: '#hsc_collectDate#', valueDate: '#hsc_valueDate#'});
 
         jeedom.cmd.update['#hde_id#'] = function(_options) {
-            $('.cmd[data-cmd_id=#hde_id#]').html(_options.display_value);
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hde_id#]').html(_options.display_value + ' #hde_unit#');
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hde_id#]').attr('title', 'Date de collecte : '+_options.collectDate+'<br/>Date de valeur : '+_options.valueDate);
         }
-		jeedom.cmd.update['#hde_id#']({display_value: '#hde#'});
+		jeedom.cmd.update['#hde_id#']({display_value: '#hde#', collectDate: '#hde_collectDate#', valueDate: '#hde_valueDate#'});
 
         jeedom.cmd.update['#hae_id#'] = function(_options) {
-            $('.cmd[data-cmd_id=#hae_id#]').html(_options.display_value);
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hae_id#]').html(_options.display_value + ' #hae_unit#');
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hae_id#]').attr('title', 'Date de collecte : '+_options.collectDate+'<br/>Date de valeur : '+_options.valueDate);
         }
-		jeedom.cmd.update['#hae_id#']({display_value: '#hae#'});
+		jeedom.cmd.update['#hae_id#']({display_value: '#hae#',collectDate: '#hae_collectDate#', valueDate: '#hae_valueDate#' });
 
         jeedom.cmd.update['#pqt_id#'] = function(_options) {
-            $('.cmd[data-cmd_id=#pqt_id#]').html(_options.display_value);
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#pqt_id#]').html(_options.display_value + ' #pqt_unit#');
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#pqt_id#]').attr('title', 'Date de collecte : '+_options.collectDate+'<br/>Date de valeur : '+_options.valueDate);
         }
-		jeedom.cmd.update['#pqt_id#']({display_value: '#pqt#'});
-
+		jeedom.cmd.update['#pqt_id#']({display_value: '#pqt#', collectDate: '#pqt_collectDate#', valueDate: '#pqt_valueDate#'});
 
         jeedom.cmd.update['#network_id#'] = function(_options) {
             var network = '#network_id#';
@@ -568,8 +573,9 @@
             $('.cmd[data-cmd_id=#network_id#][data-network="sendmsg"]').html(network.sendmsg);
             $('.cmd[data-cmd_id=#network_id#][data-network="SYSTEM"]').html(network.SYSTEM);
             $('.cmd[data-cmd_id=#network_id#][data-network="VER"]').html(network.VER);
-            $('.cmd[data-cmd_id=#network_id#][data-network="FWDATE"]').html(network.FWDATE);
             $('.cmd[data-cmd_id=#network_id#][data-network="MOD"]').html(network.MOD);
+            $('.cmd[data-cmd_id=#network_id#][data-network="CORE"]').html(network.CORE);
+            $('.cmd[data-cmd_id=#network_id#][data-network="FWDATE"]').html(network.FWDATE);
             $('.cmd[data-cmd_id=#network_id#][data-network="DNS"]').html(network.DNS[0]);
             $('.cmd[data-cmd_id=#network_id#][data-network="EADR"]').html(network.EADR);
             $('.cmd[data-cmd_id=#network_id#][data-network="EBCST"]').html(network.EBCST);

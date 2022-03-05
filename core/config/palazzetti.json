@@ -9,7 +9,7 @@
   "subType": "string",
   "unite": "",
   "isHistorized": 0,
-  "isVisible": 0
+  "isVisible": 1
 }, {
   "name": "Lire horodatage",
   "configuration": {
@@ -33,7 +33,7 @@
   "subType": "string",
   "unite": "",
   "isHistorized": 0,
-  "isVisible": 0
+  "isVisible": 1
 }, {
   "name": "R\u00e9seau",
   "configuration": {
@@ -45,7 +45,7 @@
   "subType": "string",
   "unite": "",
   "isHistorized": 0,
-  "isVisible": 0
+  "isVisible": 1
 }, {
   "name": "Allumage po\u00eale",
   "configuration": {
@@ -57,7 +57,7 @@
   "subType": "other",
   "unite": "",
   "isHistorized": 0,
-  "isVisible": 0
+  "isVisible": 1
 }, {
   "name": "Extinction po\u00eale",
   "configuration": {
@@ -69,7 +69,7 @@
   "subType": "other",
   "unite": "",
   "isHistorized": 0,
-  "isVisible": 0
+  "isVisible": 1
 }, {
   "name": "Lecture \u00e9tat po\u00eale",
   "configuration": {
@@ -104,8 +104,7 @@
   "type": "info",
   "subType": "string",
   "isVisible": 1,
-  "isHistorized": 0,
-  "unite": ""
+  "isHistorized": 0
 }, {
   "name": "Ecrire nom",
   "configuration": {
@@ -115,9 +114,8 @@
   "logicalId": "WName",
   "type": "action",
   "subType": "other",
-  "unite": "",
   "isHistorized": 0,
-  "isVisible": 1
+  "isVisible": 0
 }, {
   "name": "Lire nom",
   "configuration": {
@@ -127,7 +125,6 @@
   "logicalId": "RName",
   "type": "action",
   "subType": "other",
-  "unite": "",
   "isHistorized": 0,
   "isVisible": 0
 }, {
@@ -143,7 +140,6 @@
   "logicalId": "WPower",
   "type": "action",
   "subType": "slider",
-  "unite": "",
   "isHistorized": 0,
   "isVisible": 0
 }, {
@@ -159,7 +155,6 @@
   "logicalId": "IPower",
   "type": "info",
   "subType": "string",
-  "unite": "",
   "isHistorized": 1,
   "isVisible": 1
 }, {
@@ -175,23 +170,19 @@
   "logicalId": "WConsigne",
   "type": "action",
   "subType": "slider",
-  "unite": "",
   "isHistorized": 0,
-  "isVisible": 1
+  "isVisible": 0
 }, {
   "name": "Lire temp\u00e9rature de consigne",
   "configuration": {
     "actionCmd": "GET+SETP",
     "updateLogicalId": "IConsigne",
     "nparams": 0,
-    "parameters": "",
-    "minValue": "",
-    "maxValue": ""
+    "parameters": ""
   },
   "logicalId": "RConsigne",
   "type": "action",
   "subType": "other",
-  "unite": "",
   "isHistorized": 0,
   "isVisible": 0
 }, {
@@ -207,23 +198,19 @@
   "logicalId": "WFan",
   "type": "action",
   "subType": "slider",
-  "unite": "",
   "isHistorized": 0,
-  "isVisible": 1
+  "isVisible": 0
 }, {
   "name": "Lire force ventilateur",
   "configuration": {
     "actionCmd": "GET+FAND",
     "updateLogicalId": "IFan",
     "nparams": 0,
-    "parameters": "",
-    "minValue": "",
-    "maxValue": ""
+    "parameters": ""
   },
   "logicalId": "RFan",
   "type": "action",
   "subType": "other",
-  "unite": "",
   "isHistorized": 0,
   "isVisible": 0
 }, {
@@ -231,10 +218,7 @@
   "configuration": {
     "actionCmd": "",
     "updateLogicalId": "",
-    "nparams": 0,
-    "parameters": "",
-    "minValue": "",
-    "maxValue": ""
+    "nparams": 0
   },
   "logicalId": "IFan",
   "type": "info",
@@ -255,7 +239,6 @@
   "logicalId": "WFanF3L",
   "type": "action",
   "subType": "slider",
-  "unite": "",
   "isHistorized": 0,
   "isVisible": 0
 }, {
@@ -263,10 +246,7 @@
   "configuration": {
     "actionCmd": "GET+ALLS",
     "updateLogicalId": "IFanF3L",
-    "nparams": 0,
-    "parameters": "",
-    "minValue": "",
-    "maxValue": ""
+    "nparams": 0
   },
   "logicalId": "RFanF3L",
   "type": "action",
@@ -279,17 +259,14 @@
   "configuration": {
     "actionCmd": "",
     "updateLogicalId": "",
-    "nparams": 0,
-    "parameters": "",
-    "minValue": "",
-    "maxValue": ""
+    "nparams": 0
   },
   "logicalId": "IFanF3L",
   "type": "info",
   "subType": "string",
   "unite": "",
   "isHistorized": 0,
-  "isVisible": 0
+  "isVisible": 1
 }, {
   "name": "Ecriture force ventilateur F4L",
   "configuration": {
@@ -303,21 +280,18 @@
   "logicalId": "WFanF4L",
   "type": "action",
   "subType": "slider",
-  "unite": "",
   "isHistorized": 0,
   "isVisible": 0
 }, {
   "name": "Lire force ventilateur F4L",
-  "actionCmd": "GET+ALLS",
-  "updateLogicalId": "IFanF4L",
-  "nparams": 0,
-  "parameters": "",
-  "minValue": "",
-  "maxValue": "",
+  "configuration": {
+      "actionCmd": "GET+ALLS",
+      "updateLogicalId": "IFanF4L",
+      "nparams": 0
+  },
   "logicalId": "RFanF4L",
   "type": "action",
   "subType": "other",
-  "unite": "",
   "isHistorized": 0,
   "isVisible": 0
 }, {
@@ -325,15 +299,11 @@
   "configuration": {
     "actionCmd": "",
     "updateLogicalId": "",
-    "nparams": 0,
-    "parameters": "",
-    "minValue": "",
-    "maxValue": ""
+    "nparams": 0
   },
   "logicalId": "IFanF4L",
   "type": "info",
   "subType": "string",
-  "unite": "",
   "isHistorized": 0,
   "isVisible": 1
 }, {
@@ -341,31 +311,24 @@
   "configuration": {
     "actionCmd": "GET+TMPS",
     "updateLogicalId": "ITemp",
-    "nparams": 0,
-    "parameters": "",
-    "minValue": "",
-    "maxValue": ""
+    "nparams": 0
   },
   "logicalId": "RTemp",
   "type": "action",
   "subType": "other",
   "unite": "°C",
   "isHistorized": 0,
-  "isVisible": 1
+  "isVisible": 0
 }, {
   "name": "On\/Off Programmes horaires",
   "configuration": {
     "actionCmd": "SET+CSST+",
     "updateLogicalId": "",
-    "nparams": 0,
-    "parameters": "",
-    "minValue": "",
-    "maxValue": ""
+    "nparams": 0
   },
   "logicalId": "WPH",
   "type": "action",
   "subType": "other",
-  "unite": "",
   "isHistorized": 0,
   "isVisible": 1
 }, {
@@ -373,31 +336,24 @@
   "configuration": {
     "actionCmd": "GET+CHRD",
     "updateLogicalId": "IPH",
-    "nparams": 0,
-    "parameters": "",
-    "minValue": "",
-    "maxValue": ""
+    "nparams": 0
   },
   "logicalId": "RPH",
   "type": "action",
   "subType": "other",
   "unite": "",
   "isHistorized": 0,
-  "isVisible": 1
+  "isVisible": 0
 }, {
   "name": "Programmes horaires",
   "configuration": {
     "actionCmd": "",
     "updateLogicalId": "",
-    "nparams": 0,
-    "parameters": "",
-    "minValue": "",
-    "maxValue": ""
+    "nparams": 0
   },
   "logicalId": "IPH",
   "type": "info",
   "subType": "string",
-  "unite": "",
   "isHistorized": 0,
   "isVisible": 1
 }, {
@@ -405,10 +361,7 @@
   "configuration": {
     "actionCmd": "SET+CDAY+",
     "updateLogicalId": "",
-    "nparams": 0,
-    "parameters": "",
-    "minValue": "",
-    "maxValue": ""
+    "nparams": 0
   },
   "logicalId": "WPHtoDay",
   "type": "action",
@@ -421,15 +374,11 @@
   "configuration": {
     "actionCmd": "SET+CPRD+",
     "updateLogicalId": "",
-    "nparams": 0,
-    "parameters": "",
-    "minValue": "",
-    "maxValue": ""
+    "nparams": 0
   },
   "logicalId": "WPHtranche",
   "type": "action",
   "subType": "other",
-  "unite": "",
   "isHistorized": 0,
   "isVisible": 1
 }, {
@@ -437,17 +386,13 @@
   "configuration": {
     "actionCmd": "EXT+ADRD+2066+1",
     "updateLogicalId": "INbAllumage",
-    "nparams": 0,
-    "parameters": "",
-    "minValue": "",
-    "maxValue": ""
+    "nparams": 0
   },
   "logicalId": "RNbAllumage",
   "type": "action",
   "subType": "other",
-  "unite": "",
   "isHistorized": 0,
-  "isVisible": 1
+  "isVisible": 0
 }, {
   "name": "Nombre d'allumages",
   "configuration": {
@@ -461,7 +406,6 @@
   "logicalId": "INbAllumage",
   "type": "info",
   "subType": "numeric",
-  "unite": "",
   "isHistorized": 0,
   "isVisible": 1
 }, {
@@ -474,9 +418,8 @@
   "logicalId": "RNbAllumageFailed",
   "type": "action",
   "subType": "other",
-  "unite": "",
   "isHistorized": 0,
-  "isVisible": 1
+  "isVisible": 0
 }, {
   "name": "Nombre d'allumages \u00e9chou\u00e9s",
   "configuration": {
@@ -490,7 +433,6 @@
   "logicalId": "INbAllumageFailed",
   "type": "info",
   "subType": "numeric",
-  "unite": "",
   "isHistorized": 0,
   "isVisible": 1
 }, {
@@ -498,17 +440,13 @@
   "configuration": {
     "actionCmd": "EXT+ADRD+206A+1",
     "updateLogicalId": "IHeuresAlimElec",
-    "nparams": 0,
-    "parameters": "",
-    "minValue": "",
-    "maxValue": ""
+    "nparams": 0
   },
   "logicalId": "RHeuresAlimElec",
   "type": "action",
   "subType": "other",
-  "unite": "",
   "isHistorized": 0,
-  "isVisible": 1
+  "isVisible": 0
 }, {
   "name": "Nombre d'heures alimentation \u00e9lectrique",
   "configuration": {
@@ -530,17 +468,13 @@
   "configuration": {
     "actionCmd": "EXT+ADRD+2070+1",
     "updateLogicalId": "IHeuresChauffe",
-    "nparams": 0,
-    "parameters": "",
-    "minValue": "",
-    "maxValue": ""
+    "nparams": 0
   },
   "logicalId": "RHeuresChauffe",
   "type": "action",
   "subType": "other",
-  "unite": "",
   "isHistorized": 0,
-  "isVisible": 1
+  "isVisible": 0
 }, {
   "name": "Nombre d'heures de chauffe",
   "configuration": {
@@ -567,9 +501,8 @@
   "logicalId": "RHeuresSurChauffe",
   "type": "action",
   "subType": "other",
-  "unite": "",
   "isHistorized": 0,
-  "isVisible": 1
+  "isVisible": 0
 }, {
   "name": "Nombre d'heures de surchauffe",
   "configuration": {
@@ -591,17 +524,14 @@
   "configuration": {
     "actionCmd": "EXT+ADRD+2076+1",
     "updateLogicalId": "IHeuresDepuisEntretien",
-    "nparams": 0,
-    "parameters": "",
-    "minValue": "",
-    "maxValue": ""
+    "nparams": 0
   },
   "logicalId": "RHeuresDepuisEntretien",
   "type": "action",
   "subType": "other",
   "unite": "",
   "isHistorized": 0,
-  "isVisible": 1
+  "isVisible": 0
 }, {
   "name": "Nombre d'heures depuis entretien",
   "configuration": {
@@ -639,10 +569,7 @@
   "configuration": {
     "actionCmd": "",
     "updateLogicalId": "",
-    "nparams": 0,
-    "parameters": "",
-    "minValue": "",
-    "maxValue": ""
+    "nparams": 0
   },
   "logicalId": "ITemp2",
   "type": "info",
@@ -655,10 +582,7 @@
   "configuration": {
     "actionCmd": "",
     "updateLogicalId": "",
-    "nparams": 0,
-    "parameters": "",
-    "minValue": "",
-    "maxValue": ""
+    "nparams": 0
   },
   "logicalId": "ITemp3",
   "type": "info",
@@ -671,10 +595,7 @@
   "configuration": {
     "actionCmd": "",
     "updateLogicalId": "",
-    "nparams": 0,
-    "parameters": "",
-    "minValue": "",
-    "maxValue": ""
+    "nparams": 0
   },
   "logicalId": "IConsigne",
   "type": "info",

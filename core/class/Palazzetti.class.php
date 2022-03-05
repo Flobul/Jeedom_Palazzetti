@@ -103,6 +103,7 @@ class Palazzetti extends eqLogic
                 }
             }
             if ($cmd === null || !is_object($cmd)) {
+                log::add(__CLASS__, 'debug', __('Création commande ', __FILE__) . ' : ' . __FUNCTION__ . $config['logicalId']);
                 $cmd = new PalazzettiCmd();
                 $cmd->setEqLogic_id($this->getId());
                 utils::a2o($cmd, $config);
@@ -459,6 +460,7 @@ class Palazzetti extends eqLogic
         $nbAll = $this->getCmd(null, 'INbAllumage');
         $replace['#nbAll#'] = is_object($nbAll) ? $nbAll->execCmd() : '';
         $replace['#nbAll_id#'] = is_object($nbAll) ? $nbAll->getId() : '';
+        $replace['#nbAll_unit#'] = is_object($nbAll) ? $nbAll->getUnite() : '';
         $replace['#nbAll_valueDate#'] = is_object($nbAll) ? $nbAll->getValueDate() : '';
         $replace['#nbAll_collectDate#'] = is_object($nbAll) ? $nbAll->getCollectDate() : '';
         $replace['#nbAll_display#'] = (is_object($nbAll) && $nbAll->getIsVisible()) ? '#nbAll_display#' : 'none';
@@ -466,6 +468,7 @@ class Palazzetti extends eqLogic
         $hae = $this->getCmd(null, 'IHeuresAlimElec');
         $replace['#hae#'] = is_object($hae) ? $hae->execCmd() : '';
         $replace['#hae_id#'] = is_object($hae) ? $hae->getId() : '';
+        $replace['#hae_unit#'] = is_object($hae) ? $hae->getUnite() : '';
         $replace['#hae_valueDate#'] = is_object($hae) ? $hae->getValueDate() : '';
         $replace['#hae_collectDate#'] = is_object($hae) ? $hae->getCollectDate() : '';
         $replace['#hae_display#'] = (is_object($hae) && $hae->getIsVisible()) ? '#hae_display#' : 'none';
@@ -473,6 +476,7 @@ class Palazzetti extends eqLogic
         $hc = $this->getCmd(null, 'IHeuresChauffe');
         $replace['#hc#'] = is_object($hc) ? $hc->execCmd() : '';
         $replace['#hc_id#'] = is_object($hc) ? $hc->getId() : '';
+        $replace['#hc_unit#'] = is_object($hc) ? $hc->getUnite() : '';
         $replace['#hc_valueDate#'] = is_object($hc) ? $hc->getValueDate() : '';
         $replace['#hc_collectDate#'] = is_object($hc) ? $hc->getCollectDate() : '';
         $replace['#hc_display#'] = (is_object($hc) && $hc->getIsVisible()) ? '#hc_display#' : 'none';
@@ -480,6 +484,7 @@ class Palazzetti extends eqLogic
         $hsc = $this->getCmd(null, 'IHeuresSurChauffe');
         $replace['#hsc#'] = is_object($hsc) ? $hsc->execCmd() : '';
         $replace['#hsc_id#'] = is_object($hsc) ? $hsc->getId() : '';
+        $replace['#hsc_unit#'] = is_object($hsc) ? $hsc->getUnite() : '';
         $replace['#hsc_valueDate#'] = is_object($hsc) ? $hsc->getValueDate() : '';
         $replace['#hsc_collectDate#'] = is_object($hsc) ? $hsc->getCollectDate() : '';
         $replace['#hsc_display#'] = (is_object($hsc) && $hsc->getIsVisible()) ? '#hsc_display#' : 'none';
@@ -487,6 +492,7 @@ class Palazzetti extends eqLogic
         $hde = $this->getCmd(null, 'IHeuresDepuisEntretien');
         $replace['#hde#'] = is_object($hde) ? $hde->execCmd() : '';
         $replace['#hde_id#'] = is_object($hde) ? $hde->getId() : '';
+        $replace['#hde_unit#'] = is_object($hde) ? $hde->getUnite() : '';
         $replace['#hde_valueDate#'] = is_object($hde) ? $hde->getValueDate() : '';
         $replace['#hde_collectDate#'] = is_object($hde) ? $hde->getCollectDate() : '';
         $replace['#hde_display#'] = (is_object($hde) && $hde->getIsVisible()) ? '#hde_display#' : 'none';
@@ -494,6 +500,7 @@ class Palazzetti extends eqLogic
         $haf = $this->getCmd(null, 'INbAllumageFailed');
         $replace['#haf#'] = is_object($haf) ? $haf->execCmd() : '';
         $replace['#haf_id#'] = is_object($haf) ? $haf->getId() : '';
+        $replace['#haf_unit#'] = is_object($haf) ? $haf->getUnite() : '';
         $replace['#haf_valueDate#'] = is_object($haf) ? $haf->getValueDate() : '';
         $replace['#haf_collectDate#'] = is_object($haf) ? $haf->getCollectDate() : '';
         $replace['#haf_display#'] = (is_object($haf) && $haf->getIsVisible()) ? '#haf_display#' : 'none';
@@ -501,6 +508,7 @@ class Palazzetti extends eqLogic
         $pqt = $this->getCmd(null, 'IQuantite');
         $replace['#pqt#'] = is_object($pqt) ? $pqt->execCmd() : '';
         $replace['#pqt_id#'] = is_object($pqt) ? $pqt->getId() : '';
+        $replace['#pqt_unit#'] = is_object($pqt) ? $pqt->getUnite() : '';
         $replace['#pqt_valueDate#'] = is_object($pqt) ? $pqt->getValueDate() : '';
         $replace['#pqt_collectDate#'] = is_object($pqt) ? $pqt->getCollectDate() : '';
         $replace['#pqt_display#'] = (is_object($pqt) && $pqt->getIsVisible()) ? '#pqt_display#' : 'none';
@@ -545,56 +553,56 @@ class Palazzetti extends eqLogic
         // recuperation de l'heure
         $DATA = $this->makeRequest('GET+TIME');
         if ($DATA) {
-            $this->updateCmd('ITime', json_encode($DATA->DATA));
+            $this->checkAndUpdateCmd('ITime', json_encode($DATA->DATA));
         }
 
         // recuperation de toutes les informations réseau
         $DATA = $this->makeRequest('GET+STDT');
         if ($DATA) {
-            $this->updateCmd('IName', $DATA->DATA->LABEL);
-            $this->updateCmd('INetwork', json_encode($DATA->DATA));
+            $this->checkAndUpdateCmd('IName', $DATA->DATA->LABEL);
+            $this->checkAndUpdateCmd('INetwork', json_encode($DATA->DATA));
         }
 
         // recuperation des programmes horaires
         $DATA = $this->makeRequest('GET+CHRD');
         if ($DATA) {
-            $this->updateCmd('IPH', json_encode($DATA->DATA));
+            $this->checkAndUpdateCmd('IPH', json_encode($DATA->DATA));
         }
 
         // recuperation des infos compteurs
         $DATA = $this->makeRequest('GET+CNTR');
         if ($DATA) {
-            $this->updateCmd('INbAllumage', $DATA->DATA->IGN);
-            $this->updateCmd('INbAllumageFailed', $DATA->DATA->IGNERRORS);
-            $this->updateCmd('IHeuresAlimElec', str_replace(':', '.', $DATA->DATA->POWERTIME));
-            $this->updateCmd('IHeuresChauffe', str_replace(':', '.', $DATA->DATA->HEATTIME));
-            $this->updateCmd('IHeuresSurChauffe', str_replace(':', '.', $DATA->DATA->OVERTMPERRORS));
-            $this->updateCmd('IHeuresDepuisEntretien', str_replace(':', '.', $DATA->DATA->SERVICETIME));
-            $this->updateCmd('IQuantite', $DATA->DATA->PQT);
+            $this->checkAndUpdateCmd('INbAllumage', $DATA->DATA->IGN);
+            $this->checkAndUpdateCmd('INbAllumageFailed', $DATA->DATA->IGNERRORS);
+            $this->checkAndUpdateCmd('IHeuresAlimElec', str_replace(':', '.', $DATA->DATA->POWERTIME));
+            $this->checkAndUpdateCmd('IHeuresChauffe', str_replace(':', '.', $DATA->DATA->HEATTIME));
+            $this->checkAndUpdateCmd('IHeuresSurChauffe', str_replace(':', '.', $DATA->DATA->OVERTMPERRORS));
+            $this->checkAndUpdateCmd('IHeuresDepuisEntretien', str_replace(':', '.', $DATA->DATA->SERVICETIME));
+            $this->checkAndUpdateCmd('IQuantite', $DATA->DATA->PQT);
         } else {
             $DATA = $this->makeRequest('EXT+ADRD+2066+1');
             if ($DATA) {
-                $this->updateCmd('INbAllumage', $DATA->DATA->ADDR_2066);
+                $this->checkAndUpdateCmd('INbAllumage', $DATA->DATA->ADDR_2066);
             }
             $DATA = $this->makeRequest('EXT+ADRD+207C+1');
             if ($DATA) {
-                $this->updateCmd('INbAllumageFailed', $DATA->DATA->ADDR_207C);
+                $this->checkAndUpdateCmd('INbAllumageFailed', $DATA->DATA->ADDR_207C);
             }
             $DATA = $this->makeRequest('EXT+ADRD+206A+1');
             if ($DATA) {
-                $this->updateCmd('IHeuresAlimElec', str_replace(':', '.', $DATA->DATA->ADDR_206A));
+                $this->checkAndUpdateCmd('IHeuresAlimElec', str_replace(':', '.', $DATA->DATA->ADDR_206A));
             }
             $DATA = $this->makeRequest('EXT+ADRD+2070+1');
             if ($DATA) {
-                $this->updateCmd('IHeuresChauffe', str_replace(':', '.', $DATA->DATA->ADDR_2070));
+                $this->checkAndUpdateCmd('IHeuresChauffe', str_replace(':', '.', $DATA->DATA->ADDR_2070));
             }
             $DATA = $this->makeRequest('EXT+ADRD+207A+1');
             if ($DATA) {
-                $this->updateCmd('IHeuresSurChauffe', str_replace(':', '.', $DATA->DATA->ADDR_207A));
+                $this->checkAndUpdateCmd('IHeuresSurChauffe', str_replace(':', '.', $DATA->DATA->ADDR_207A));
             }
             $DATA = $this->makeRequest('EXT+ADRD+2076+1');
             if ($DATA) {
-                $this->updateCmd('IHeuresDepuisEntretien', str_replace(':', '.', $DATA->DATA->ADDR_2076));
+                $this->checkAndUpdateCmd('IHeuresDepuisEntretien', str_replace(':', '.', $DATA->DATA->ADDR_2076));
             }
         }
 
@@ -602,16 +610,16 @@ class Palazzetti extends eqLogic
         $DATA = $this->makeRequest('GET+ALLS');
         if ($DATA) {
             // mise à jour force du feu
-            $this->updateCmd('IPower', $DATA->DATA->PWR);
-            $this->updateCmd('IConsigne', $DATA->DATA->SETP);
-            $this->updateCmd('IFan', $DATA->DATA->F2L);
-            $this->updateCmd('IFanF3L', $DATA->DATA->F3L);
-            $this->updateCmd('IFanF4L', $DATA->DATA->F4L);
-            $this->updateCmd('ITemp', round($DATA->DATA->T1, 2));
-            $this->updateCmd('ITemp2', round($DATA->DATA->T2, 2));
-            $this->updateCmd('ITemp3', round($DATA->DATA->T3, 2));
-            $this->updateCmd('IStatus', $DATA->DATA->STATUS);
-            $this->updateCmd('ISnap', json_encode($DATA));
+            $this->checkAndUpdateCmd('IPower', $DATA->DATA->PWR);
+            $this->checkAndUpdateCmd('IConsigne', $DATA->DATA->SETP);
+            $this->checkAndUpdateCmd('IFan', $DATA->DATA->F2L);
+            $this->checkAndUpdateCmd('IFanF3L', $DATA->DATA->F3L);
+            $this->checkAndUpdateCmd('IFanF4L', $DATA->DATA->F4L);
+            $this->checkAndUpdateCmd('ITemp', round($DATA->DATA->T1, 2));
+            $this->checkAndUpdateCmd('ITemp2', round($DATA->DATA->T2, 2));
+            $this->checkAndUpdateCmd('ITemp3', round($DATA->DATA->T3, 2));
+            $this->checkAndUpdateCmd('IStatus', $DATA->DATA->STATUS);
+            $this->checkAndUpdateCmd('ISnap', json_encode($DATA));
         }
     }
 
