@@ -60,13 +60,6 @@ class Palazzetti extends eqLogic
         log::add(__CLASS__, 'debug', __('Fin', __FILE__) . ' : ' . __FUNCTION__);
     }
 
-    public function preSave()
-    {
-        log::add(__CLASS__, 'debug', __('Début', __FILE__) . ' : ' . __FUNCTION__);
-        //$this->createCmd();
-        log::add(__CLASS__, 'debug', __('Fin', __FILE__) . ' : ' . __FUNCTION__);
-    }
-
     public function postSave()
     {
         log::add(__CLASS__, 'debug', __('Début', __FILE__) . ' : ' . __FUNCTION__);
@@ -133,14 +126,14 @@ class Palazzetti extends eqLogic
     }
 
     // methode requete
-    public function makeRequest($cmd)
+    public function makeRequest($cmd, $_timeout = 4)
     {
         $url = 'http://' . $this->getConfiguration('addressip') . '/cgi-bin/sendmsg.lua?cmd=' . $cmd;
         log::add(__CLASS__, 'debug', __FUNCTION__ . ' - ' . 'get URL ' . $url);
 
         try {
             $request_http = new com_http($url);
-            $return = $request_http->exec(4, 1);
+            $return = $request_http->exec($_timeout, 1);
         } catch (Exception $e) {
             if ($e->getCode() == 404) {
                 log::add(__CLASS__, 'debug', __FUNCTION__.' - '. $e->getCode() . ' erreur connexion : ' . $e->getMessage());
@@ -151,7 +144,7 @@ class Palazzetti extends eqLogic
         }
 
         $return = json_decode($return);
-        if ($return->INFO->RSP != 'OK') {
+        if ($return->INFO->RSP != 'OK' && !$return->PARM &&  !$return->HPAR ) {
             log::add(__CLASS__, 'debug', __FUNCTION__.' - '. ' erreur résultat : ' . $cmd);
             return false;
         } else {
@@ -298,12 +291,25 @@ class Palazzetti extends eqLogic
             case 'CMD+ON':
             case 'CMD+OFF':
             case 'GET+STAT':
-                $value = $this->getStoveState($DATA->Status->STATUS);
+                $value = $DATA->DATA->STATUS; //"DATA":{"STATUS":0,"LSTATUS":0}}
                 break;
                 // nom poele
+           case 'GET+ALLS':
+                // mise à jour force du feu
+                $this->checkAndUpdateCmd('IPower', $DATA->DATA->PWR);
+                $this->checkAndUpdateCmd('IConsigne', $DATA->DATA->SETP);
+                $this->checkAndUpdateCmd('IFan', $DATA->DATA->F2L);
+                $this->checkAndUpdateCmd('IFanF3L', $DATA->DATA->F3L);
+                $this->checkAndUpdateCmd('IFanF4L', $DATA->DATA->F4L);
+                $this->checkAndUpdateCmd('ITemp', round($DATA->DATA->T1, 2));
+                $this->checkAndUpdateCmd('ITemp2', round($DATA->DATA->T2, 2));
+                $this->checkAndUpdateCmd('ITemp3', round($DATA->DATA->T3, 2));
+                $this->checkAndUpdateCmd('IStatus', $DATA->DATA->STATUS);
+                $this->checkAndUpdateCmd('ISnap', json_encode($DATA));
+                break;
             case 'GET+LABL':
             case 'SET+LABL':
-                $value = $DATA->StoveData->LABEL;
+                $value = $DATA->DATA->LABEL;
                 break;
                 // force du feu
             case 'SET+POWR':
@@ -312,11 +318,11 @@ class Palazzetti extends eqLogic
                 // température de consigne
             case 'GET+SETP':
             case 'SET+SETP':
-                $value = $DATA->DATA->SETP;
+                $value = $DATA->DATA->SETP; //"DATA":{"SETP":22}}
                 break;
                 // force du ventilateur
             case 'GET+FAND':
-                $value = $this->getFanState($DATA->Fans->FAN_FAN2LEVEL);
+                $value = $this->getFanState($DATA->DATA->F2L); //"DATA":{"F1V":0,"F2V":0,"F1RPM":0,"F2L":0,"F2LF":0}}
                 break;
             case 'SET+RFAN':
                 $value = $this->getFanState($DATA->DATA->F2L);
@@ -331,12 +337,23 @@ class Palazzetti extends eqLogic
                 break;
                 // température ambiance
             case 'GET+TMPS':
-                $value = $DATA->DATA->T1;
+                $value = $DATA->DATA->T1; //"DATA":{"T1":16.79999924,"T2":17.89999962,"T3":18,"T4":0,"T5":0}}
+                $this->checkAndUpdateCmd('ITemp2', $DATA->DATA->T2);
+                $this->checkAndUpdateCmd('ITemp3', $DATA->DATA->T3);
                 break;
                 // programmes horaires
             case 'GET+CHRD':
                 $value = json_encode($DATA->DATA);
                 break;
+            case 'GET+CNTR':
+                   //"DATA":{"IGN":263,"POWERTIME":"7280:48","HEATTIME":"1144:20","SERVICETIME":"1144:20","ONTIME":"0:00","OVERTMPERRORS":0,"IGNERRORS":0,"PQT":2371}}%    
+                $this->checkAndUpdateCmd('INbAllumage', $DATA->DATA->IGN);
+                $this->checkAndUpdateCmd('INbAllumageFailed', $DATA->DATA->IGNERRORS);
+                $this->checkAndUpdateCmd('IHeuresAlimElec', str_replace(':', '.', $DATA->DATA->POWERTIME));
+                $this->checkAndUpdateCmd('IHeuresChauffe', str_replace(':', '.', $DATA->DATA->HEATTIME));
+                $this->checkAndUpdateCmd('IHeuresSurChauffe', str_replace(':', '.', $DATA->DATA->OVERTMPERRORS));
+                $this->checkAndUpdateCmd('IHeuresDepuisEntretien', str_replace(':', '.', $DATA->DATA->SERVICETIME));
+                $this->checkAndUpdateCmd('IQuantite', $DATA->DATA->PQT);
                 // programmes horaires
             case 'SET+CSST':
                 break;
@@ -638,9 +655,7 @@ class PalazzettiCmd extends cmd
     /*     * *************************Attributs******************************
     public static $_widgetPossibility = array('custom' => false);
 
-/*     * *********************Methode d'instance************************* */
-
-
+    /*     * *********************Methode d'instance************************* */
 
     public function execute($_options = null)
     {
@@ -651,7 +666,8 @@ class PalazzettiCmd extends cmd
         if ($this->getLogicalId('') == 'refresh') {
             $eqLogic->getInformations();
         } else {
-            $eqLogic->sendCommand($this, $_options);
+            $return = $eqLogic->sendCommand($this, $_options);
+            log::add('Palazzetti', 'debug', '(' . __LINE__ . ') ' . __FUNCTION__ . ' - ' . 'resultat ' . $return);
         }
     }
 }

@@ -45,9 +45,23 @@ $eqLogics = eqLogic::byType($plugin->getId());
 			</span>
 		</div>
 		<ul class="nav nav-tabs" role="tablist">
-			<li role="presentation"><a href="#" class="eqLogicAction" aria-controls="home" role="tab" data-toggle="tab" data-action="returnToThumbnailDisplay"><i class="fas fa-arrow-circle-left"></i></a></li>
-			<li role="presentation" class="active"><a href="#eqlogictab" aria-controls="home" role="tab" data-toggle="tab"><i class="fas fa-tachometer-alt"></i> {{Equipement}}</a></li>
-			<li role="presentation"><a href="#commandtab" aria-controls="profile" role="tab" data-toggle="tab"><i class="fas fa-list-alt"></i> {{Commandes}}</a></li>
+			<li role="presentation">
+                <a href="#" class="eqLogicAction" aria-controls="home" role="tab" data-toggle="tab" data-action="returnToThumbnailDisplay">
+                    <i class="fas fa-arrow-circle-left"></i>
+                </a>
+            </li>
+			<li role="presentation" class="active">
+                <a href="#eqlogictab" aria-controls="home" role="tab" data-toggle="tab">
+                    <i class="fas fa-tachometer-alt"></i>
+                        {{Equipement}}
+                </a>
+            </li>
+			<li role="presentation">
+                <a href="#commandtab" aria-controls="profile" role="tab" data-toggle="tab" aria-expanded="false">
+                    <i class="fas fa-list-alt"></i>
+                        {{Commandes}}
+                </a>
+            </li>
 		</ul>
 		<div class="tab-content" style="height:calc(100% - 50px);overflow:auto;overflow-x: hidden;">
 			<div role="tabpanel" class="tab-pane active" id="eqlogictab">
@@ -112,24 +126,31 @@ $eqLogics = eqLogic::byType($plugin->getId());
                             <input type="checkbox" class="eqLogicAttr form-control" id="widgetTemplate" data-l1key="configuration" data-l2key="widgetTemplate" />
                           </div>
                         </div>
+                        <div class="form-group" id="buttonParam" style="display:none">
+                            <label class="col-sm-3 control-label"></label>
+                            <span class="input-group">
+                                <a class="btn btn-info btn-sm cmdAction roundedLeft" data-action="parametres" style="margin-top:5px;"><i class="fas fa-plus-circle"></i> {{Paramètres du poêle}}</a>
+                                <a class="btn btn-info btn-sm cmdAction roundedRight" data-action="hiddenParametres" style="margin-top:5px;"><i class="fas fa-plus-circle"></i> {{Paramètres cachés du poêle}}</a>
+                            </span>
+                        </div>
 					</fieldset>
 				</form>
 			</div>
 			<div role="tabpanel" class="tab-pane" id="commandtab">
+				<a class="btn btn-success btn-sm cmdAction pull-right" data-action="add" style="margin-top:5px;"><i class="fas fa-plus-circle"></i> {{Ajouter une commande}}</a>
 				<table id="table_cmd" class="table table-bordered table-condensed">
 					<thead>
 						<tr>
 							<th>{{Nom}}</th>
 							<th>{{Type}}</th>
 							<th>{{Commande}}</th>
-							<th>{{Parametres}}</th>
+							<th>{{Paramètres}}</th>
 							<th>{{Action}}</th>
 						</tr>
 					</thead>
 					<tbody>
 					</tbody>
 				</table>
-				<a class="btn btn-success btn-sm cmdAction pull-right" data-action="add" style="margin-top:5px;"><i class="fas fa-plus-circle"></i> {{Ajouter une commande}}</a><br /><br />
 			</div>
 		</div>
 	</div>

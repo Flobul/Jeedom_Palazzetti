@@ -103,8 +103,8 @@
   "logicalId": "IName",
   "type": "info",
   "subType": "string",
-  "isVisible": 1,
-  "isHistorized": 0
+  "isHistorized": 0,
+  "isVisible": 1
 }, {
   "name": "Ecrire nom",
   "configuration": {
@@ -416,6 +416,18 @@
     "nparams": 0
   },
   "logicalId": "RNbAllumageFailed",
+  "type": "action",
+  "subType": "other",
+  "isHistorized": 0,
+  "isVisible": 0
+}, {
+  "name": "Lecture de tous les compteurs",
+  "configuration": {
+    "actionCmd": "GET+CNTR",
+    "updateLogicalId": "",
+    "nparams": 0
+  },
+  "logicalId": "RAllCounters",
   "type": "action",
   "subType": "other",
   "isHistorized": 0,

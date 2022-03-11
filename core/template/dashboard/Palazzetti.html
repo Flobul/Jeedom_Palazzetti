@@ -6,7 +6,7 @@
 		</strong>
 	</center>
 	<div class="classActionPage#id#" id="idActions#id#">
-		<i class="fas fa-info-circle pull-right classTitreIcon#uid# classPage#id# cursor" title="Vers la page informations générales"></i>
+		<i class="fas fa-info-circle pull-right classTitreIcon#uid# classPage#id# cursor" title="Vers la page informations générales"></i>	
         <div class="classActions#id#">
 				<div type="button" class="classBtnOnOff#id#" id="idBtnOnOff#id#"></div>
 				<div class="status#id#"></div><br/>
@@ -64,59 +64,59 @@
                 </tr>
 	            <tr style="display:#consigne_display#">
                     <td>Température de consigne</td>
-                    <td><span class="cmd cursor history" data-cmd_id="#consigne_id#"></span></td>
+                    <td><span class="cmd cursor history" data-cmd_id="#consigne_id#"></span></td> 
                 </tr>
 	            <tr style="display:#temperature_display#">
                     <td>Température ambiante</td>
-                    <td><span class="cmd cursor history" data-cmd_id="#temperature_id#"></span></td>
+                    <td><span class="cmd cursor history" data-cmd_id="#temperature_id#"></span></td> 
                 </tr>
 	            <tr style="display:#temperature2_display#">
                     <td>Température granulés</td>
-                    <td><span class="cmd cursor history" data-cmd_id="#temperature2_id#"></span></td>
+                    <td><span class="cmd cursor history" data-cmd_id="#temperature2_id#"></span></td> 
                 </tr>
 	            <tr style="display:#temperature3_display#">
                     <td>Température combustion</td>
-                    <td><span class="cmd cursor history" data-cmd_id="#temperature2_id#"></span></td>
+                    <td><span class="cmd cursor history" data-cmd_id="#temperature3_id#"></span></td> 
                 </tr>
 	            <tr style="display:#fan_display#">
                     <td>Force ventilateur</td>
-                    <td><span class="cmd cursor history" data-cmd_id="#fan_id#"></span></td>
+                    <td><span class="cmd cursor history" data-cmd_id="#fan_id#"></span></td> 
                 </tr>
 	            <tr style="display:#power_display#">
                     <td>Force du feu</td>
-                    <td><span class="cmd cursor history" data-cmd_id="#power_id#"></span></td>
+                    <td><span class="cmd cursor history" data-cmd_id="#power_id#"></span></td> 
                 </tr>
 	            <tr style="display:#status_display#">
                     <td>État du poêle</td>
-                    <td><span class="cmd" data-cmd_id="#status_id#"></span></td>
+                    <td><span class="cmd" data-cmd_id="#status_id#"></span></td> 
                 </tr>
 	            <tr style="display:#nbAll_display#">
                     <td>Nombre d'allumages</td>
-                    <td><span class="cmd cursor history" data-cmd_id="#nbAll_id#"></span></td>
+                    <td><span class="cmd cursor history" data-cmd_id="#nbAll_id#"></span></td> 
                 </tr>
 	            <tr style="display:#hae_display#">
                     <td>Nombre d'heures alimentation électrique</td>
-                    <td><span class="cmd cursor history" data-cmd_id="#hae_id#"></span></td>
+                    <td><span class="cmd cursor history" data-cmd_id="#hae_id#"></span></td> 
                 </tr>
 	            <tr style="display:#hc_display#">
                     <td>Nombre d'heures de chauffe</td>
-                    <td><span class="cmd cursor history" data-cmd_id="#hc_id#"></span></td>
+                    <td><span class="cmd cursor history" data-cmd_id="#hc_id#"></span></td> 
                 </tr>
 	            <tr style="display:#hsc_display#">
                     <td>Nombre d'heures de surchauffe</td>
-                    <td><span class="cmd cursor history" data-cmd_id="#hsc_id#"></span></td>
+                    <td><span class="cmd cursor history" data-cmd_id="#hsc_id#"></span></td> 
                 </tr>
 	            <tr style="display:#hde_display#">
                     <td>Nombre d'heures depuis entretien</td>
-                    <td><span class="cmd cursor history" data-cmd_id="#hde_id#"></span></td>
+                    <td><span class="cmd cursor history" data-cmd_id="#hde_id#"></span></td> 
                 </tr>
 	            <tr style="display:#hae_display#">
                     <td>Nombre d'allumages échoués</td>
-                    <td><span class="cmd cursor history" data-cmd_id="#hae_id#"></span></td>
+                    <td><span class="cmd cursor history" data-cmd_id="#hae_id#"></span></td> 
                 </tr>
 	            <tr style="display:#pqt_display#">
                     <td>Quantité de pellets consommé</td>
-                    <td><span class="cmd cursor history" data-cmd_id="#pqt_id#"></span></td>
+                    <td><span class="cmd cursor history" data-cmd_id="#pqt_id#"></span></td> 
                 </tr>
 	            <tr>
                     <td colspan="2" style="background-color:#444">Connection box</td>
@@ -230,7 +230,7 @@
         </table>
 	</div>
 	<style>
-
+      
         .classTitreIcon#uid# {
             position: absolute;
             right: 0;
@@ -242,11 +242,11 @@
 			text-transform:uppercase;
 			font-family:roboto;
 		}
-
+      
         .classActions#id# {
             text-align:center;
             width: 100%;
-            position: absolute;
+            position: absolute;  
         }
 
 		.status#id#
@@ -335,13 +335,13 @@
             font-size: 18px;
             font-weight: 100;
         }
-
+      
 	</style>
-	<script>
-
+	<script>		
+      
         var dayNames#id# = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
         var statusCode#id# = {0:'Eteint',1:'Arrêté',2:'Vérification',3:'Chargement granulés',4:'Allumage',5:'Contrôle combustion',6:'En chauffe',9:'Diffusion',10:'Extinction',11:'Nettoyage',12:'Refroidissement',241:'Erreur Nettoyage',243:'Erreur Grille',244:'NTC2 ALARM',245:'NTC3 ALARM',247:'Erreur Porte',248:'Erreur Dépression',249:'NTC1 ALARM',250:'TC1 ALARM',252:'Erreur évacuation Fumée',253:'Pas de pellets'};
-
+      
         // Afficher la page Actions et cacher la page Infos
         $('#idInfos#id#').hide();
         $('#idActions#id#').show();
@@ -364,15 +364,15 @@
 
         jeedom.cmd.update['#status_id#'] = function(_options) {
 		    if (['0',0].includes(_options.display_value)) {
-		        $('#idBtnOnOff#id#').addClass('successColor#id#').removeClass('dangerColor#id#').text('Démarrer');
+		        $('#idBtnOnOff#id#').addClass('successColor#id#').removeClass('dangerColor#id#').text('Démarrer'); 
             } else {
-			    $('#idBtnOnOff#id#').addClass('dangerColor#id#').removeClass('successColor#id#').text('Arrêter');
+			    $('#idBtnOnOff#id#').addClass('dangerColor#id#').removeClass('successColor#id#').text('Arrêter'); 
             }
             $('.status#id#').html(statusCode#id#[_options.display_value]);
             $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#status_id#]').html(statusCode#id#[_options.display_value]);
         }
 		jeedom.cmd.update['#status_id#']({display_value: '#status#'});
-
+		
 		$('#idBtnOnOff#id#').on('click', function(){
 			if($('#idBtnOnOff#id#').text() == "Arrêter") {
 				jeedom.cmd.execute({id: '#off_id#'});
@@ -401,7 +401,7 @@
             $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#temperature3_id#]').html(_options.display_value + ' <sup>#temperature3_unite#</sup>');
         }
 		jeedom.cmd.update['#temperature3_id#']({display_value: '#temperature3#', valueDate: '#temperature3_valueDate#', collectDate: '#temperature3_collectDate#'});
-
+      
         jeedom.cmd.update['#consigne_id#'] = function(_options) {
             $('#idTempConsigne#id#').html(_options.display_value + ' <sup>#consigne_unite#</sup>');
             $('#idTempConsigne#id#').attr('title', 'Date de collecte : '+_options.collectDate+'<br/>Date de valeur : '+_options.valueDate);
@@ -438,12 +438,12 @@
 
         jeedom.cmd.update['#power_id#'] = function(_options) {
             $('#idPower#id#').html(_options.display_value);
+    		$('#idPowerPlus#id#').removeClass('disabled');
+            $('#idPowerMoins#id#').removeClass('disabled');
             if (parseInt(_options.display_value) == 5) {
 				$('#idPowerPlus#id#').addClass('disabled');
             } else if (parseInt(_options.display_value) == 1) {
              	$('#idPowerMoins#id#').addClass('disabled');
-            } else {
-				$('#idPowerPlus#id#').removeClass('disabled');
             }
             $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#power_id#]').html(_options.display_value);
         }
@@ -475,7 +475,7 @@
             jeedom.cmd.execute({id:'#powerSet_id#', value: {slider: $('#idPower#id#').value()}})
           }, 1000)
         })
-
+		
         jeedom.cmd.update['#fan_id#'] = function(_options) {
 		    $('#idVentilationMoins#id#').removeClass('disabled');
             $('#idVentilationPlus#id#').removeClass('disabled');
@@ -570,7 +570,7 @@
             try {
                 network = JSON.parse(_options.display_value);
             } catch (e) {
-            }
+            }   
             $('.cmd[data-cmd_id=#network_id#][data-network="plzbridge"]').html(network.plzbridge);
             $('.cmd[data-cmd_id=#network_id#][data-network="sendmsg"]').html(network.sendmsg);
             $('.cmd[data-cmd_id=#network_id#][data-network="SYSTEM"]').html(network.SYSTEM);
@@ -615,7 +615,7 @@
 		$('.eqLogic[data-eqLogic_id=#id#] .calendar').on('click', function () {
 			$('#md_modal').dialog({title: "Planning horaires"});
 				$('#md_modal').load('index.php?v=d&plugin=Palazzetti&modal=planning&id=#id#').dialog('open');
-		});
+		});	
 
 		/* refresh */
 		$('.eqLogic[data-eqLogic_id=#id#] .refresh').on('click', function () {
