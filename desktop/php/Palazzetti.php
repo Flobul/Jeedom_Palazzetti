@@ -101,8 +101,8 @@ $eqLogics = eqLogic::byType($plugin->getId());
 							</div>
 						</div>
 						<div class="form-group">
-							<label class="col-sm-3 control-label"></label>
-							<div class="col-sm-9">
+							<label class="col-sm-3 control-label">{{Options}}</label>
+							<div class="col-sm-6">
 								<label class="checkbox-inline"><input type="checkbox" class="eqLogicAttr" data-l1key="isEnable" checked />{{Activer}}</label>
 								<label class="checkbox-inline"><input type="checkbox" class="eqLogicAttr" data-l1key="isVisible" checked />{{Visible}}</label>
 							</div>
@@ -114,8 +114,8 @@ $eqLogics = eqLogic::byType($plugin->getId());
 							</div>
 						</div>
                         <div class="form-group">
-                            <label class="col-sm-3 control-label"></label>
-                            <div class="col-sm-9">
+                            <label class="col-sm-3 control-label">{{Particularité}}</label>
+                            <div class="col-sm-6">
                                 <label class="checkbox-inline"><input id="deamoncheck" type="checkbox" class="eqLogicAttr" data-l1key="configuration" data-l2key="Cbox" />{{Poêle BEATRICE}}</label>
                             </div>
                         </div>
@@ -127,7 +127,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
                           </div>
                         </div>
                         <div class="form-group" id="buttonParam" style="display:none">
-                            <label class="col-sm-3 control-label"></label>
+                            <label class="col-sm-3 control-label">{{Accès aux pages de paramètres}}</label>
                             <span class="input-group">
                                 <a class="btn btn-info btn-sm cmdAction roundedLeft" data-action="parametres" style="margin-top:5px;"><i class="fas fa-plus-circle"></i> {{Paramètres du poêle}}</a>
                                 <a class="btn btn-info btn-sm cmdAction roundedRight" data-action="hiddenParametres" style="margin-top:5px;"><i class="fas fa-plus-circle"></i> {{Paramètres cachés du poêle}}</a>
@@ -141,10 +141,12 @@ $eqLogics = eqLogic::byType($plugin->getId());
 				<table id="table_cmd" class="table table-bordered table-condensed">
 					<thead>
 						<tr>
+							<th>{{ID}}</th>
 							<th>{{Nom}}</th>
 							<th>{{Type}}</th>
 							<th>{{Commande}}</th>
 							<th>{{Paramètres}}</th>
+							<th style="width:200px;">{{État}}</th>
 							<th>{{Action}}</th>
 						</tr>
 					</thead>
