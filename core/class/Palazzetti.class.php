@@ -6,7 +6,7 @@ require_once dirname(__FILE__) . '/../../../../core/php/core.inc.php';
 
 class Palazzetti extends eqLogic
 {
-    public static function cron()
+    public static $_pluginVersion = '1.01';
     public static function pull()
     {
         log::add(__CLASS__, 'debug', __FUNCTION__ . ' : ' . __('Démarrage du cron', __FILE__));
@@ -350,7 +350,7 @@ class Palazzetti extends eqLogic
                 $value = json_encode($DATA->DATA);
                 break;
             case 'GET+CNTR':
-                   //"DATA":{"IGN":263,"POWERTIME":"7280:48","HEATTIME":"1144:20","SERVICETIME":"1144:20","ONTIME":"0:00","OVERTMPERRORS":0,"IGNERRORS":0,"PQT":2371}}%    
+                   //"DATA":{"IGN":263,"POWERTIME":"7280:48","HEATTIME":"1144:20","SERVICETIME":"1144:20","ONTIME":"0:00","OVERTMPERRORS":0,"IGNERRORS":0,"PQT":2371}}%
                 $this->checkAndUpdateCmd('INbAllumage', $DATA->DATA->IGN);
                 $this->checkAndUpdateCmd('INbAllumageFailed', $DATA->DATA->IGNERRORS);
                 $this->checkAndUpdateCmd('IHeuresAlimElec', str_replace(':', '.', $DATA->DATA->POWERTIME));
