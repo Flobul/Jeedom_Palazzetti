@@ -7,35 +7,39 @@ require_once dirname(__FILE__) . '/../../../../core/php/core.inc.php';
 class Palazzetti extends eqLogic
 {
     public static function cron()
+    public static function pull()
     {
-        $autorefresh = config::byKey('autorefresh', 'Palazzetti');
+        log::add(__CLASS__, 'debug', __FUNCTION__ . ' : ' . __('Démarrage du cron', __FILE__));
+        $autorefresh = config::byKey('autorefresh', 'Palazzetti', '');
+        $eqLogics = eqLogic::byType('Palazzetti');
         if ($autorefresh != '') {
             try {
-                $cron = new Cron\CronExpression(checkAndFixCron($autorefresh), new Cron\FieldFactory());
-                if ($cron->isDue()) {
-                    log::add(__CLASS__, 'debug', __("Démarrage du cron ", __FILE__). $autorefresh);
-                    foreach (eqLogic::byType('Palazzetti') as $Palazzetti) {
-                        /** seulement si activé **/
-                        if ($Palazzetti->getIsEnable()) {
-                            try {
-                                $Palazzetti->getInformations();
-                            } catch (Exception $exc) {
+                $c = new Cron\CronExpression($autorefresh, new Cron\FieldFactory());
+                if ($c->isDue()) {
+                    try {
+                        foreach ($eqLogics as $eqLogic) {
+                            if ($eqLogic->getIsEnable()) {
+                                try {
+                                    $eqLogic->getInformations();
+                                } catch (Exception $exc) {
+                                }
                             }
                         }
+                    } catch (Exception $exc) {
+                        log::add(__CLASS__, 'error', __('Erreur : ', __FILE__) . $exc->getMessage());
                     }
-                    log::add(__CLASS__, 'debug', __("Fin d'exécution du cron ", __FILE__). $autorefresh);
                 }
             } catch (Exception $exc) {
-                log::add(__CLASS__, 'error', __("Erreur lors de l'exécution du cron ", __FILE__) . $exc->getMessage());
+                log::add(__CLASS__, 'error', __('Expression cron non valide : ', __FILE__) . $autorefresh);
             }
         }
-        log::add(__CLASS__, 'debug', __FUNCTION__ . __(' : fin', __FILE__));
+        log::add(__CLASS__, 'debug', __FUNCTION__ . ' : ' . __('fin', __FILE__));
     }
 
     // avant création équipement
     public function postInsert()
     {
-        config::save("*/15 * * * *", 'autorefresh', 'Palazzetti');
+        config::save("*/5 * * * *", 'autorefresh', 'Palazzetti');
     }
 
     public function preUpdate()
