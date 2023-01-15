@@ -237,8 +237,7 @@
             z-index: 4;
         }
 
-		.classActionPage#id#
-		{
+		.classActionPage#id# {
 			text-transform:uppercase;
 			font-family:roboto;
 		}
@@ -249,26 +248,22 @@
             position: absolute;
         }
 
-		.status#id#
-		{
+		.status#id# {
 			text-align:center
 		}
 
-		.classGroupTemp#id#
-		{
+		.classGroupTemp#id# {
             width:100px;
 			font-size:12px;
             display:inline-block;
 		}
 
-		.classGroupConsigne#id#
-		{
+		.classGroupConsigne#id# {
 			padding-top:20px;
 			clear:both;
 		}
 
-		.classConsigneTitle#id#
-		{
+		.classConsigneTitle#id# {
 			font-family:roboto;
 			text-align:center;
 			font-size:18px;
@@ -277,14 +272,12 @@
 			clear:both;
 		}
 
-		.classConsigneAction#id#
-		{
+		.classConsigneAction#id# {
 			display:flex;
 			margin:10px;
 		}
 
-		.classConsigneCmd#id#
-		{
+		.classConsigneCmd#id# {
 			font-family: 'Roboto';
 			text-align:center;
 			margin:auto;
@@ -292,11 +285,14 @@
 			font-weight:bold;
 		}
 
-		.btnConsigne#id#
-		{
+		.btnConsigne#id# {
 			margin:auto;
-			font-size:24px;
+			font-size:28px;
 			font-weight:bold;
+		}
+
+		.btnConsigne#id#:hover {
+			opacity:.65;
 		}
 
         .successColor#id# {
@@ -336,7 +332,7 @@
             font-weight: 100;
         }
 
-        .classActions#id# {
+        [data-theme="core2019_Dark"] .classActions#id# {
            color: var(--sc-lightTxt-color) !important;
         }
 
@@ -379,6 +375,7 @@
         }]);
 
         jeedom.cmd.addUpdateFunction('#status_id#', function(_options) {
+          console.log(_options)
 		    if (['0',0].includes(_options.display_value)) {
 		        $('#idBtnOnOff#id#').addClass('successColor#id#').removeClass('dangerColor#id#').text('Démarrer');
             } else {

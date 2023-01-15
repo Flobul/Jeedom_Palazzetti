@@ -254,7 +254,7 @@ function getParamValue(_id) {
         success: function (data) {
             $('.paramAction[data-action=refresh]').removeClass('btn-warning').addClass('btn-success').removeClass('disabled');
             $('.paramAction[data-action=refresh]').html('<i class="fas fa-sync"></i> {{Rafraîchir les paramètres}}');
-            if (data.state == 'error' || data.result.PARM.length == 0) {
+            if (data.state == 'error' || !data.result.PARM || data.result.PARM.length == 0) {
 			    $.fn.showAlert({message: 'Code: ' + data.code + ' - Result: ' + data.result, level: 'danger'});
                 return;
             }

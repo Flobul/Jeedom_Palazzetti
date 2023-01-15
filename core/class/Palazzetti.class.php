@@ -6,7 +6,8 @@ require_once dirname(__FILE__) . '/../../../../core/php/core.inc.php';
 
 class Palazzetti extends eqLogic
 {
-    public static $_pluginVersion = '1.01';
+    public static $_pluginVersion = '1.02';
+
     public static function pull()
     {
         log::add(__CLASS__, 'debug', __FUNCTION__ . ' : ' . __('Démarrage du cron', __FILE__));
@@ -130,30 +131,35 @@ class Palazzetti extends eqLogic
     }
 
     // methode requete
-    public function makeRequest($cmd, $_timeout = 4)
+    public function makeRequest($cmd, $_timeout = 5)
     {
         $url = 'http://' . $this->getConfiguration('addressip') . '/cgi-bin/sendmsg.lua?cmd=' . $cmd;
         log::add(__CLASS__, 'debug', __FUNCTION__ . ' - ' . 'get URL ' . $url);
 
         try {
             $request_http = new com_http($url);
-            $return = $request_http->exec($_timeout, 1);
+            $return = $request_http->exec($_timeout, 2);
         } catch (Exception $e) {
             if ($e->getCode() == 404) {
                 log::add(__CLASS__, 'debug', __FUNCTION__.' - '. $e->getCode() . ' erreur connexion : ' . $e->getMessage());
-                throw $e;
+                //throw $e;
             }
             log::add(__CLASS__, 'debug', __FUNCTION__.' - '. $e->getCode() . ' probleme connexion : ' . $e->getMessage());
             return false;
         }
 
         $return = json_decode($return);
-        if ($return->INFO->RSP != 'OK' && !$return->PARM &&  !$return->HPAR ) {
-            log::add(__CLASS__, 'debug', __FUNCTION__.' - '. ' erreur résultat : ' . $cmd);
-            return false;
-        } else {
+        if ($return->INFO->RSP && $return->INFO->RSP == 'OK') {
+          // {"INFO":{"CMD":"UNKNOWN","MSG":"No valid request received"},"SUCCESS":false,"DATA":{"NODATA":true}}
             log::add(__CLASS__, 'debug', __FUNCTION__ . ' - ' . 'get result ' . json_encode($return));
             return $return;
+
+        } elseif ($return->PARM || $return->HPAR) {
+            log::add(__CLASS__, 'debug', __FUNCTION__ . ' - ' . 'get result PARM || HPAR ' . json_encode($return));
+            return $return;
+        } else {
+            log::add(__CLASS__, 'debug', __FUNCTION__.' - '. ' erreur résultat : ' . $cmd . ' - valeur : ' . json_encode($return));
+            return false;
         }
     }
 
@@ -275,7 +281,7 @@ class Palazzetti extends eqLogic
             log::add(__CLASS__, 'debug', '(' . __LINE__ . ') ' . __FUNCTION__ . ' - ' . ' commande ' . $cmdString);
             log::add(__CLASS__, 'debug', '(' . __LINE__ . ') ' . __FUNCTION__ . ' - ' . ' commande ' . json_encode($_options));
         }
-        $DATA = $this->makeRequest($cmdString);
+        $DATA = $this->makeRequest($cmdString, 6);
 
         if (!$DATA) {
             return 'ERROR';
@@ -585,13 +591,13 @@ class Palazzetti extends eqLogic
         }
 
         // recuperation des programmes horaires
-        $DATA = $this->makeRequest('GET+CHRD');
+        $DATA = $this->makeRequest('GET+CHRD', 6);
         if ($DATA) {
             $this->checkAndUpdateCmd('IPH', json_encode($DATA->DATA));
         }
-
+sleep(1);
         // recuperation des infos compteurs
-        $DATA = $this->makeRequest('GET+CNTR');
+        $DATA = $this->makeRequest('GET+CNTR', 6);
         if ($DATA) {
             $this->checkAndUpdateCmd('INbAllumage', $DATA->DATA->IGN);
             $this->checkAndUpdateCmd('INbAllumageFailed', $DATA->DATA->IGNERRORS);
@@ -628,7 +634,7 @@ class Palazzetti extends eqLogic
         }
 
         // recuperation de toutes les informations
-        $DATA = $this->makeRequest('GET+ALLS');
+        $DATA = $this->makeRequest('GET+ALLS', 6);
         if ($DATA) {
             // mise à jour force du feu
             $this->checkAndUpdateCmd('IPower', $DATA->DATA->PWR);
@@ -642,6 +648,7 @@ class Palazzetti extends eqLogic
             $this->checkAndUpdateCmd('IStatus', $DATA->DATA->STATUS);
             $this->checkAndUpdateCmd('ISnap', json_encode($DATA));
         }
+        log::add(__CLASS__, 'debug', __('Fin', __FILE__) . ' : ' . __FUNCTION__);
     }
 
     public function updateCmd($_logicalId, $_value)

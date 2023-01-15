@@ -23,7 +23,7 @@ try {
     if (!isConnect('admin')) {
         throw new Exception(__('401 - Accès non autorisé', __FILE__));
     }
-    
+
     ajax::init();
 
 	if (init('action') == 'getParam') {
@@ -38,11 +38,11 @@ try {
                 $result = $eqLogic->makeRequest('GET+PARM+' . init('param_id'),3);
             }
         } else {
-            $result = $eqLogic->makeRequest('BKP+PARM+JSON',5);
+            $result = $eqLogic->makeRequest('BKP+PARM+JSON',10);
         }
         ajax::success($result);
     }
-  
+
 
 	if (init('action') == 'setParam') {
 		$eqLogic = Palazzetti::byId(init('id'));
@@ -56,7 +56,7 @@ try {
         }
         ajax::success($result);
     }
-  
+
 	if (init('action') == 'getHiddenParam') {
 		$eqLogic = Palazzetti::byId(init('id'));
 		if (!is_object($eqLogic)) {
@@ -69,7 +69,7 @@ try {
                 $result = $eqLogic->makeRequest('GET+HPAR+' . init('hidden_param_id'),3);
             }
         } else {
-            $result = $eqLogic->makeRequest('BKP+HPAR+JSON',5);
+            $result = $eqLogic->makeRequest('BKP+HPAR+JSON',10);
         }
         ajax::success($result);
     }
