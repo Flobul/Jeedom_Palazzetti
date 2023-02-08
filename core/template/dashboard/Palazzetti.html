@@ -375,7 +375,6 @@
         }]);
 
         jeedom.cmd.addUpdateFunction('#status_id#', function(_options) {
-          console.log(_options)
 		    if (['0',0].includes(_options.display_value)) {
 		        $('#idBtnOnOff#id#').addClass('successColor#id#').removeClass('dangerColor#id#').text('Démarrer');
             } else {
@@ -554,7 +553,7 @@
             var step = (isNaN(parseFloat('#fan_step#'))) ? 1 : parseFloat('#fan_step#')
             if (parseFloat($('#idVentilation#id#').data('value') ) <= max - step ) {
                 jeedom.cmd.refreshValue([{
-                    cmd_id :'#power_id#',
+                    cmd_id :'#fan_id#',
 		            display_value: parseFloat($('#idVentilation#id#').data('value') ) + step
                 }]);
                 $('#idVentilation#id#').trigger('change');
