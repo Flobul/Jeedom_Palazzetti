@@ -6,7 +6,7 @@ require_once dirname(__FILE__) . '/../../../../core/php/core.inc.php';
 
 class Palazzetti extends eqLogic
 {
-    public static $_pluginVersion = '1.02';
+    public static $_pluginVersion = '1.03';
 
     public static function pull()
     {
@@ -215,50 +215,49 @@ class Palazzetti extends eqLogic
     // interpretation valeur status poele
     public static function getStoveState($num)
     {
-        $lib[0] = 'Eteint';
-        $lib[1] = 'Arrêté';
-        $lib[2] = 'Vérification';
-        $lib[3] = 'Chargement granulés';
-        $lib[4] = 'Allumage';
-        $lib[5] = 'Contrôle combustion';
-        $lib[6] = 'En chauffe';
-        $lib[9] = 'Diffusion';
-        $lib[10] = 'Extinction';
-        $lib[11] = 'Nettoyage';
-        $lib[12] = 'Refroidissement';
-        $lib[241] = 'Erreur Nettoyage';
-        $lib[243] = 'Erreur Grille';
-        $lib[244] = 'NTC2 ALARM';
-        $lib[245] = 'NTC3 ALARM';
-        $lib[247] = 'Erreur Porte';
-        $lib[248] = 'Erreur Dépression';
-        $lib[249] = 'NTC1 ALARM';
-        $lib[250] = 'TC1 ALARM';
-        $lib[252] = 'Erreur évacuation Fumée';
-        $lib[253] = 'Pas de pellets';
-        if (isset($lib[$num])) {
-            return $lib[$num];
-        } else {
-            return $num;
-        }
+        $lib = [
+            0 => __('Eteint', __FILE__),
+            1 => __('Arrêté', __FILE__),
+            2 => __('Vérification', __FILE__),
+            3 => __('Chargement granulés', __FILE__),
+            4 => __('Allumage', __FILE__),
+            5 => __('Contrôle combustion', __FILE__),
+            6 => __('En chauffe', __FILE__),
+            9 => __('Diffusion', __FILE__),
+            10 => __('Extinction', __FILE__),
+            11 => __('Nettoyage', __FILE__),
+            12 => __('Refroidissement', __FILE__),
+            241 => __('Erreur Nettoyage', __FILE__),
+            243 => __('Erreur Grille', __FILE__),
+            244 => __('NTC2 ALARM', __FILE__),
+            245 => __('NTC3 ALARM', __FILE__),
+            247 => __('Erreur Porte', __FILE__),
+            248 => __('Erreur Dépression', __FILE__),
+            249 => __('NTC1 ALARM', __FILE__),
+            250 => __('TC1 ALARM', __FILE__),
+            252 => __('Erreur évacuation Fumées', __FILE__),
+            253 => __('Pas de pellets', __FILE__)
+        ];
+
+        return $lib[$num] ?? $num;
     }
 
     // methode jour de la semaine
     public static function getWeekDay($num)
     {
-        $lib[1] = 'Lundi';
-        $lib[2] = 'Mardi';
-        $lib[3] = 'Mercredi';
-        $lib[4] = 'Jeudi';
-        $lib[5] = 'Vendredi';
-        $lib[6] = 'Samedi';
-        $lib[7] = 'Dimanche';
-        if (isset($lib[$num])) {
-            return $lib[$num];
-        } else {
-            return 'Jour #' . $num;
-        }
+        $lib = [
+            1 => __('Lundi', __FILE__),
+            2 => __('Mardi', __FILE__),
+            3 => __('Mercredi', __FILE__),
+            4 => __('Jeudi', __FILE__),
+            5 => __('Vendredi', __FILE__),
+            6 => __('Samedi', __FILE__),
+            7 => __('Dimanche', __FILE__)
+        ];
+
+        return $lib[$num] ?? __('Jour #', __FILE__) . $num;
     }
+
     // methode traitement commande
     public function sendCommand($CMD, $_options)
     {
@@ -568,6 +567,7 @@ class Palazzetti extends eqLogic
         $replace['#refresh_id#'] = is_object($refresh) ? $refresh->getId() : '';
 
         $html = template_replace($replace, getTemplate('core', $version, 'Palazzetti', 'Palazzetti'));
+        $html = translate::exec($html, 'plugins/Palazzetti/core/template/' . $version . '/Palazzetti.html');
         cache::set('PalazzettiWidget' . $_version . $this->getId(), $html, 0);
         return $html;
     }

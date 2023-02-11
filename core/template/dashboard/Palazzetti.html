@@ -6,16 +6,16 @@
 		</strong>
 	</center>
 	<div class="classActionPage#id#" id="idActions#id#">
-		<i class="fas fa-info-circle pull-right classTitreIcon#uid# classPage#id# cursor" title="Vers la page informations générales"></i>
+		<i class="fas fa-info-circle pull-right classTitreIcon#uid# classPage#id# cursor" title="{{Vers la page informations générales}}"></i>
         <div class="classActions#id#">
 				<div type="button" class="classBtnOnOff#id#" id="idBtnOnOff#id#"></div>
 				<div class="status#id#"></div><br/>
-				<div class="classGroupTemp#id#"><span id="idTempAmbiance#id#" class="cmd history cursor" data-cmd_id="#temperature_id#"></span> <br/> T° ambiante</div>
-				<div class="classGroupTemp#id#"><span id="idTempGranules#id#" class="cmd history cursor" data-cmd_id="#temperature2_id#"></span> <br/> T° granulés</div>
-				<div class="classGroupTemp#id#"><span id="idTempCombustion#id#" class="cmd history cursor" data-cmd_id="#temperature3_id#"></span> <br/> T° combustion</div>
+				<div class="classGroupTemp#id#"><span id="idTempAmbiance#id#" class="cmd history cursor" data-cmd_id="#temperature_id#"></span> <br/> {{T° ambiante}}</div>
+				<div class="classGroupTemp#id#"><span id="idTempGranules#id#" class="cmd history cursor" data-cmd_id="#temperature2_id#"></span> <br/> {{T° granulés}}</div>
+				<div class="classGroupTemp#id#"><span id="idTempCombustion#id#" class="cmd history cursor" data-cmd_id="#temperature3_id#"></span> <br/> {{T° combustion}}</div>
 
 				<div class="classGroupConsigne#id#">
-					<div class="classConsigneTitle#id#"><i class="fas fa-thermometer-half"></i> consigne</div>
+					<div class="classConsigneTitle#id#"><i class="fas fa-thermometer-half"></i> {{consigne}}</div>
 					<div class="classConsigneAction#id#">
 						<span type="button" class="cursor btnConsigne#id#" id="idTempConsigneMoins#id#">-</span>
 						<span class="classConsigneCmd#id# cmd history cursor" id="idTempConsigne#id#" data-cmd_id="#consigne_id#"></span>
@@ -23,7 +23,7 @@
 					</div>
 				</div>
 				<div class="classGroupConsigne#id#">
-					<div class="classConsigneTitle#id#"><i class="fas fa-fire-alt"></i> puissance</div>
+					<div class="classConsigneTitle#id#"><i class="fas fa-fire-alt"></i> {{puissance}}</div>
 					<div class="classConsigneAction#id#">
 						<span type="button" class="cursor btnConsigne#id#" id="idPowerMoins#id#">-</span>
 						<span class="classConsigneCmd#id# cmd history cursor" id="idPower#id#" data-cmd_id="#power_id#"></span>
@@ -31,7 +31,7 @@
 					</div>
 				</div>
 				<div class="classGroupConsigne#id#">
-					<div class="classConsigneTitle#id#"><i class="fas fa-fan"></i> ventilation</div>
+					<div class="classConsigneTitle#id#"><i class="fas fa-fan"></i> {{ventilation}}</div>
 					<div class="classConsigneAction#id#">
 						<span type="button" class="cursor btnConsigne#id#" id="idVentilationMoins#id#">-</span>
 						<span class="classConsigneCmd#id# cmd history cursor" id="idVentilation#id#" data-cmd_id="#fan_id#"></span>
@@ -42,12 +42,12 @@
 		</div>
 	</div>
 	<div id="idInfos#id#" style="display:none">
-		<i class="fas fa-undo classTitreIcon#uid# classPage#id# pull-right cursor" title="Retour à la page principale"></i>
+		<i class="fas fa-undo classTitreIcon#uid# classPage#id# pull-right cursor" title="{{Retour à la page principale}}"></i>
         <table class="table table-condensed" id="idTablePalazzettiInfo#id#">
             <thead>
                 <tr>
-                    <th>Nom</th>
-                    <th>Valeur</th>
+                    <th>{{Nom}}</th>
+                    <th>{{Valeur}}</th>
                 </tr>
             </thead>
             <tbody>
@@ -55,174 +55,174 @@
                     <td colspan="2" style="background-color:#CCC">Poële #name_display#</td>
                 </tr>
                 <tr style="display:#heure_display#">
-                    <td>Heure du poêle</td>
+                    <td>{{Heure du poêle}}</td>
                     <td><span class="cmd" data-cmd_id="#heure_id#" data-time="heure"></span></td>
                 </tr>
                 <tr style="display:#heure_display#">
-                    <td>Jour de la semaine</td>
+                    <td>{{Jour de la semaine}}</td>
                     <td><span class="cmd" data-cmd_id="#heure_id#" data-time="jour"></span></td>
                 </tr>
 	            <tr style="display:#consigne_display#">
-                    <td>Température de consigne</td>
+                    <td>{{Température de consigne}}</td>
                     <td><span class="cmd cursor history" data-cmd_id="#consigne_id#"></span></td>
                 </tr>
 	            <tr style="display:#temperature_display#">
-                    <td>Température ambiante</td>
+                    <td>{{Température ambiante}}</td>
                     <td><span class="cmd cursor history" data-cmd_id="#temperature_id#"></span></td>
                 </tr>
 	            <tr style="display:#temperature2_display#">
-                    <td>Température granulés</td>
+                    <td>{{Température granulés}}</td>
                     <td><span class="cmd cursor history" data-cmd_id="#temperature2_id#"></span></td>
                 </tr>
 	            <tr style="display:#temperature3_display#">
-                    <td>Température combustion</td>
+                    <td>{{Température combustion}}</td>
                     <td><span class="cmd cursor history" data-cmd_id="#temperature3_id#"></span></td>
                 </tr>
 	            <tr style="display:#fan_display#">
-                    <td>Force ventilateur</td>
+                    <td>{{Force ventilateur}}</td>
                     <td><span class="cmd cursor history" data-cmd_id="#fan_id#"></span></td>
                 </tr>
 	            <tr style="display:#power_display#">
-                    <td>Force du feu</td>
+                    <td>{{Force du feu}}</td>
                     <td><span class="cmd cursor history" data-cmd_id="#power_id#"></span></td>
                 </tr>
 	            <tr style="display:#status_display#">
-                    <td>État du poêle</td>
+                    <td>{{État du poêle}}</td>
                     <td><span class="cmd" data-cmd_id="#status_id#"></span></td>
                 </tr>
 	            <tr style="display:#nbAll_display#">
-                    <td>Nombre d'allumages</td>
+                    <td>{{Nombre d'allumages}}</td>
                     <td><span class="cmd cursor history" data-cmd_id="#nbAll_id#"></span></td>
                 </tr>
 	            <tr style="display:#hae_display#">
-                    <td>Nombre d'heures alimentation électrique</td>
+                    <td>{{Nombre d'heures alimentation électrique}}</td>
                     <td><span class="cmd cursor history" data-cmd_id="#hae_id#"></span></td>
                 </tr>
 	            <tr style="display:#hc_display#">
-                    <td>Nombre d'heures de chauffe</td>
+                    <td>{{Nombre d'heures de chauffe}}</td>
                     <td><span class="cmd cursor history" data-cmd_id="#hc_id#"></span></td>
                 </tr>
 	            <tr style="display:#hsc_display#">
-                    <td>Nombre d'heures de surchauffe</td>
+                    <td>{{Nombre d'heures de surchauffe}}</td>
                     <td><span class="cmd cursor history" data-cmd_id="#hsc_id#"></span></td>
                 </tr>
 	            <tr style="display:#hde_display#">
-                    <td>Nombre d'heures depuis entretien</td>
+                    <td>{{Nombre d'heures depuis entretien}}</td>
                     <td><span class="cmd cursor history" data-cmd_id="#hde_id#"></span></td>
                 </tr>
 	            <tr style="display:#hae_display#">
-                    <td>Nombre d'allumages échoués</td>
+                    <td>{{Nombre d'allumages échoués}}</td>
                     <td><span class="cmd cursor history" data-cmd_id="#hae_id#"></span></td>
                 </tr>
 	            <tr style="display:#pqt_display#">
-                    <td>Quantité de pellets consommé</td>
+                    <td>{{Quantité de pellets consommé}}</td>
                     <td><span class="cmd cursor history" data-cmd_id="#pqt_id#"></span></td>
                 </tr>
 	            <tr>
-                    <td colspan="2" style="background-color:#CCC">Connection box</td>
+                    <td colspan="2" style="background-color:#CCC">{{Connection box}}</td>
                 </tr>
                 <div style="display:#network_display#">
                     <tr>
-                        <td>Version plzbridge</td>
+                        <td>{{Version plzbridge}}</td>
                         <td><span class="cmd" data-cmd_id="#network_id#" data-network="plzbridge"></span></td>
                     </tr>
                     <tr>
-                        <td>Version sendmsg</td>
+                        <td>{{Version sendmsg}}</td>
                         <td><span class="cmd" data-cmd_id="#network_id#" data-network="sendmsg"></span></td>
                     </tr>
                     <tr>
-                        <td>Version SYSTEM</td>
+                        <td>{{Version SYSTEM}}</td>
                         <td><span class="cmd" data-cmd_id="#network_id#" data-network="SYSTEM"></span></td>
                     </tr>
                     <tr>
-                        <td>Version firmware</td>
+                        <td>{{Version firmware}}</td>
                         <td><span class="cmd" data-cmd_id="#network_id#" data-network="VER"></span></td>
                     </tr>
                     <tr>
-                        <td>Modèle</td>
+                        <td>{{Modèle}}</td>
                         <td><span class="cmd" data-cmd_id="#network_id#" data-network="MOD"></span></td>
                     </tr>
                     <tr>
-                        <td>Core</td>
+                        <td>{{Core}}</td>
                         <td><span class="cmd" data-cmd_id="#network_id#" data-network="CORE"></span></td>
                     </tr>
                     <tr>
-                        <td>Date firmware</td>
+                        <td>{{Date firmware}}</td>
                         <td><span class="cmd" data-cmd_id="#network_id#" data-network="FWDATE"></span></td>
                     </tr>
                     <tr>
-                        <td colspan="2" style="background-color:#CCC">Local ethernet</td>
+                        <td colspan="2" style="background-color:#CCC">{{Local Ethernet}}</td>
                     </tr>
                     <tr>
-                        <td>Adresse IP</td>
+                        <td>{{Adresse IP}}</td>
                         <td><span class="cmd" data-cmd_id="#network_id#" data-network="EADR"></span></td>
                     </tr>
                     <tr>
-                        <td>Masque sous-réseau</td>
+                        <td>{{Masque sous-réseau}}</td>
                         <td><span class="cmd" data-cmd_id="#network_id#" data-network="EMSK"></span></td>
                     </tr>
                     <tr>
-                        <td>Serveur DNS</td>
+                        <td>{{Serveur DNS}}</td>
                         <td><span class="cmd" data-cmd_id="#network_id#" data-network="DNS"></span></td>
                     </tr>
                     <tr>
-                        <td>Passerelle</td>
+                        <td>{{Passerelle}}</td>
                         <td><span class="cmd" data-cmd_id="#network_id#" data-network="EGW"></span></td>
                     </tr>
                     <tr>
-                        <td>Broadcast</td>
+                        <td>{{Broadcast}}</td>
                         <td><span class="cmd" data-cmd_id="#network_id#" data-network="EBCST"></span></td>
                     </tr>
                     <tr>
-                        <td>Adresse mac</td>
+                        <td>{{Adresse MAC}}</td>
                         <td><span class="cmd" data-cmd_id="#network_id#" data-network="EMAC"></span></td>
                     </tr>
                     <tr>
-                        <td>Mode</td>
+                        <td>{{Mode}}</td>
                         <td><span class="cmd" data-cmd_id="#network_id#" data-network="PR"></span></td>
                     </tr>
 
                     <tr>
-                        <td colspan="2" style="background-color:#CCC">Local wifi</td>
+                        <td colspan="2" style="background-color:#CCC">{{Local Wi-Fi}}</td>
                     </tr>
                     <tr>
-                        <td>Adresse IP</td>
+                        <td>{{Adresse IP}}</td>
                         <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_ADDR"></span></td>
                     </tr>
                     <tr>
-                        <td>Masque sous-réseau</td>
+                        <td>{{Masque sous-réseau}}</td>
                         <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_MASK"></span></td>
                     </tr>
                     <tr>
-                        <td>Passerelle</td>
+                        <td>{{Passerelle}}</td>
                         <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_GW"></span></td>
                     </tr>
                     <tr>
-                        <td>Broadcast</td>
+                        <td>{{Broadcast}}</td>
                         <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_BCAST"></span></td>
                     </tr>
                     <tr>
-                        <td>Adresse mac</td>
+                        <td>{{Adresse MAC}}</td>
                         <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_MAC"></span></td>
                     </tr>
                     <tr>
-                        <td>Mode</td>
+                        <td>{{Mode}}</td>
                         <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_PROTO"></span></td>
                     </tr>
                     <tr>
-                        <td>Mode wifi</td>
+                        <td>{{Mode Wi-Fi}}</td>
                         <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_MODE"></span></td>
                     </tr>
                     <tr>
-                        <td>Canal</td>
+                        <td>{{Canal}}</td>
                         <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_CH"></span></td>
                     </tr>
                     <tr>
-                        <td>SSID</td>
+                        <td>{{SSID}}</td>
                         <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_SSID"></span></td>
                     </tr>
                     <tr>
-                        <td>Type de cryptage</td>
+                        <td>{{Type de cryptage}}</td>
                         <td><span class="cmd" data-cmd_id="#network_id#" data-network="WLAN0_ENC"></span></td>
                     </tr>
                 </div>
@@ -348,8 +348,8 @@
                 jeedom.cmd.update[id] = func;
             }
         }
-        var dayNames#id# = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-        var statusCode#id# = {0:'Eteint',1:'Arrêté',2:'Vérification',3:'Chargement granulés',4:'Allumage',5:'Contrôle combustion',6:'En chauffe',9:'Diffusion',10:'Extinction',11:'Nettoyage',12:'Refroidissement',241:'Erreur Nettoyage',243:'Erreur Grille',244:'NTC2 ALARM',245:'NTC3 ALARM',247:'Erreur Porte',248:'Erreur Dépression',249:'NTC1 ALARM',250:'TC1 ALARM',252:'Erreur évacuation Fumée',253:'Pas de pellets'};
+        var dayNames#id# = ['{{Dimanche}}', '{{Lundi}}', '{{Mardi}}', '{{Mercredi}}', '{{Jeudi}}', '{{Vendredi}}', '{{Samedi}}'];
+        var statusCode#id# = {0:'{{Eteint}}',1:'{{Arrêté}}',2:'{{Vérification}}',3:'{{Chargement granulés}}',4:'{{Allumage}}',5:'{{Contrôle combustion}}',6:'{{En chauffe}}',9:'{{Diffusion}}',10:'{{Extinction}}',11:'{{Nettoyage}}',12:'{{Refroidissement}}',241:'{{Erreur Nettoyage}}',243:'{{Erreur Grille}}',244:'NTC2 ALARM',245:'NTC3 ALARM',247:'{{Erreur Porte}}',248:'{{Erreur Dépression}}',249:'NTC1 ALARM',250:'TC1 ALARM',252:'{{Erreur évacuation Fumées}}',253:'{{Pas de pellets}}'};
 
         // Afficher la page Actions et cacher la page Infos
         $('#idInfos#id#').hide();
@@ -376,9 +376,9 @@
 
         jeedom.cmd.addUpdateFunction('#status_id#', function(_options) {
 		    if (['0',0].includes(_options.display_value)) {
-		        $('#idBtnOnOff#id#').addClass('successColor#id#').removeClass('dangerColor#id#').text('Démarrer');
+		        $('#idBtnOnOff#id#').addClass('successColor#id#').removeClass('dangerColor#id#').text('{{Démarrer}}');
             } else {
-			    $('#idBtnOnOff#id#').addClass('dangerColor#id#').removeClass('successColor#id#').text('Arrêter');
+			    $('#idBtnOnOff#id#').addClass('dangerColor#id#').removeClass('successColor#id#').text('{{Arrêter}}');
             }
             $('.status#id#').html(statusCode#id#[_options.display_value]);
             $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#status_id#]').html(statusCode#id#[_options.display_value]);
@@ -389,17 +389,22 @@
         }]);
 
 		$('#idBtnOnOff#id#').on('click', function(){
-			if($('#idBtnOnOff#id#').text() == "Arrêter") {
+			if($('#idBtnOnOff#id#').text() == "{{Arrêter}}") {
 				jeedom.cmd.execute({id: '#off_id#'});
-			} else if($('#idBtnOnOff#id#').text() == "Démarrer"){
+			} else if($('#idBtnOnOff#id#').text() == "{{Démarrer}}"){
 				jeedom.cmd.execute({id: '#on_id#'});
 			}
 		});
 
         jeedom.cmd.addUpdateFunction('#temperature_id#', function(_options) {
             $('#idTempAmbiance#id#').html(_options.display_value + ' <sup>#temperature_unite#</sup>');
-            $('#idTempAmbiance#id#').attr('title', 'Date de collecte : '+_options.collectDate+'<br/>Date de valeur : '+_options.valueDate);
+            $('#idTempAmbiance#id#').attr('title', '{{Date de collecte}} : '+_options.collectDate+'<br/>{{Date de valeur}} : '+_options.valueDate);
             $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#temperature_id#]').html(_options.display_value + ' <sup>#temperature_unite#</sup>');
+            $('#idTempAmbiance#id#').attr('style', 'color: var(--logo-primary-color) !important');
+            setTimeout(function() {
+                $('#idTempAmbiance#id#').attr('style', 'color: ""');
+                jeedomUtils.initTooltips()
+            }, 1000)
         });
         jeedom.cmd.refreshValue([{
             cmd_id :'#temperature_id#',
@@ -410,8 +415,13 @@
 
         jeedom.cmd.addUpdateFunction('#temperature2_id#', function(_options) {
             $('#idTempGranules#id#').html(_options.display_value + ' <sup>#temperature2_unite#</sup>');
-            $('#idTempGranules#id#').attr('title', 'Date de collecte : '+_options.collectDate+'<br/>Date de valeur : '+_options.valueDate);
+            $('#idTempGranules#id#').attr('title', '{{Date de collecte}} : '+_options.collectDate+'<br/>{{Date de valeur}} : '+_options.valueDate);
             $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#temperature2_id#]').html(_options.display_value + ' <sup>#temperature2_unite#</sup>');
+            $('#idTempGranules#id#').attr('style', 'color: var(--logo-primary-color) !important');
+            setTimeout(function() {
+                $('#idTempGranules#id#').attr('style', 'color: ""');
+                jeedomUtils.initTooltips()
+            }, 1000)
         });
 		jeedom.cmd.refreshValue([{
             cmd_id :'#temperature2_id#',
@@ -422,8 +432,13 @@
 
         jeedom.cmd.addUpdateFunction('#temperature3_id#', function(_options) {
             $('#idTempCombustion#id#').html(_options.display_value + ' <sup>#temperature3_unite#</sup>');
-            $('#idTempCombustion#id#').attr('title', 'Date de collecte : '+_options.collectDate+'<br/>Date de valeur : '+_options.valueDate);
+            $('#idTempCombustion#id#').attr('title', '{{Date de collecte}} : '+_options.collectDate+'<br/>{{Date de valeur}} : '+_options.valueDate);
             $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#temperature3_id#]').html(_options.display_value + ' <sup>#temperature3_unite#</sup>');
+            $('#idTempCombustion#id#').attr('style', 'color: var(--logo-primary-color) !important');
+            setTimeout(function() {
+                $('#idTempCombustion#id#').attr('style', 'color: ""');
+                jeedomUtils.initTooltips()
+            }, 1000)
         });
 		jeedom.cmd.refreshValue([{
             cmd_id :'#temperature3_id#',
@@ -434,7 +449,7 @@
 
         jeedom.cmd.addUpdateFunction('#consigne_id#', function(_options) {
             $('#idTempConsigne#id#').html(_options.display_value + ' <sup>#consigne_unite#</sup>');
-            $('#idTempConsigne#id#').attr('title', 'Date de collecte : '+_options.collectDate+'<br/>Date de valeur : '+_options.valueDate);
+            $('#idTempConsigne#id#').attr('title', '{{Date de collecte}} : '+_options.collectDate+'<br/>{{Date de valeur}} : '+_options.valueDate);
             $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#consigne_id#]').html(_options.display_value + ' <sup>#consigne_unite#</sup>');
         });
 		jeedom.cmd.refreshValue([{
@@ -583,7 +598,7 @@
 
         jeedom.cmd.addUpdateFunction('#nbAll_id#', function(_options) {
             $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#nbAll_id#]').html(_options.display_value + ' #nbAll_unit#');
-            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#nbAll_id#]').attr('title', 'Date de collecte : '+_options.collectDate+'<br/>Date de valeur : '+_options.valueDate);
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#nbAll_id#]').attr('title', '{{Date de collecte}} : '+_options.collectDate+'<br/>{{Date de valeur}} : '+_options.valueDate);
         });
         jeedom.cmd.refreshValue([{
             cmd_id :'#nbAll_id#',
@@ -594,7 +609,7 @@
 
         jeedom.cmd.addUpdateFunction('#hae_id#', function(_options) {
             $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hae_id#]').html(_options.display_value + ' #hae_unit#');
-            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hae_id#]').attr('title', 'Date de collecte : '+_options.collectDate+'<br/>Date de valeur : '+_options.valueDate);
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hae_id#]').attr('title', '{{Date de collecte}} : '+_options.collectDate+'<br/>{{Date de valeur}} : '+_options.valueDate);
         });
         jeedom.cmd.refreshValue([{
             cmd_id :'#hae_id#',
@@ -605,7 +620,7 @@
 
         jeedom.cmd.addUpdateFunction('#hc_id#', function(_options) {
             $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hc_id#]').html(_options.display_value + ' #hc_unit#');
-            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hc_id#]').attr('title', 'Date de collecte : '+_options.collectDate+'<br/>Date de valeur : '+_options.valueDate);
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hc_id#]').attr('title', '{{Date de collecte}} : '+_options.collectDate+'<br/>{{Date de valeur}} : '+_options.valueDate);
         });
         jeedom.cmd.refreshValue([{
             cmd_id :'#hc_id#',
@@ -616,7 +631,7 @@
 
         jeedom.cmd.addUpdateFunction('#hsc_id#', function(_options) {
             $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hsc_id#]').html(_options.display_value + ' #hsc_unit#');
-            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hsc_id#]').attr('title', 'Date de collecte : '+_options.collectDate+'<br/>Date de valeur : '+_options.valueDate);
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hsc_id#]').attr('title', '{{Date de collecte}} : '+_options.collectDate+'<br/>{{Date de valeur}} : '+_options.valueDate);
         });
         jeedom.cmd.refreshValue([{
             cmd_id :'#hsc_id#',
@@ -627,7 +642,7 @@
 
         jeedom.cmd.addUpdateFunction('#hde_id#', function(_options) {
             $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hde_id#]').html(_options.display_value + ' #hde_unit#');
-            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hde_id#]').attr('title', 'Date de collecte : '+_options.collectDate+'<br/>Date de valeur : '+_options.valueDate);
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hde_id#]').attr('title', '{{Date de collecte}} : '+_options.collectDate+'<br/>{{Date de valeur}} : '+_options.valueDate);
         });
         jeedom.cmd.refreshValue([{
             cmd_id :'#hde_id#',
@@ -638,7 +653,7 @@
 
         jeedom.cmd.addUpdateFunction('#hae_id#', function(_options) {
             $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hae_id#]').html(_options.display_value + ' #hae_unit#');
-            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hae_id#]').attr('title', 'Date de collecte : '+_options.collectDate+'<br/>Date de valeur : '+_options.valueDate);
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hae_id#]').attr('title', '{{Date de collecte}} : '+_options.collectDate+'<br/>{{Date de valeur}} : '+_options.valueDate);
         });
         jeedom.cmd.refreshValue([{
             cmd_id :'#hae_id#',
@@ -649,7 +664,7 @@
 
         jeedom.cmd.addUpdateFunction('#pqt_id#', function(_options) {
             $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#pqt_id#]').html(_options.display_value + ' #pqt_unit#');
-            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#pqt_id#]').attr('title', 'Date de collecte : '+_options.collectDate+'<br/>Date de valeur : '+_options.valueDate);
+            $('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#pqt_id#]').attr('title', '{{Date de collecte}} : '+_options.collectDate+'<br/>{{Date de valeur}} : '+_options.valueDate);
         });
         jeedom.cmd.refreshValue([{
             cmd_id :'#pqt_id#',
