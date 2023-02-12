@@ -21,7 +21,6 @@ if (!isConnect()) {
     include_file('desktop', '404', 'php');
     die();
 }
-$plugin = plugin::byId('smartthings');
 
 ?>
 <form class="form-horizontal">
