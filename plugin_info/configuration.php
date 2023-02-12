@@ -27,7 +27,7 @@ if (!isConnect()) {
     <fieldset>
 		<div class="form-group">
 			<label class="col-lg-4 control-label">{{Intervalle de rafraîchissement des informations (cron)}}<sup>
-				<i class="fa fa-question-circle tooltips" title="{{Sélectionnez l'intervalle de récupération des informations.</br>Par défaut : 15 minute.}}"></i>
+				<i class="fa fa-question-circle tooltips" title="{{Sélectionnez l'intervalle de récupération des informations}}.</br>{{Par défaut : 15 minutes.}}"></i>
 						</sup></label>
 			<div class="col-lg-4">
 				<select class="configKey form-control" data-l1key="autorefresh" >
