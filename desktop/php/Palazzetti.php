@@ -45,9 +45,23 @@ $eqLogics = eqLogic::byType($plugin->getId());
 			</span>
 		</div>
 		<ul class="nav nav-tabs" role="tablist">
-			<li role="presentation"><a href="#" class="eqLogicAction" aria-controls="home" role="tab" data-toggle="tab" data-action="returnToThumbnailDisplay"><i class="fas fa-arrow-circle-left"></i></a></li>
-			<li role="presentation" class="active"><a href="#eqlogictab" aria-controls="home" role="tab" data-toggle="tab"><i class="fas fa-tachometer-alt"></i> {{Equipement}}</a></li>
-			<li role="presentation"><a href="#commandtab" aria-controls="profile" role="tab" data-toggle="tab"><i class="fas fa-list-alt"></i> {{Commandes}}</a></li>
+			<li role="presentation">
+                <a href="#" class="eqLogicAction" aria-controls="home" role="tab" data-toggle="tab" data-action="returnToThumbnailDisplay">
+                    <i class="fas fa-arrow-circle-left"></i>
+                </a>
+            </li>
+			<li role="presentation" class="active">
+                <a href="#eqlogictab" aria-controls="home" role="tab" data-toggle="tab">
+                    <i class="fas fa-tachometer-alt"></i>
+                        {{Equipement}}
+                </a>
+            </li>
+			<li role="presentation">
+                <a href="#commandtab" aria-controls="profile" role="tab" data-toggle="tab" aria-expanded="false">
+                    <i class="fas fa-list-alt"></i>
+                        {{Commandes}}
+                </a>
+            </li>
 		</ul>
 		<div class="tab-content" style="height:calc(100% - 50px);overflow:auto;overflow-x: hidden;">
 			<div role="tabpanel" class="tab-pane active" id="eqlogictab">
@@ -67,9 +81,9 @@ $eqLogics = eqLogic::byType($plugin->getId());
 								<select id="sel_object" class="eqLogicAttr form-control" data-l1key="object_id">
 									<option value="">{{Aucun}}</option>
 									<?php
-									foreach (jeeObject::all() as $object) {
-										echo '<option value="' . $object->getId() . '">' . $object->getName() . '</option>';
-									}
+									foreach ((jeeObject::buildTree(null, false)) as $object) {
+											echo '<option value="' . $object->getId() . '">' . str_repeat('&nbsp;&nbsp;', $object->getConfiguration('parentNumber')) . $object->getName() . '</option>';
+								    }
 									?>
 								</select>
 							</div>
@@ -87,8 +101,8 @@ $eqLogics = eqLogic::byType($plugin->getId());
 							</div>
 						</div>
 						<div class="form-group">
-							<label class="col-sm-3 control-label"></label>
-							<div class="col-sm-9">
+							<label class="col-sm-3 control-label">{{Options}}</label>
+							<div class="col-sm-6">
 								<label class="checkbox-inline"><input type="checkbox" class="eqLogicAttr" data-l1key="isEnable" checked />{{Activer}}</label>
 								<label class="checkbox-inline"><input type="checkbox" class="eqLogicAttr" data-l1key="isVisible" checked />{{Visible}}</label>
 							</div>
@@ -100,28 +114,45 @@ $eqLogics = eqLogic::byType($plugin->getId());
 							</div>
 						</div>
                         <div class="form-group">
-                            <label class="col-sm-3 control-label"></label>
-                            <div class="col-sm-9">
+                            <label class="col-sm-3 control-label">{{Particularité}}</label>
+                            <div class="col-sm-6">
                                 <label class="checkbox-inline"><input id="deamoncheck" type="checkbox" class="eqLogicAttr" data-l1key="configuration" data-l2key="Cbox" />{{Poêle BEATRICE}}</label>
                             </div>
+                        </div>
+                        <div class="form-group">
+                          <label class="col-sm-3 control-label help" data-help="{{Cocher la case pour utiliser le widget associé au type de l'appareil.}}</br>{{Laissez décoché pour laisser le core générer le widget par défaut.}}">{{Widget équipement}}
+                          </label>
+                          <div class="col-sm-8">
+                            <input type="checkbox" class="eqLogicAttr form-control" id="widgetTemplate" data-l1key="configuration" data-l2key="widgetTemplate" />
+                          </div>
+                        </div>
+                        <div class="form-group" id="buttonParam" style="display:none">
+                            <label class="col-sm-3 control-label">{{Accès aux pages de paramètres}}</label>
+                            <span class="input-group">
+                                <a class="btn btn-info btn-sm cmdAction roundedLeft" data-action="parametres" style="margin-top:5px;"><i class="fas fa-plus-circle"></i> {{Paramètres du poêle}}</a>
+                                <a class="btn btn-info btn-sm cmdAction roundedRight" data-action="hiddenParametres" style="margin-top:5px;"><i class="fas fa-plus-circle"></i> {{Paramètres cachés du poêle}}</a>
+                            </span>
                         </div>
 					</fieldset>
 				</form>
 			</div>
 			<div role="tabpanel" class="tab-pane" id="commandtab">
+				<a class="btn btn-success btn-sm cmdAction pull-right" data-action="add" style="margin-top:5px;"><i class="fas fa-plus-circle"></i> {{Ajouter une commande}}</a>
 				<table id="table_cmd" class="table table-bordered table-condensed">
 					<thead>
 						<tr>
+							<th>{{ID}}</th>
 							<th>{{Nom}}</th>
 							<th>{{Type}}</th>
-							<th>{{Parametres}}</th>
+							<th>{{Commande}}</th>
+							<th>{{Paramètres}}</th>
+							<th style="width:200px;">{{État}}</th>
 							<th>{{Action}}</th>
 						</tr>
 					</thead>
 					<tbody>
 					</tbody>
 				</table>
-				<a class="btn btn-success btn-sm cmdAction pull-right" data-action="add" style="margin-top:5px;"><i class="fas fa-plus-circle"></i> {{Ajouter une Commande}}</a><br /><br />
 			</div>
 		</div>
 	</div>

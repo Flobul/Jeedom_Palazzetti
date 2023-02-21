@@ -1,7 +1,16 @@
 <?php
 	$eqLogic = eqLogic::byId($_GET['id']);
-	// recuperation des informations
-	$PH = json_decode($eqLogic->getCmd('info','IPH')->getCache()['value']);
+    if (!is_object($eqLogic)) {
+        throw new Exception(__('Objet non trouvé', __FILE__));
+    }
+    $cmdPH = $eqLogic->getCmd('info','IPH');
+    if (!is_object($cmdPH)) {
+        throw new Exception(__('Commande non trouvée', __FILE__));
+    }
+    $PH = json_decode($cmdPH->getCache()['value']);
+	if (!is_object($PH) || !isset($PH)) {
+        throw new Exception(__('Valeur de la commande IPH incorrecte', __FILE__));
+	}
 ?>
 <div id="Palazzetti_PH">
 <div>
@@ -54,7 +63,7 @@
 			<th>{{Numéro tranche}}</th>
 			<th>{{Début tranche}}</th>
 			<th>{{Fin tranche}}</th>
-			<th>{{Température tranche}}</th>
+			<th>{{Consigne tranche}}</th>
 		</tr>
 	</thead>
 	<tbody>
