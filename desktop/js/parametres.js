@@ -224,17 +224,15 @@ var palaHiddenParam = {
     110: 'FactoryReload'
 };
 
-$(function() {
-    for (var i in palaParam) {
-        addParamToTable({id:i, description: palaParam[i]})
-    }
-    getParamValue(id);
-    for (var j in eqLogic.configuration.commentaire[0]) {
-        $('#table_param tbody tr').find('.eqLogicAttr[data-l1key=configuration][data-l2key=commentaire][data-l3key=' + j + ']').value(eqLogic.configuration.commentaire[0][j])
-    }
-    modifyWithoutSave = false;
-    $.hideLoading();
-});
+for (var i in palaParam) {
+  addParamToTable({id:i, description: palaParam[i]})
+}
+getParamValue(id);
+for (var j in eqLogic.configuration.commentaire[0]) {
+  $('#table_param tbody tr').find('.eqLogicAttr[data-l1key=configuration][data-l2key=commentaire][data-l3key=' + j + ']').value(eqLogic.configuration.commentaire[0][j])
+}
+modifyWithoutSave = false;
+$.hideLoading();
 
 function getParamValue(_id) {
     $('.paramAction[data-action=refresh]').removeClass('btn-success').addClass('btn-warning').addClass('disabled');
