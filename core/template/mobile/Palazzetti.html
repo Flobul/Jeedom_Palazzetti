@@ -1,11 +1,14 @@
-<div id="plugin_container" class="eqLogic-widget eqLogic allowResize" style="width:#width#;height:#height#;border:#border#;border-radius:#border-radius#;background-color: #background-color#;color: #color#; #style#" data-tags="#tags#"
-	data-eqType="#eqType#" data-category="#category#" data-eqLogic_id="#id#" data-eqLogic_uid="#uid#" data-version="#version#">
-	<center class="widget-name"><strong><a href="#eqLink#" style="font-size : 1.1em;#hideEqLogicName#">#name_display#</a>
-			<span class="cmd refresh pull-right cursor" data-cmd_id="#refresh_id#">
-				<i class="fas fa-sync"></i>
-			</span>
-		</strong>
-	</center>
+<div class="eqLogic eqLogic-widget text-center allowResize allowReorderCmd #custom_layout# #eqLogic_class# #class# #category#" data-eqType="#eqType#" data-eqLogic_id="#id#" data-eqLogic_uid="#uid#" data-version="#version#" data-translate-category="#translate_category#" data-category="#category#" data-tags="#tags#" style="width: #width#;height: #height#;#style#">
+  <div class="widget-name">
+    <span style="color:#background-color#" title="#alert_name#">
+      <i class='#alert_icon#'></i>
+    </span>
+    <span class="cmd refresh pull-right cursor" data-cmd_id="#refresh_id#">
+      <i class="fas fa-sync"></i>
+    </span>
+    <span class="reportModeVisible">#name_display# <span class="object_name">#object_name#</span></span>
+    <a href="#eqLink#" class="reportModeHidden">#name_display# <span class="object_name">#object_name#</span></a>
+  </div>
 	<div class="classActionPage#id#" id="idActions#id#">
 		<i class="fas fa-info-circle pull-right classTitreIcon#uid# classPage#id# cursor" title="{{Vers la page informations générales}}"></i>
 		<div class="classActions#id#">
@@ -230,6 +233,7 @@
 			</tbody>
 		</table>
 	</div>
+    #divGraphInfo#
 	<style>
 		.classTitreIcon#uid# {
 			position: absolute;
@@ -339,6 +343,10 @@
 		#idTablePalazzettiInfo#id# span.cmd {
 			color: grey !important;
 		}
+
+        #idTablePalazzettiInfo#id# tr > td {
+            text-align: left;
+        }
 	</style>
 	<script>
 		if (typeof jeedom.cmd.addUpdateFunction !== 'function') {
@@ -768,10 +776,12 @@
 		});
 
 		/* refresh */
-		$('.eqLogic[data-eqLogic_id=#id#] .refresh').on('click', function() {
-			jeedom.cmd.execute({
-				id: #refresh_id#
-			});
-		});
+        if ('#refresh_id#' != '') {
+          document.querySelector('.eqLogic[data-eqLogic_uid="#uid#"] .refresh')?.addEventListener('click', function() {
+            jeedom.cmd.execute({ id: '#refresh_id#' })
+          })
+        } else {
+          document.querySelector('.eqLogic[data-eqLogic_uid="#uid#"] .refresh')?.remove()
+        }
 	</script>
 </div>
