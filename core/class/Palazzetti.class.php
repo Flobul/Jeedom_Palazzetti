@@ -637,15 +637,33 @@ sleep(1);
         $DATA = $this->makeRequest('GET+ALLS', 6);
         if ($DATA) {
             // mise à jour force du feu
-            $this->checkAndUpdateCmd('IPower', $DATA->DATA->PWR);
-            $this->checkAndUpdateCmd('IConsigne', $DATA->DATA->SETP);
-            $this->checkAndUpdateCmd('IFan', $DATA->DATA->F2L);
-            $this->checkAndUpdateCmd('IFanF3L', $DATA->DATA->F3L);
-            $this->checkAndUpdateCmd('IFanF4L', $DATA->DATA->F4L);
-            $this->checkAndUpdateCmd('ITemp', round($DATA->DATA->T1, 2));
-            $this->checkAndUpdateCmd('ITemp2', round($DATA->DATA->T2, 2));
-            $this->checkAndUpdateCmd('ITemp3', round($DATA->DATA->T3, 2));
-            $this->checkAndUpdateCmd('IStatus', $DATA->DATA->STATUS);
+            if (isset($DATA->DATA->PWR)) {
+                $this->checkAndUpdateCmd('IPower', $DATA->DATA->PWR);
+            }
+            if (isset($DATA->DATA->SETP)) {
+                $this->checkAndUpdateCmd('IConsigne', $DATA->DATA->SETP);
+            }
+            if (isset($DATA->DATA->F2L)) {
+                $this->checkAndUpdateCmd('IFan', $DATA->DATA->F2L);
+            }
+            if (isset($DATA->DATA->F3L)) {
+                $this->checkAndUpdateCmd('IFanF3L', $DATA->DATA->F3L);
+            }
+            if (isset($DATA->DATA->F4L)) {
+                $this->checkAndUpdateCmd('IFanF4L', $DATA->DATA->F4L);
+            }
+            if (isset($DATA->DATA->T1)) {
+                $this->checkAndUpdateCmd('ITemp', round($DATA->DATA->T1, 2));
+            }
+            if (isset($DATA->DATA->T2)) {
+                $this->checkAndUpdateCmd('ITemp2', round($DATA->DATA->T2, 2));
+            }
+            if (isset($DATA->DATA->T3)) {
+                $this->checkAndUpdateCmd('ITemp3', round($DATA->DATA->T3, 2));
+            }
+            if (isset($DATA->DATA->STATUS)) {
+                $this->checkAndUpdateCmd('IStatus', $DATA->DATA->STATUS);
+            }
             $this->checkAndUpdateCmd('ISnap', json_encode($DATA));
         }
         log::add(__CLASS__, 'debug', __('Fin', __FILE__) . ' : ' . __FUNCTION__);
