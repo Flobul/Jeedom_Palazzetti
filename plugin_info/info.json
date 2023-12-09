@@ -12,8 +12,8 @@
 	"category" : "wellness",
     "hasDependency" : false,
 	"hasOwnDeamon" : false,
-	"changelog" : "https://domotechdiscord.github.io/Docs/Palazzetti/fr_FR/changelog",
-	"documentation" : "https://domotechdiscord.github.io/Docs/Palazzetti/fr_FR/",
+	"changelog" : "https://flobul-domotique.fr/liste-des-versions-du-plugin-palazzetti-pour-jeedom/",
+	"documentation" : "https://flobul-domotique.fr/presentation-et-configuration-du-plugin-palazzetti-pour-jeedom/",
     "link":{
         "forum":"https://community.jeedom.com/tag/plugin-palazzetti"
     },
