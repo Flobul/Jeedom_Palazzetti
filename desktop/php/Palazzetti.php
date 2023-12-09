@@ -114,10 +114,11 @@ $eqLogics = eqLogic::byType($plugin->getId());
 							</div>
 						</div>
                         <div class="form-group">
-                            <label class="col-sm-3 control-label">{{Particularité}}</label>
-                            <div class="col-sm-6">
-                                <label class="checkbox-inline"><input id="deamoncheck" type="checkbox" class="eqLogicAttr" data-l1key="configuration" data-l2key="Cbox" />{{Poêle BEATRICE}}</label>
-                            </div>
+                          <label class="col-sm-3 control-label help" data-help="{{Inverse la vitesse de ventilation AUTO et OFF .}}</br>{{Décoché}} : 0=OFF ; 7=AUTO</br>{{Coché}} : 0=AUTO ; 7=OFF">{{Inverser les valeurs de vitesse de ventilation}}
+                          </label>
+                          <div class="col-sm-8">
+                            <input type="checkbox" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="invertFanSpeed" />
+                          </div>
                         </div>
                         <div class="form-group">
                           <label class="col-sm-3 control-label help" data-help="{{Cocher la case pour utiliser le widget associé au type de l'appareil.}}</br>{{Laissez décoché pour laisser le core générer le widget par défaut.}}">{{Widget équipement}}

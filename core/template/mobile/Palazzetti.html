@@ -586,13 +586,23 @@
 			$('#idVentilationMoins#id#').removeClass('disabled');
 			$('#idVentilationPlus#id#').removeClass('disabled');
 			if (_options.display_value == 0) {
-				$('#idVentilation#id#').html('OFF');
-				$('#idVentilationMoins#id#').addClass('disabled');
+                if ('#invertFanSpeed#'=='1') {
+                    $('#idVentilation#id#').html('AUTO');
+                    $('#idVentilationPlus#id#').addClass('disabled');
+                } else {
+                    $('#idVentilation#id#').html('OFF');
+                    $('#idVentilationMoins#id#').addClass('disabled');
+                }
 			} else if (_options.display_value == 6) {
-				$('#idVentilation#id#').html('AUTO');
-			} else if (_options.display_value == 7) {
 				$('#idVentilation#id#').html('HIGH');
-				$('#idVentilationPlus#id#').addClass('disabled');
+			} else if (_options.display_value == 7) {
+                if ('#invertFanSpeed#'=='1') {
+                    $('#idVentilation#id#').html('OFF');
+                    $('#idVentilationMoins#id#').addClass('disabled');
+                } else {
+                    $('#idVentilation#id#').html('AUTO');
+                    $('#idVentilationPlus#id#').addClass('disabled');
+                }
 			} else {
 				$('#idVentilation#id#').html(_options.display_value);
 			}

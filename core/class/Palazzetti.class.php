@@ -6,13 +6,13 @@ require_once dirname(__FILE__) . '/../../../../core/php/core.inc.php';
 
 class Palazzetti extends eqLogic
 {
-    public static $_pluginVersion = '1.03';
+    public static $_pluginVersion = '1.04';
 
     public static function pull()
     {
         log::add(__CLASS__, 'debug', __FUNCTION__ . ' : ' . __('Démarrage du cron', __FILE__));
-        $autorefresh = config::byKey('autorefresh', 'Palazzetti', '');
-        $eqLogics = eqLogic::byType('Palazzetti');
+        $autorefresh = config::byKey('autorefresh', __CLASS__, '');
+        $eqLogics = eqLogic::byType(__CLASS__);
         if ($autorefresh != '') {
             try {
                 $c = new Cron\CronExpression($autorefresh, new Cron\FieldFactory());
@@ -40,7 +40,7 @@ class Palazzetti extends eqLogic
     // avant création équipement
     public function postInsert()
     {
-        config::save("*/5 * * * *", 'autorefresh', 'Palazzetti');
+        config::save("*/5 * * * *", 'autorefresh', __CLASS__);
     }
 
     public function preUpdate()
@@ -168,13 +168,13 @@ class Palazzetti extends eqLogic
     {
         switch ($num) {
             case 0:
-                $value = 'OFF';
+                $value = $this->getConfiguration('invertFanSpeed', false) ? 'OFF' : 'AUTO';
                 break;
             case 6:
-                $value = 'AUTO';
+                $value = 'HIGH';
                 break;
             case 7:
-                $value = 'HIGH';
+                $value = $this->getConfiguration('invertFanSpeed', false) ? 'AUTO' : 'OFF';
                 break;
             default:
                 $value = $num;
@@ -402,6 +402,8 @@ class Palazzetti extends eqLogic
         }
         $version = jeedom::versionAlias($_version);
 
+        $replace['#invertFanSpeed#'] = $this->getConfiguration('invertFanSpeed', false);
+
         $heure = $this->getCmd(null, 'ITime');
         $replace['#heure#'] = is_object($heure) ? $heure->execCmd() : '';
         $replace['#heure_id#'] = is_object($heure) ? $heure->getId() : '';
@@ -566,7 +568,7 @@ class Palazzetti extends eqLogic
         $refresh = $this->getCmd(null, 'refresh');
         $replace['#refresh_id#'] = is_object($refresh) ? $refresh->getId() : '';
 
-        $html = template_replace($replace, getTemplate('core', $version, 'Palazzetti', 'Palazzetti'));
+        $html = template_replace($replace, getTemplate('core', $version, __CLASS__, __CLASS__));
         $html = translate::exec($html, 'plugins/Palazzetti/core/template/' . $version . '/Palazzetti.html');
         cache::set('PalazzettiWidget' . $_version . $this->getId(), $html, 0);
         return $html;
