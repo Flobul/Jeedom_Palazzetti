@@ -8,7 +8,7 @@
     "installation":"Sélectionnez un intervalle de rafraîchissement des informations.<br>Ajoutez un équipement, entrez son adresse IP, activez-le et sauvegardez.",
 	"licence" : "AGPL",
 	"author" : "Thibaut.Trarbach (modifié par Flobul)",
-	"require" : "4.0",
+	"require" : "4.2",
 	"category" : "wellness",
     "hasDependency" : false,
 	"hasOwnDeamon" : false,

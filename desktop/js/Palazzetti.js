@@ -1,5 +1,17 @@
-/*
+/* This file is part of Jeedom.
  *
+ * Jeedom is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Jeedom is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
  */
 
 $("#table_cmd").sortable({
@@ -13,20 +25,8 @@ $("#table_cmd").sortable({
 
 function printEqLogic(_eqLogic) {
     $('#buttonParam').hide();
-    for (var i in _eqLogic.cmd) {
-        if (_eqLogic.cmd[i].logicalId == 'IName') {
-            jeedom.cmd.execute({
-                id: _eqLogic.cmd[i].id,
-                async: false,
-                cache: 1,
-                notify: false,
-                success: function(result) {
-                    if (result == 'WPalaControl') {
-                        $('#buttonParam').show();
-                    }
-                }
-            });
-        }
+    if (_eqLogic.configuration.isWirelessPalaControl) {
+        $('#buttonParam').show();
     }
 }
 
@@ -102,7 +102,7 @@ function addCmdToTable(_cmd) {
             type: 'info'
         },
         error: function (error) {
-            $('#div_alert').showAlert({
+            $.fn.showAlert({
                 message: error.message,
                 level: 'danger'
             });

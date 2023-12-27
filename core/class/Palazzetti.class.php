@@ -1,12 +1,27 @@
 <?php
-/*
+
+/* This file is part of Jeedom.
+ *
+ * Jeedom is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Jeedom is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
  */
+
 /* * ***************************Includes********************************* */
 require_once dirname(__FILE__) . '/../../../../core/php/core.inc.php';
 
 class Palazzetti extends eqLogic
 {
-    public static $_pluginVersion = '1.04';
+    public static $_pluginVersion = '1.05';
 
     public static function pull()
     {
@@ -589,6 +604,13 @@ class Palazzetti extends eqLogic
         $DATA = $this->makeRequest('GET+STDT');
         if ($DATA) {
             $this->checkAndUpdateCmd('IName', $DATA->DATA->LABEL);
+            if ($DATA->DATA->LABEL == 'WPalaControl' ||
+               ($DATA->DATA->CBTYPE == 'miniembplug' &&
+                $DATA->DATA->sendmsg == '2.1.2 2018-03-28 10:19:09' &&
+                $DATA->DATA->plzbridge == '2.2.1 2021-10-08 09:30:45' &&
+                $DATA->DATA->SYSTEM == '2.5.3 2021-10-08 10:30:20 (657c8cf)')) {
+                $this->setConfiguration('isWirelessPalaControl', true);
+            }
             $this->checkAndUpdateCmd('INetwork', json_encode($DATA->DATA));
         }
 
@@ -597,7 +619,7 @@ class Palazzetti extends eqLogic
         if ($DATA) {
             $this->checkAndUpdateCmd('IPH', json_encode($DATA->DATA));
         }
-sleep(1);
+        sleep(1);
         // recuperation des infos compteurs
         $DATA = $this->makeRequest('GET+CNTR', 6);
         if ($DATA) {
