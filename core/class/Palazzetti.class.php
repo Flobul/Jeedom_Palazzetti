@@ -395,12 +395,14 @@ class Palazzetti extends eqLogic
         }
 
         // mise a jour variables info
-        if ($CMD->getConfiguration('updateLogicalId')) {
-            $INFO = $this->getCmd(null, $CMD->getConfiguration('updateLogicalId'));
-            $INFO->event($value);
-            $INFO->save();
+        if ($updateLogicalId = $CMD->getConfiguration('updateLogicalId')) {
+            $INFO = $this->getCmd('info', $updateLogicalId);
+            if (is_object($INFO)) {
+                $INFO->event($value);
+                $INFO->save();
+            }
             log::add(__CLASS__, 'debug', '(' . __LINE__ . ') ' . __FUNCTION__ . ' - ' . 'response ' . $value);
-            log::add(__CLASS__, 'debug', '(' . __LINE__ . ') ' . __FUNCTION__ . ' - ' . 'updatelogicalId ' .  $CMD->getConfiguration('updateLogicalId') . ' = ' . $value);
+            log::add(__CLASS__, 'debug', '(' . __LINE__ . ') ' . __FUNCTION__ . ' - ' . 'updatelogicalId ' .  $updateLogicalId . ' = ' . $value);
         }
         // mise à jour lastvalue commande
         $CMD->setConfiguration('lastCmdValue', $value);
