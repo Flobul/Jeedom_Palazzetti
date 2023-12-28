@@ -52,12 +52,6 @@ class Palazzetti extends eqLogic
         log::add(__CLASS__, 'debug', __FUNCTION__ . ' : ' . __('fin', __FILE__));
     }
 
-    // avant création équipement
-    public function postInsert()
-    {
-        config::save("*/5 * * * *", 'autorefresh', __CLASS__);
-    }
-
     public function preUpdate()
     {
         log::add(__CLASS__, 'debug', __('Début', __FILE__) . ' : ' . __FUNCTION__);
