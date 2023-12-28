@@ -298,66 +298,81 @@ class Palazzetti extends eqLogic
 
         // traitement suivant commande
         switch ($pattern) {
-                // allumage, extinction, status
             case 'CMD+ON':
+                // allumage
             case 'CMD+OFF':
+                // extinction
             case 'GET+STAT':
-                $value = $DATA->DATA->STATUS; //"DATA":{"STATUS":0,"LSTATUS":0}}
+                // status
+                //"DATA":{"STATUS":0,"LSTATUS":0}}
+                $value = $DATA->DATA->STATUS;
                 break;
                 // nom poele
            case 'GET+ALLS':
                 // mise à jour force du feu
+                //"DATA":{"MBTYPE":0,"MAC":"XX:XX:XX:XX:XX:XX","MOD":318,"VER":47,"CORE":129,"FWDATE":"2017-05-03","APLTS":"2000-01-07 11:25:14","APLWDAY":7,"CHRSTATUS":0,"STATUS":0,"LSTATUS":0,"SETP":22,"PUMP":0,"PQT":2872,"F1V":0,"F1RPM":0,"F2L":0,"F2LF":0,"FANLMINMAX":[0,5,0,1,0,1],"F2V":0,"PWR":1,"FDR":0,"DPT":0,"DP":67,"IN":13,"OUT":0,"T1":18.5,"T2":22.39999962,"T3":20,"T4":0,"T5":0,"EFLAGS":0}
                 $this->checkAndUpdateCmd('IPower', $DATA->DATA->PWR);
                 $this->checkAndUpdateCmd('IConsigne', $DATA->DATA->SETP);
                 $this->checkAndUpdateCmd('IFan', $DATA->DATA->F2L);
                 $this->checkAndUpdateCmd('IFanF3L', $DATA->DATA->F3L);
                 $this->checkAndUpdateCmd('IFanF4L', $DATA->DATA->F4L);
-                $this->checkAndUpdateCmd('ITemp', round($DATA->DATA->T1, 2));
-                $this->checkAndUpdateCmd('ITemp2', round($DATA->DATA->T2, 2));
-                $this->checkAndUpdateCmd('ITemp3', round($DATA->DATA->T3, 2));
+                $this->checkAndUpdateCmd('ITemp', round($DATA->DATA->T1, 1));
+                $this->checkAndUpdateCmd('ITemp2', round($DATA->DATA->T2, 1));
+                $this->checkAndUpdateCmd('ITemp3', round($DATA->DATA->T3, 1));
                 $this->checkAndUpdateCmd('IStatus', $DATA->DATA->STATUS);
+                $this->checkAndUpdateCmd('IQuantite', $DATA->DATA->PQT);
                 $this->checkAndUpdateCmd('ISnap', json_encode($DATA));
                 break;
             case 'GET+LABL':
+                // nom du palazzeti
             case 'SET+LABL':
                 $value = $DATA->DATA->LABEL;
                 break;
+            case 'GET+POWR':
                 // force du feu
+                //"DATA":{"PWR":1,"FDR":0}
             case 'SET+POWR':
+                //"DATA":{"PWR":1,"F2L":0,"FANLMINMAX":[0,5,0,1,0,1]}}
+                $this->checkAndUpdateCmd('IFan', $DATA->DATA->F2L);
                 $value = $DATA->DATA->PWR;
                 break;
-                // température de consigne
             case 'GET+SETP':
+                // température de consigne
             case 'SET+SETP':
-                $value = $DATA->DATA->SETP; //"DATA":{"SETP":22}}
+                //"DATA":{"SETP":22}}
+                $value = $DATA->DATA->SETP;
                 break;
-                // force du ventilateur
             case 'GET+FAND':
-                $value = $this->getFanState($DATA->DATA->F2L); //"DATA":{"F1V":0,"F2V":0,"F1RPM":0,"F2L":0,"F2LF":0}}
-                break;
-            case 'SET+RFAN':
+                // force du ventilateur
+                //"DATA":{"F1V":0,"F2V":0,"F1RPM":0,"F2L":0,"F2LF":0}}
                 $value = $this->getFanState($DATA->DATA->F2L);
                 break;
-                // force ventilateur F3L
+            case 'SET+RFAN':
+                //"DATA":{"PWR":1,"F2L":1,"F2LF":0}
+                $this->checkAndUpdateCmd('IPower', $DATA->DATA->PWR);
+                $value = $this->getFanState($DATA->DATA->F2L);
+                break;
             case 'SET+FN3L':
+                // force ventilateur F3L
                 $value = $this->getFanState($DATA->DATA->F3L);
                 break;
-                // force ventilateur F4L
             case 'SET+FN4L':
+                // force ventilateur F4L
                 $value = $this->getFanState($DATA->DATA->F4L);
                 break;
-                // température ambiance
             case 'GET+TMPS':
+                // toutes les températures
                 $value = $DATA->DATA->T1; //"DATA":{"T1":16.79999924,"T2":17.89999962,"T3":18,"T4":0,"T5":0}}
                 $this->checkAndUpdateCmd('ITemp2', $DATA->DATA->T2);
                 $this->checkAndUpdateCmd('ITemp3', $DATA->DATA->T3);
                 break;
-                // programmes horaires
             case 'GET+CHRD':
+                // programmes horaires
                 $value = json_encode($DATA->DATA);
                 break;
             case 'GET+CNTR':
-                   //"DATA":{"IGN":263,"POWERTIME":"7280:48","HEATTIME":"1144:20","SERVICETIME":"1144:20","ONTIME":"0:00","OVERTMPERRORS":0,"IGNERRORS":0,"PQT":2371}}%
+                // tous les compteurs
+                //"DATA":{"IGN":263,"POWERTIME":"7280:48","HEATTIME":"1144:20","SERVICETIME":"1144:20","ONTIME":"0:00","OVERTMPERRORS":0,"IGNERRORS":0,"PQT":2371}}%
                 $this->checkAndUpdateCmd('INbAllumage', $DATA->DATA->IGN);
                 $this->checkAndUpdateCmd('INbAllumageFailed', $DATA->DATA->IGNERRORS);
                 $this->checkAndUpdateCmd('IHeuresAlimElec', str_replace(':', '.', $DATA->DATA->POWERTIME));
