@@ -406,11 +406,11 @@ class Palazzetti extends eqLogic
 
         $replace['#invertFanSpeed#'] = $this->getConfiguration('invertFanSpeed', false);
 
-        $heure = $this->getCmd(null, 'ITime');
+        $heure = $this->getCmd('info', 'ITime');
         $replace['#heure#'] = is_object($heure) ? $heure->execCmd() : '';
         $replace['#heure_id#'] = is_object($heure) ? $heure->getId() : '';
 
-        $temps = $this->getCmd(null, 'ITemp');
+        $temps = $this->getCmd('info', 'ITemp');
         $replace['#temperature#'] = is_object($temps) ? $temps->execCmd() : '';
         $replace['#temperature_id#'] = is_object($temps) ? $temps->getId() : '';
         $replace['#temperature_valueDate#'] = is_object($temps) ? $temps->getValueDate() : '';
@@ -418,7 +418,7 @@ class Palazzetti extends eqLogic
         $replace['#temperature_unite#'] = is_object($temps) ? $temps->getUnite() : '';
         $replace['#temperature_display#'] = (is_object($temps) && $temps->getIsVisible()) ? '#temperature_display#' : 'none';
 
-        $temps2 = $this->getCmd(null, 'ITemp2');
+        $temps2 = $this->getCmd('info', 'ITemp2');
         $replace['#temperature2#'] = is_object($temps2) ? $temps2->execCmd() : '';
         $replace['#temperature2_id#'] = is_object($temps2) ? $temps2->getId() : '';
         $replace['#temperature2_valueDate#'] = is_object($temps2) ? $temps2->getValueDate() : '';
@@ -426,7 +426,7 @@ class Palazzetti extends eqLogic
         $replace['#temperature2_unite#'] = is_object($temps2) ? $temps2->getUnite() : '';
         $replace['#temperature2_display#'] = (is_object($temps) && $temps2->getIsVisible()) ? '#temperature2_display#' : 'none';
 
-        $temps3 = $this->getCmd(null, 'ITemp3');
+        $temps3 = $this->getCmd('info', 'ITemp3');
         $replace['#temperature3#'] = is_object($temps3) ? $temps3->execCmd() : '';
         $replace['#temperature3_id#'] = is_object($temps3) ? $temps3->getId() : '';
         $replace['#temperature3_valueDate#'] = is_object($temps3) ? $temps3->getValueDate() : '';
@@ -434,11 +434,11 @@ class Palazzetti extends eqLogic
         $replace['#temperature3_unite#'] = is_object($temps3) ? $temps3->getUnite() : '';
         $replace['#temperature3_display#'] = (is_object($temps) && $temps3->getIsVisible()) ? '#temperature3_display#' : 'none';
 
-        $status = $this->getCmd(null, 'IStatus');
+        $status = $this->getCmd('info', 'IStatus');
         $replace['#status#'] = is_object($status) ? $status->execCmd() : '';
         $replace['#status_id#'] = is_object($status) ? $status->getId() : '';
 
-        $consigne = $this->getCmd(null, 'IConsigne');
+        $consigne = $this->getCmd('info', 'IConsigne');
         $replace['#consigne#'] = is_object($consigne) ? $consigne->execCmd() : '';
         $replace['#consigne_id#'] = is_object($consigne) ? $consigne->getId() : '';
         $replace['#consigne_valueDate#'] = is_object($consigne) ? $consigne->getValueDate() : '';
@@ -447,7 +447,7 @@ class Palazzetti extends eqLogic
         $replace['#consigne_minValue#'] = is_object($consigne) ? $consigne->getConfiguration('minValue') : '';
         $replace['#consigne_maxValue#'] = is_object($consigne) ? $consigne->getConfiguration('maxValue') : '';
         $replace['#consigne_display#'] = (is_object($consigne) && $consigne->getIsVisible()) ? '#consigne_display#' : 'none';
-        $Wconsigne = $this->getCmd(null, 'WConsigne');
+        $Wconsigne = $this->getCmd('info', 'WConsigne');
         $replace['#consigneSet_id#'] = is_object($Wconsigne) ? $Wconsigne->getId() : '';
         if (is_array($Wconsigne->getDisplay('parameters'))) {
             foreach ($Wconsigne->getDisplay('parameters') as $key => $value) {
@@ -455,7 +455,7 @@ class Palazzetti extends eqLogic
             }
         }
 
-        $power = $this->getCmd(null, 'IPower');
+        $power = $this->getCmd('info', 'IPower');
         $replace['#power#'] = is_object($power) ? $power->execCmd() : '';
         $replace['#power_id#'] = is_object($power) ? $power->getId() : '';
         $replace['#power_valueDate#'] = is_object($power) ? $power->getValueDate() : '';
@@ -463,7 +463,7 @@ class Palazzetti extends eqLogic
         $replace['#power_minValue#'] = is_object($power) ? $power->getConfiguration('minValue') : '';
         $replace['#power_maxValue#'] = is_object($power) ? $power->getConfiguration('maxValue') : '';
         $replace['#power_display#'] = (is_object($power) && $power->getIsVisible()) ? '#power_display#' : 'none';
-        $Wpower = $this->getCmd(null, 'Wpower');
+        $Wpower = $this->getCmd('action', 'Wpower');
         $replace['#powerSet_id#'] = is_object($Wpower) ? $Wpower->getId() : '';
         if (is_array($Wpower->getDisplay('parameters'))) {
             foreach ($Wpower->getDisplay('parameters') as $key => $value) {
@@ -471,7 +471,7 @@ class Palazzetti extends eqLogic
             }
         }
 
-        $fan = $this->getCmd(null, 'IFan');
+        $fan = $this->getCmd('info', 'IFan');
         $replace['#fan#'] = is_object($fan) ? $fan->execCmd() : '';
         $replace['#fan_id#'] = is_object($fan) ? $fan->getId() : '';
         $replace['#fan_valueDate#'] = is_object($fan) ? $fan->getValueDate() : '';
@@ -479,7 +479,7 @@ class Palazzetti extends eqLogic
         $replace['#fan_minValue#'] = is_object($fan) ? $fan->getConfiguration('minValue') : '';
         $replace['#fan_maxValue#'] = is_object($fan) ? $fan->getConfiguration('maxValue') : '';
         $replace['#fan_display#'] = (is_object($fan) && $fan->getIsVisible()) ? '#fan_display#' : 'none';
-        $Wfan = $this->getCmd(null, 'WFan');
+        $Wfan = $this->getCmd('action', 'WFan');
         $replace['#fanSet_id#'] = is_object($Wfan) ? $Wfan->getId() : '';
         if (is_array($Wfan->getDisplay('parameters'))) {
             foreach ($Wfan->getDisplay('parameters') as $key => $value) {
@@ -487,7 +487,7 @@ class Palazzetti extends eqLogic
             }
         }
 
-        $nbAll = $this->getCmd(null, 'INbAllumage');
+        $nbAll = $this->getCmd('info', 'INbAllumage');
         $replace['#nbAll#'] = is_object($nbAll) ? $nbAll->execCmd() : '';
         $replace['#nbAll_id#'] = is_object($nbAll) ? $nbAll->getId() : '';
         $replace['#nbAll_unit#'] = is_object($nbAll) ? $nbAll->getUnite() : '';
@@ -495,7 +495,7 @@ class Palazzetti extends eqLogic
         $replace['#nbAll_collectDate#'] = is_object($nbAll) ? $nbAll->getCollectDate() : '';
         $replace['#nbAll_display#'] = (is_object($nbAll) && $nbAll->getIsVisible()) ? '#nbAll_display#' : 'none';
 
-        $hae = $this->getCmd(null, 'IHeuresAlimElec');
+        $hae = $this->getCmd('info', 'IHeuresAlimElec');
         $replace['#hae#'] = is_object($hae) ? $hae->execCmd() : '';
         $replace['#hae_id#'] = is_object($hae) ? $hae->getId() : '';
         $replace['#hae_unit#'] = is_object($hae) ? $hae->getUnite() : '';
@@ -503,7 +503,7 @@ class Palazzetti extends eqLogic
         $replace['#hae_collectDate#'] = is_object($hae) ? $hae->getCollectDate() : '';
         $replace['#hae_display#'] = (is_object($hae) && $hae->getIsVisible()) ? '#hae_display#' : 'none';
 
-        $hc = $this->getCmd(null, 'IHeuresChauffe');
+        $hc = $this->getCmd('info', 'IHeuresChauffe');
         $replace['#hc#'] = is_object($hc) ? $hc->execCmd() : '';
         $replace['#hc_id#'] = is_object($hc) ? $hc->getId() : '';
         $replace['#hc_unit#'] = is_object($hc) ? $hc->getUnite() : '';
@@ -511,7 +511,7 @@ class Palazzetti extends eqLogic
         $replace['#hc_collectDate#'] = is_object($hc) ? $hc->getCollectDate() : '';
         $replace['#hc_display#'] = (is_object($hc) && $hc->getIsVisible()) ? '#hc_display#' : 'none';
 
-        $hsc = $this->getCmd(null, 'IHeuresSurChauffe');
+        $hsc = $this->getCmd('info', 'IHeuresSurChauffe');
         $replace['#hsc#'] = is_object($hsc) ? $hsc->execCmd() : '';
         $replace['#hsc_id#'] = is_object($hsc) ? $hsc->getId() : '';
         $replace['#hsc_unit#'] = is_object($hsc) ? $hsc->getUnite() : '';
@@ -519,7 +519,7 @@ class Palazzetti extends eqLogic
         $replace['#hsc_collectDate#'] = is_object($hsc) ? $hsc->getCollectDate() : '';
         $replace['#hsc_display#'] = (is_object($hsc) && $hsc->getIsVisible()) ? '#hsc_display#' : 'none';
 
-        $hde = $this->getCmd(null, 'IHeuresDepuisEntretien');
+        $hde = $this->getCmd('info', 'IHeuresDepuisEntretien');
         $replace['#hde#'] = is_object($hde) ? $hde->execCmd() : '';
         $replace['#hde_id#'] = is_object($hde) ? $hde->getId() : '';
         $replace['#hde_unit#'] = is_object($hde) ? $hde->getUnite() : '';
@@ -527,7 +527,7 @@ class Palazzetti extends eqLogic
         $replace['#hde_collectDate#'] = is_object($hde) ? $hde->getCollectDate() : '';
         $replace['#hde_display#'] = (is_object($hde) && $hde->getIsVisible()) ? '#hde_display#' : 'none';
 
-        $haf = $this->getCmd(null, 'INbAllumageFailed');
+        $haf = $this->getCmd('info', 'INbAllumageFailed');
         $replace['#haf#'] = is_object($haf) ? $haf->execCmd() : '';
         $replace['#haf_id#'] = is_object($haf) ? $haf->getId() : '';
         $replace['#haf_unit#'] = is_object($haf) ? $haf->getUnite() : '';
@@ -535,7 +535,7 @@ class Palazzetti extends eqLogic
         $replace['#haf_collectDate#'] = is_object($haf) ? $haf->getCollectDate() : '';
         $replace['#haf_display#'] = (is_object($haf) && $haf->getIsVisible()) ? '#haf_display#' : 'none';
 
-        $pqt = $this->getCmd(null, 'IQuantite');
+        $pqt = $this->getCmd('info', 'IQuantite');
         $replace['#pqt#'] = is_object($pqt) ? $pqt->execCmd() : '';
         $replace['#pqt_id#'] = is_object($pqt) ? $pqt->getId() : '';
         $replace['#pqt_unit#'] = is_object($pqt) ? $pqt->getUnite() : '';
@@ -543,31 +543,31 @@ class Palazzetti extends eqLogic
         $replace['#pqt_collectDate#'] = is_object($pqt) ? $pqt->getCollectDate() : '';
         $replace['#pqt_display#'] = (is_object($pqt) && $pqt->getIsVisible()) ? '#pqt_display#' : 'none';
 
-        $network = $this->getCmd(null, 'INetwork');
+        $network = $this->getCmd('info', 'INetwork');
         $replace['#network#'] = is_object($network) ? $network->execCmd() : '';
         $replace['#network_id#'] = is_object($network) ? $network->getId() : '';
         $replace['#network_display#'] = (is_object($network) && $network->getIsVisible()) ? '#network_display#' : 'none';
 
-        $WOn = $this->getCmd(null, 'WOn');
+        $WOn = $this->getCmd('action', 'WOn');
         $replace['#on_id#'] = is_object($WOn) ? $WOn->getId() : '';
-        $WOff = $this->getCmd(null, 'WOff');
+        $WOff = $this->getCmd('action', 'WOff');
         $replace['#off_id#'] = is_object($WOff) ? $WOff->getId() : '';
 
-        $fanF3L = $this->getCmd(null, 'IFanF3L');
+        $fanF3L = $this->getCmd('info', 'IFanF3L');
         $replace['#fanF3L#'] = $this->getFanStateF3L($fanF3L->execCmd());
-        $WfanF3L = $this->getCmd(null, 'WFanF3L');
+        $WfanF3L = $this->getCmd('action', 'WFanF3L');
         $replace['#fanF3L_id#'] = is_object($WfanF3L) ? $WfanF3L->getId() : '';
 
-        $fanF4L = $this->getCmd(null, 'IFanF4L');
+        $fanF4L = $this->getCmd('info', 'IFanF4L');
         $replace['#fanF4L#'] = $this->getFanStateF4L($fanF4L->execCmd());
-        $WfanF4L = $this->getCmd(null, 'WFanF4L');
+        $WfanF4L = $this->getCmd('action', 'WFanF4L');
         $replace['#fanF4L_id#'] = is_object($WfanF4L) ? $WfanF4L->getId() : '';
 
-        $snap = $this->getCmd(null, 'ISnap');
+        $snap = $this->getCmd('info', 'ISnap');
         $replace['#snap_id#'] = is_object($snap) ? $snap->getId() : '';
         $replace['#snap_display#'] = (is_object($snap) && $snap->getIsVisible()) ? '#snap_display#' : 'none';
 
-        $refresh = $this->getCmd(null, 'refresh');
+        $refresh = $this->getCmd('action', 'refresh');
         $replace['#refresh_id#'] = is_object($refresh) ? $refresh->getId() : '';
 
         $html = template_replace($replace, getTemplate('core', $version, __CLASS__, __CLASS__));
