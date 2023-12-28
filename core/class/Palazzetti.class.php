@@ -375,10 +375,10 @@ class Palazzetti extends eqLogic
                 //"DATA":{"IGN":263,"POWERTIME":"7280:48","HEATTIME":"1144:20","SERVICETIME":"1144:20","ONTIME":"0:00","OVERTMPERRORS":0,"IGNERRORS":0,"PQT":2371}}%
                 $this->checkAndUpdateCmd('INbAllumage', $DATA->DATA->IGN);
                 $this->checkAndUpdateCmd('INbAllumageFailed', $DATA->DATA->IGNERRORS);
-                $this->checkAndUpdateCmd('IHeuresAlimElec', str_replace(':', '.', $DATA->DATA->POWERTIME));
-                $this->checkAndUpdateCmd('IHeuresChauffe', str_replace(':', '.', $DATA->DATA->HEATTIME));
-                $this->checkAndUpdateCmd('IHeuresSurChauffe', str_replace(':', '.', $DATA->DATA->OVERTMPERRORS));
-                $this->checkAndUpdateCmd('IHeuresDepuisEntretien', str_replace(':', '.', $DATA->DATA->SERVICETIME));
+                $this->checkAndUpdateCmd('IHeuresAlimElec', self::convertTimeToDec($DATA->DATA->POWERTIME));
+                $this->checkAndUpdateCmd('IHeuresChauffe', self::convertTimeToDec($DATA->DATA->HEATTIME));
+                $this->checkAndUpdateCmd('IHeuresSurChauffe', self::convertTimeToDec($DATA->DATA->OVERTMPERRORS));
+                $this->checkAndUpdateCmd('IHeuresDepuisEntretien', self::convertTimeToDec($DATA->DATA->SERVICETIME));
                 $this->checkAndUpdateCmd('IQuantite', $DATA->DATA->PQT);
                 // programmes horaires
             case 'SET+CSST':
@@ -627,10 +627,10 @@ class Palazzetti extends eqLogic
         if ($DATA) {
             $this->checkAndUpdateCmd('INbAllumage', $DATA->DATA->IGN);
             $this->checkAndUpdateCmd('INbAllumageFailed', $DATA->DATA->IGNERRORS);
-            $this->checkAndUpdateCmd('IHeuresAlimElec', str_replace(':', '.', $DATA->DATA->POWERTIME));
-            $this->checkAndUpdateCmd('IHeuresChauffe', str_replace(':', '.', $DATA->DATA->HEATTIME));
-            $this->checkAndUpdateCmd('IHeuresSurChauffe', str_replace(':', '.', $DATA->DATA->OVERTMPERRORS));
-            $this->checkAndUpdateCmd('IHeuresDepuisEntretien', str_replace(':', '.', $DATA->DATA->SERVICETIME));
+            $this->checkAndUpdateCmd('IHeuresAlimElec', self::convertTimeToDec($DATA->DATA->POWERTIME));
+            $this->checkAndUpdateCmd('IHeuresChauffe', self::convertTimeToDec($DATA->DATA->HEATTIME));
+            $this->checkAndUpdateCmd('IHeuresSurChauffe', self::convertTimeToDec($DATA->DATA->OVERTMPERRORS));
+            $this->checkAndUpdateCmd('IHeuresDepuisEntretien', self::convertTimeToDec($DATA->DATA->SERVICETIME));
             $this->checkAndUpdateCmd('IQuantite', $DATA->DATA->PQT);
         } else {
             $DATA = $this->makeRequest('EXT+ADRD+2066+1');
@@ -643,19 +643,19 @@ class Palazzetti extends eqLogic
             }
             $DATA = $this->makeRequest('EXT+ADRD+206A+1');
             if ($DATA) {
-                $this->checkAndUpdateCmd('IHeuresAlimElec', str_replace(':', '.', $DATA->DATA->ADDR_206A));
+                $this->checkAndUpdateCmd('IHeuresAlimElec', self::convertTimeToDec($DATA->DATA->ADDR_206A));
             }
             $DATA = $this->makeRequest('EXT+ADRD+2070+1');
             if ($DATA) {
-                $this->checkAndUpdateCmd('IHeuresChauffe', str_replace(':', '.', $DATA->DATA->ADDR_2070));
+                $this->checkAndUpdateCmd('IHeuresChauffe', self::convertTimeToDec($DATA->DATA->ADDR_2070));
             }
             $DATA = $this->makeRequest('EXT+ADRD+207A+1');
             if ($DATA) {
-                $this->checkAndUpdateCmd('IHeuresSurChauffe', str_replace(':', '.', $DATA->DATA->ADDR_207A));
+                $this->checkAndUpdateCmd('IHeuresSurChauffe', self::convertTimeToDec($DATA->DATA->ADDR_207A));
             }
             $DATA = $this->makeRequest('EXT+ADRD+2076+1');
             if ($DATA) {
-                $this->checkAndUpdateCmd('IHeuresDepuisEntretien', str_replace(':', '.', $DATA->DATA->ADDR_2076));
+                $this->checkAndUpdateCmd('IHeuresDepuisEntretien', self::convertTimeToDec($DATA->DATA->ADDR_2076));
             }
         }
 
@@ -695,13 +695,9 @@ class Palazzetti extends eqLogic
         log::add(__CLASS__, 'debug', __('Fin', __FILE__) . ' : ' . __FUNCTION__);
     }
 
-    public function updateCmd($_logicalId, $_value)
-    {
-        $cmd = $this->getCmd(null, $_logicalId);
-        if (is_object($cmd)) {
-            $cmd->event($_value);
-            $cmd->save();
-        }
+    public static function convertTimeToDec($_time) {
+        $time = explode(':', $_time);
+        return floatval($time[0] .'.'. round($time[1]/0.60));
     }
 }
 
