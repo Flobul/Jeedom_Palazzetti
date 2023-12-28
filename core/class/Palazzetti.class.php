@@ -123,17 +123,17 @@ class Palazzetti extends eqLogic
     public function loadCmdFromConf($type)
     {
         if (!is_file(dirname(__FILE__) . '/../../core/config/' . $type . '.json')) {
-            log::add(__CLASS__, 'debug', 'Fichier introuvable : ' . dirname(__FILE__) . '/config/' . $type . '.json');
+            log::add(__CLASS__, 'debug', __('Fichier introuvable : ', __FILE__) . dirname(__FILE__) . '/config/' . $type . '.json');
             return false;
         }
         $content = file_get_contents(dirname(__FILE__) . '/../../core/config/' . $type . '.json');
         if (!is_json($content)) {
-            log::add(__CLASS__, 'debug', 'JSON invalide : ' . $type . '.json');
+            log::add(__CLASS__, 'debug', __('JSON invalide : ', __FILE__) . $type . '.json');
             return false;
         }
         $device = json_decode($content, true);
         if (!is_array($device) || !isset($device)) {
-            log::add(__CLASS__, 'debug', 'Tableau incorrect : ' . $type . '.json');
+            log::add(__CLASS__, 'debug', __('Tableau incorrect : ', __FILE__) . $type . '.json');
             return false;
         }
         return $device;
@@ -150,24 +150,27 @@ class Palazzetti extends eqLogic
             $return = $request_http->exec($_timeout, 2);
         } catch (Exception $e) {
             if ($e->getCode() == 404) {
-                log::add(__CLASS__, 'debug', __FUNCTION__.' - '. $e->getCode() . ' erreur connexion : ' . $e->getMessage());
+                log::add(__CLASS__, 'debug', __FUNCTION__.' - '. $e->getCode() . __(' erreur de connexion : ', __FILE__) . $e->getMessage());
                 //throw $e;
             }
-            log::add(__CLASS__, 'debug', __FUNCTION__.' - '. $e->getCode() . ' probleme connexion : ' . $e->getMessage());
+            log::add(__CLASS__, 'debug', __FUNCTION__.' - '. $e->getCode() . __(' problème de connexion : ', __FILE__) . $e->getMessage());
             return false;
         }
 
         $return = json_decode($return);
-        if ($return->INFO->RSP && $return->INFO->RSP == 'OK') {
-          // {"INFO":{"CMD":"UNKNOWN","MSG":"No valid request received"},"SUCCESS":false,"DATA":{"NODATA":true}}
-            log::add(__CLASS__, 'debug', __FUNCTION__ . ' - ' . 'get result ' . json_encode($return));
-            return $return;
-
+        if ($return->INFO->RSP) {
+            if ($return->INFO->RSP == 'OK') {
+                log::add(__CLASS__, 'debug', __FUNCTION__ . __(' - resultat : ', __FILE__) . json_encode($return));
+                return $return;
+            } elseif($return->INFO->RSP == 'TIMEOUT') {
+                log::add(__CLASS__, 'debug', __FUNCTION__ . ' - timeout : ' . json_encode($return));
+                return $return;
+            }
         } elseif ($return->PARM || $return->HPAR) {
-            log::add(__CLASS__, 'debug', __FUNCTION__ . ' - ' . 'get result PARM || HPAR ' . json_encode($return));
+            log::add(__CLASS__, 'debug', __FUNCTION__ . __(' - resultat PARM || HPAR : ', __FILE__) . json_encode($return));
             return $return;
         } else {
-            log::add(__CLASS__, 'debug', __FUNCTION__.' - '. ' erreur résultat : ' . $cmd . ' - valeur : ' . json_encode($return));
+            log::add(__CLASS__, 'debug', __FUNCTION__ . __(' - erreur : ', __FILE__) . $cmd . __(' - valeur : ', __FILE__) . json_encode($return));
             return false;
         }
     }
@@ -286,8 +289,8 @@ class Palazzetti extends eqLogic
             } else {
                 $cmdString = $cmdString . $_options;
             }
-            log::add(__CLASS__, 'debug', '(' . __LINE__ . ') ' . __FUNCTION__ . ' - ' . ' commande ' . $cmdString);
-            log::add(__CLASS__, 'debug', '(' . __LINE__ . ') ' . __FUNCTION__ . ' - ' . ' commande ' . json_encode($_options));
+            log::add(__CLASS__, 'debug', '(' . __LINE__ . ') ' . __FUNCTION__ . __(' - commande ', __FILE__) . $cmdString);
+            log::add(__CLASS__, 'debug', '(' . __LINE__ . ') ' . __FUNCTION__ . __(' - commande ', __FILE__) . json_encode($_options));
         }
         $DATA = $this->makeRequest($cmdString, 6);
 
@@ -296,7 +299,7 @@ class Palazzetti extends eqLogic
         }
         // verification succes du traitement
         if ($DATA->INFO->RSP != 'OK') {
-            log::add(__CLASS__, 'error', '(' . __LINE__ . ') ' . __FUNCTION__ . ' - ' . ' erreur ' . $CMD . ' : ' . $DATA->INFO->RSP);
+            log::add(__CLASS__, 'error', '(' . __LINE__ . ') ' . __FUNCTION__ . __(' - erreur ', __FILE__) . $CMD . ' : ' . $DATA->INFO->RSP);
             return false;
         }
         // definition patern de comparaison
@@ -708,13 +711,13 @@ class PalazzettiCmd extends cmd
     {
         $eqLogic = $this->getEqLogic();
 
-        log::add('Palazzetti', 'debug', '(' . __LINE__ . ') ' . __FUNCTION__ . ' - ' . 'options ' . json_encode($this->getConfiguration('options')));
-        log::add('Palazzetti', 'debug', '(' . __LINE__ . ') ' . __FUNCTION__ . ' - ' . '$_options ' . json_encode($_options));
+        log::add('Palazzetti', 'debug', __FUNCTION__ . ' options ' . json_encode($this->getConfiguration('options')));
+        log::add('Palazzetti', 'debug', __FUNCTION__ . ' $options ' . json_encode($_options));
         if ($this->getLogicalId('') == 'refresh') {
             $eqLogic->getInformations();
         } else {
             $return = $eqLogic->sendCommand($this, $_options);
-            log::add('Palazzetti', 'debug', '(' . __LINE__ . ') ' . __FUNCTION__ . ' - ' . 'resultat ' . $return);
+            log::add('Palazzetti', 'debug', __FUNCTION__ . __(' resultat ', __FILE__) . $return);
         }
     }
 }
