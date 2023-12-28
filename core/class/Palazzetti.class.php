@@ -273,7 +273,7 @@ class Palazzetti extends eqLogic
                     $cmdString = $cmdString . $_options['jour'] . '+' . $_options['tranche'] . '+' . $_options['programme'];
                 } elseif (isset($_options['numero']) && isset($_options['temperature']) && isset($_options['h1']) && isset($_options['m1']) && isset($_options['h2']) && isset($_options['m2'])) {
                     $cmdString = $cmdString . $_options['numero'] . '+' . $_options['temperature'] . '+' . $_options['h1'] . '+' . $_options['m1'] . '+' . $_options['h2'] . '+' . $_options['m2'];
-                } elseif (isset($_options['slider'])) {
+                } elseif (isset($_options['slider']) && $_options['slider'] != '') {
                     $cmdString = $cmdString . $_options['slider'];
                 }
             } else {
