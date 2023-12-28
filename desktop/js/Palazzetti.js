@@ -50,6 +50,7 @@ function addCmdToTable(_cmd) {
     var tr = '<tr class="cmd" data-cmd_id="' + init(_cmd.id) + '">';
     tr += '<td class="hidden-xs">';
     tr += '<span class="cmdAttr" data-l1key="id"></span>';
+    tr += '<span class="cmdAttr" data-l1key="logicalId" style="display:none;"></span>';
     tr += '</td>';
 
     tr += '<td>';
@@ -80,6 +81,11 @@ function addCmdToTable(_cmd) {
         tr += '<input class="tooltips cmdAttr form-control input-sm" data-l1key="unite" placeholder="Unité" title="{{Unité}}" style="width:30%;max-width:80px;display:inline-block;margin-right:2px;">';
         tr += '</div>';
     }
+    if (['select', 'slider', 'color', 'other'].includes(init(_cmd.subType)) || init(_cmd.configuration.updateLogicalId) != '') {
+        tr += '    <select class="cmdAttr form-control input-sm" data-l1key="configuration" data-l2key="updateLogicalId" title="{{Commande d\'information à mettre à jour}}">';
+        tr += '        <option value="">{{Aucune}}</option>';
+        tr += '    </select>';
+    }
     tr += '</td>';
     tr += '<td>';
     tr += '<span class="cmdAttr" data-l1key="htmlstate"><span class="cmdTableState tooltipstered" data-cmd_id="' + init(_cmd.id) + '"> <span></span></span></span>';
@@ -96,8 +102,8 @@ function addCmdToTable(_cmd) {
     tr += '</tr>';
     $('#table_cmd tbody').append(tr);
     var tr = $('#table_cmd tbody tr:last');
-    jeedom.eqLogic.buildSelectCmd({
-        id: $(".li_eqLogic.active").attr('data-eqLogic_id'),
+    buildPalaSelectCmd({
+        id: $('.eqLogicAttr[data-l1key=id]').value(),
         filter: {
             type: 'info'
         },
@@ -108,8 +114,42 @@ function addCmdToTable(_cmd) {
             });
         },
         success: function (result) {
+            tr.find('.cmdAttr[data-l1key=value]').append(result);
+            tr.find('.cmdAttr[data-l1key=configuration][data-l2key=updateLogicalId]').append(result);
             tr.setValues(_cmd, '.cmdAttr');
             jeedom.cmd.changeType(tr, init(_cmd.subType));
         }
     });
+}
+buildPalaSelectCmd = function(_params) {
+  if (!isset(_params.filter)) {
+    _params.filter = {}
+  }
+  jeedom.eqLogic.getCmd({
+    id: _params.id,
+    async: false,
+    success: function(cmds) {
+      var result = ''
+      for (var i in cmds) {
+        if ((init(_params.filter.type, 'all') == 'all' || cmds[i].type == _params.filter.type) &&
+          (init(_params.filter.subType, 'all') == 'all' || cmds[i].subType == _params.filter.subType) &&
+          (init(_params.filter.isHistorized, 'all') == 'all' || cmds[i].isHistorized == _params.filter.isHistorized)
+        ) {
+          result += '<option value="' + cmds[i].logicalId + '" data-type="' + cmds[i].type + '"  data-subType="' + cmds[i].subType + '" >' + cmds[i].name + '</option>'
+        }
+      }
+      if ('function' == typeof (_params.success)) {
+        _params.success(result)
+      }
+    }
+  })
+}
+
+saveEqLogic = function(_eqLogic) {
+    _eqLogic.cmd.forEach(cmd => {
+      if (cmd.logicalId == '') {
+	    cmd.logicalId = cmd.configuration.actionCmd;
+      }
+    });
+	return _eqLogic;
 }
