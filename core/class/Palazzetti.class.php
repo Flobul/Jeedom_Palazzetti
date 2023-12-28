@@ -392,6 +392,9 @@ class Palazzetti extends eqLogic
                 $value = $DATA->DATA->{'ADDR_' . $expl[2]};
                 log::add(__CLASS__, 'debug', '(' . __LINE__ . ') ' . __FUNCTION__ . ' - ' . 'reponse ' . $value);
                 break;
+            default:
+                $value = json_encode($DATA->DATA);
+                break;
         }
 
         // mise a jour variables info
