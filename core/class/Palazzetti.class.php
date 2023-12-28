@@ -629,6 +629,7 @@ class Palazzetti extends eqLogic
                     $toSave = true;
                 }
                 if ($toSave) {
+                    $eqLogic->setConfiguration('isWirelessPalaControl', true);
                     $eqLogic->save();
                     return true;
                 }
@@ -650,13 +651,6 @@ class Palazzetti extends eqLogic
         $DATA = $this->makeRequest('GET+STDT');
         if ($DATA) {
             $this->checkAndUpdateCmd('IName', $DATA->DATA->LABEL);
-            if ($DATA->DATA->LABEL == 'WPalaControl' ||
-               ($DATA->DATA->CBTYPE == 'miniembplug' &&
-                $DATA->DATA->sendmsg == '2.1.2 2018-03-28 10:19:09' &&
-                $DATA->DATA->plzbridge == '2.2.1 2021-10-08 09:30:45' &&
-                $DATA->DATA->SYSTEM == '2.5.3 2021-10-08 10:30:20 (657c8cf)')) {
-                $this->setConfiguration('isWirelessPalaControl', true);
-            }
             $this->checkAndUpdateCmd('INetwork', json_encode($DATA->DATA));
         }
 
