@@ -1,641 +1,691 @@
-[{
-  "name": "Heure du po\u00eale",
-  "configuration": {
-    "actionCmd": "",
-    "updateLogicalId": ""
-  },
-  "logicalId": "ITime",
-  "type": "info",
-  "subType": "string",
-  "unite": "",
-  "isHistorized": 0,
-  "isVisible": 1
-}, {
-  "name": "Lire horodatage",
-  "configuration": {
-    "actionCmd": "GET+TIME",
-    "updateLogicalId": "ITime"
-  },
-  "logicalId": "RTime",
-  "type": "action",
-  "subType": "other",
-  "unite": "",
-  "isHistorized": 0,
-  "isVisible": 0
-}, {
-  "name": "Informations",
-  "configuration": {
-    "actionCmd": "",
-    "updateLogicalId": ""
-  },
-  "logicalId": "ISnap",
-  "type": "info",
-  "subType": "string",
-  "unite": "",
-  "isHistorized": 0,
-  "isVisible": 1
-}, {
-  "name": "R\u00e9seau",
-  "configuration": {
-    "actionCmd": "",
-    "updateLogicalId": ""
-  },
-  "logicalId": "INetwork",
-  "type": "info",
-  "subType": "string",
-  "unite": "",
-  "isHistorized": 0,
-  "isVisible": 1
-}, {
-  "name": "Allumage po\u00eale",
-  "configuration": {
-    "actionCmd": "CMD+ON",
-    "updateLogicalId": "IStatus"
-  },
-  "logicalId": "WOn",
-  "type": "action",
-  "subType": "other",
-  "unite": "",
-  "isHistorized": 0,
-  "isVisible": 1
-}, {
-  "name": "Extinction po\u00eale",
-  "configuration": {
-    "actionCmd": "CMD+OFF",
-    "updateLogicalId": "IStatus"
-  },
-  "logicalId": "WOff",
-  "type": "action",
-  "subType": "other",
-  "unite": "",
-  "isHistorized": 0,
-  "isVisible": 1
-}, {
-  "name": "Lecture \u00e9tat po\u00eale",
-  "configuration": {
-    "actionCmd": "GET+STAT",
-    "updateLogicalId": "IStatus"
-  },
-  "logicalId": "RStatus",
-  "type": "action",
-  "subType": "other",
-  "unite": "",
-  "isHistorized": 0,
-  "isVisible": 0
-}, {
-  "name": "Etat du po\u00eale",
-  "configuration": {
-    "actionCmd": "",
-    "updateLogicalId": ""
-  },
-  "logicalId": "IStatus",
-  "type": "info",
-  "subType": "string",
-  "unite": "",
-  "isHistorized": 0,
-  "isVisible": 1
-}, {
-  "name": "Nom",
-  "configuration": {
-    "actionCmd": "",
-    "updateLogicalId": ""
-  },
-  "logicalId": "IName",
-  "type": "info",
-  "subType": "string",
-  "isHistorized": 0,
-  "isVisible": 1
-}, {
-  "name": "Ecrire nom",
-  "configuration": {
-    "actionCmd": "SET+LABL+",
-    "updateLogicalId": "IName"
-  },
-  "logicalId": "WName",
-  "type": "action",
-  "subType": "other",
-  "isHistorized": 0,
-  "isVisible": 0
-}, {
-  "name": "Lire nom",
-  "configuration": {
-    "actionCmd": "GET+LABL",
-    "updateLogicalId": "IName"
-  },
-  "logicalId": "RName",
-  "type": "action",
-  "subType": "other",
-  "isHistorized": 0,
-  "isVisible": 0
-}, {
-  "name": "Ecrire force du feu",
-  "configuration": {
-    "actionCmd": "SET+POWR+",
-    "updateLogicalId": "IPower",
-    "nparams": 1,
-    "parameters": "#slider#",
-    "minValue": 1,
-    "maxValue": 5
-  },
-  "logicalId": "WPower",
-  "type": "action",
-  "subType": "slider",
-  "isHistorized": 0,
-  "isVisible": 0
-}, {
-  "name": "Force du feu",
-  "configuration": {
-    "actionCmd": "",
-    "updateLogicalId": "",
-    "nparams": 0,
-    "parameters": "",
-    "minValue": 1,
-    "maxValue": 5
-  },
-  "logicalId": "IPower",
-  "type": "info",
-  "subType": "string",
-  "isHistorized": 1,
-  "isVisible": 1
-}, {
-  "name": "Ecrire temp\u00e9rature de consigne",
-  "configuration": {
-    "actionCmd": "SET+SETP+",
-    "updateLogicalId": "IConsigne",
-    "nparams": 1,
-    "parameters": "#slider#",
-    "minValue": 0,
-    "maxValue": 40
-  },
-  "logicalId": "WConsigne",
-  "type": "action",
-  "subType": "slider",
-  "isHistorized": 0,
-  "isVisible": 0
-}, {
-  "name": "Lire temp\u00e9rature de consigne",
-  "configuration": {
-    "actionCmd": "GET+SETP",
-    "updateLogicalId": "IConsigne",
-    "nparams": 0,
-    "parameters": ""
-  },
-  "logicalId": "RConsigne",
-  "type": "action",
-  "subType": "other",
-  "isHistorized": 0,
-  "isVisible": 0
-}, {
-  "name": "Ecriture force ventilateur",
-  "configuration": {
-    "actionCmd": "SET+RFAN+",
-    "updateLogicalId": "IFan",
-    "nparams": 1,
-    "parameters": "#slider#",
-    "minValue": 0,
-    "maxValue": 5
-  },
-  "logicalId": "WFan",
-  "type": "action",
-  "subType": "slider",
-  "isHistorized": 0,
-  "isVisible": 0
-}, {
-  "name": "Lire force ventilateur",
-  "configuration": {
-    "actionCmd": "GET+FAND",
-    "updateLogicalId": "IFan",
-    "nparams": 0,
-    "parameters": ""
-  },
-  "logicalId": "RFan",
-  "type": "action",
-  "subType": "other",
-  "isHistorized": 0,
-  "isVisible": 0
-}, {
-  "name": "Force ventilateur",
-  "configuration": {
-    "actionCmd": "",
-    "updateLogicalId": "",
-    "nparams": 0
-  },
-  "logicalId": "IFan",
-  "type": "info",
-  "subType": "string",
-  "unite": "",
-  "isHistorized": 1,
-  "isVisible": 1
-}, {
-  "name": "Ecriture force ventilateur F3L",
-  "configuration": {
-    "actionCmd": "SET+FN3L+",
-    "updateLogicalId": "IFanF3L",
-    "nparams": 1,
-    "parameters": "#slider#",
-    "minValue": 0,
-    "maxValue": 1
-  },
-  "logicalId": "WFanF3L",
-  "type": "action",
-  "subType": "slider",
-  "isHistorized": 0,
-  "isVisible": 0
-}, {
-  "name": "Lire force ventilateur F3L",
-  "configuration": {
-    "actionCmd": "GET+ALLS",
-    "updateLogicalId": "IFanF3L",
-    "nparams": 0
-  },
-  "logicalId": "RFanF3L",
-  "type": "action",
-  "subType": "other",
-  "unite": "",
-  "isHistorized": 0,
-  "isVisible": 0
-}, {
-  "name": "Force ventilateur F3L",
-  "configuration": {
-    "actionCmd": "",
-    "updateLogicalId": "",
-    "nparams": 0
-  },
-  "logicalId": "IFanF3L",
-  "type": "info",
-  "subType": "string",
-  "unite": "",
-  "isHistorized": 0,
-  "isVisible": 1
-}, {
-  "name": "Ecriture force ventilateur F4L",
-  "configuration": {
-    "actionCmd": "SET+FN4L+",
-    "updateLogicalId": "IFanF4L",
-    "nparams": 1,
-    "parameters": "#slider#",
-    "minValue": "0",
-    "maxValue": "1"
-  },
-  "logicalId": "WFanF4L",
-  "type": "action",
-  "subType": "slider",
-  "isHistorized": 0,
-  "isVisible": 0
-}, {
-  "name": "Lire force ventilateur F4L",
-  "configuration": {
-      "actionCmd": "GET+ALLS",
-      "updateLogicalId": "IFanF4L",
-      "nparams": 0
-  },
-  "logicalId": "RFanF4L",
-  "type": "action",
-  "subType": "other",
-  "isHistorized": 0,
-  "isVisible": 0
-}, {
-  "name": "Force ventilateur F4L",
-  "configuration": {
-    "actionCmd": "",
-    "updateLogicalId": "",
-    "nparams": 0
-  },
-  "logicalId": "IFanF4L",
-  "type": "info",
-  "subType": "string",
-  "isHistorized": 0,
-  "isVisible": 1
-}, {
-  "name": "Lire temp\u00e9ratures",
-  "configuration": {
-    "actionCmd": "GET+TMPS",
-    "updateLogicalId": "ITemp",
-    "nparams": 0
-  },
-  "logicalId": "RTemp",
-  "type": "action",
-  "subType": "other",
-  "unite": "°C",
-  "isHistorized": 0,
-  "isVisible": 0
-}, {
-  "name": "On\/Off Programmes horaires",
-  "configuration": {
-    "actionCmd": "SET+CSST+",
-    "updateLogicalId": "",
-    "nparams": 0
-  },
-  "logicalId": "WPH",
-  "type": "action",
-  "subType": "other",
-  "isHistorized": 0,
-  "isVisible": 1
-}, {
-  "name": "Lecture programmes horaires",
-  "configuration": {
-    "actionCmd": "GET+CHRD",
-    "updateLogicalId": "IPH",
-    "nparams": 0
-  },
-  "logicalId": "RPH",
-  "type": "action",
-  "subType": "other",
-  "unite": "",
-  "isHistorized": 0,
-  "isVisible": 0
-}, {
-  "name": "Programmes horaires",
-  "configuration": {
-    "actionCmd": "",
-    "updateLogicalId": "",
-    "nparams": 0
-  },
-  "logicalId": "IPH",
-  "type": "info",
-  "subType": "string",
-  "isHistorized": 0,
-  "isVisible": 1
-}, {
-  "name": "Affectation programme horaire",
-  "configuration": {
-    "actionCmd": "SET+CDAY+",
-    "updateLogicalId": "",
-    "nparams": 0
-  },
-  "logicalId": "WPHtoDay",
-  "type": "action",
-  "subType": "other",
-  "unite": "",
-  "isHistorized": 0,
-  "isVisible": 1
-}, {
-  "name": "Configuration tranche horaire",
-  "configuration": {
-    "actionCmd": "SET+CPRD+",
-    "updateLogicalId": "",
-    "nparams": 0
-  },
-  "logicalId": "WPHtranche",
-  "type": "action",
-  "subType": "other",
-  "isHistorized": 0,
-  "isVisible": 1
-}, {
-  "name": "Lecture nombre d'allumages",
-  "configuration": {
-    "actionCmd": "EXT+ADRD+2066+1",
-    "updateLogicalId": "INbAllumage",
-    "nparams": 0
-  },
-  "logicalId": "RNbAllumage",
-  "type": "action",
-  "subType": "other",
-  "isHistorized": 0,
-  "isVisible": 0
-}, {
-  "name": "Nombre d'allumages",
-  "configuration": {
-    "actionCmd": "",
-    "updateLogicalId": "",
-    "nparams": 0,
-    "parameters": "",
-    "minValue": 0,
-    "maxValue": ""
-  },
-  "logicalId": "INbAllumage",
-  "type": "info",
-  "subType": "numeric",
-  "isHistorized": 0,
-  "isVisible": 1
-}, {
-  "name": "Lecture nombre d'allumages \u00e9chou\u00e9s",
-  "configuration": {
-    "actionCmd": "EXT+ADRD+207C+1",
-    "updateLogicalId": "INbAllumageFailed",
-    "nparams": 0
-  },
-  "logicalId": "RNbAllumageFailed",
-  "type": "action",
-  "subType": "other",
-  "isHistorized": 0,
-  "isVisible": 0
-}, {
-  "name": "Lecture de tous les compteurs",
-  "configuration": {
-    "actionCmd": "GET+CNTR",
-    "updateLogicalId": "",
-    "nparams": 0
-  },
-  "logicalId": "RAllCounters",
-  "type": "action",
-  "subType": "other",
-  "isHistorized": 0,
-  "isVisible": 0
-}, {
-  "name": "Nombre d'allumages \u00e9chou\u00e9s",
-  "configuration": {
-    "actionCmd": "",
-    "updateLogicalId": "",
-    "nparams": 0,
-    "parameters": "",
-    "minValue": 0,
-    "maxValue": ""
-  },
-  "logicalId": "INbAllumageFailed",
-  "type": "info",
-  "subType": "numeric",
-  "isHistorized": 0,
-  "isVisible": 1
-}, {
-  "name": "Lecture heures alimentation \u00e9lectrique",
-  "configuration": {
-    "actionCmd": "EXT+ADRD+206A+1",
-    "updateLogicalId": "IHeuresAlimElec",
-    "nparams": 0
-  },
-  "logicalId": "RHeuresAlimElec",
-  "type": "action",
-  "subType": "other",
-  "isHistorized": 0,
-  "isVisible": 0
-}, {
-  "name": "Nombre d'heures alimentation \u00e9lectrique",
-  "configuration": {
-    "actionCmd": "",
-    "updateLogicalId": "",
-    "nparams": 0,
-    "parameters": "",
-    "minValue": 0,
-    "maxValue": ""
-  },
-  "logicalId": "IHeuresAlimElec",
-  "type": "info",
-  "subType": "numeric",
-  "unite": "h",
-  "isHistorized": 0,
-  "isVisible": 1
-}, {
-  "name": "Lecture heures de chauffe",
-  "configuration": {
-    "actionCmd": "EXT+ADRD+2070+1",
-    "updateLogicalId": "IHeuresChauffe",
-    "nparams": 0
-  },
-  "logicalId": "RHeuresChauffe",
-  "type": "action",
-  "subType": "other",
-  "isHistorized": 0,
-  "isVisible": 0
-}, {
-  "name": "Nombre d'heures de chauffe",
-  "configuration": {
-    "actionCmd": "",
-    "updateLogicalId": "",
-    "nparams": 0,
-    "parameters": "",
-    "minValue": 0,
-    "maxValue": ""
-  },
-  "logicalId": "IHeuresChauffe",
-  "type": "info",
-  "subType": "numeric",
-  "unite": "h",
-  "isHistorized": 0,
-  "isVisible": 1
-}, {
-  "name": "Lecture heures de surchauffe",
-  "configuration": {
-    "actionCmd": "EXT+ADRD+207A+1",
-    "updateLogicalId": "IHeuresSurChauffe",
-    "nparams": 0
-  },
-  "logicalId": "RHeuresSurChauffe",
-  "type": "action",
-  "subType": "other",
-  "isHistorized": 0,
-  "isVisible": 0
-}, {
-  "name": "Nombre d'heures de surchauffe",
-  "configuration": {
-    "actionCmd": "",
-    "updateLogicalId": "",
-    "nparams": 0,
-    "parameters": "",
-    "minValue": 0,
-    "maxValue": ""
-  },
-  "logicalId": "IHeuresSurChauffe",
-  "type": "info",
-  "subType": "numeric",
-  "unite": "h",
-  "isHistorized": 0,
-  "isVisible": 1
-}, {
-  "name": "Lecture heures depuis entretien",
-  "configuration": {
-    "actionCmd": "EXT+ADRD+2076+1",
-    "updateLogicalId": "IHeuresDepuisEntretien",
-    "nparams": 0
-  },
-  "logicalId": "RHeuresDepuisEntretien",
-  "type": "action",
-  "subType": "other",
-  "unite": "",
-  "isHistorized": 0,
-  "isVisible": 0
-}, {
-  "name": "Nombre d'heures depuis entretien",
-  "configuration": {
-    "actionCmd": "",
-    "updateLogicalId": "",
-    "nparams": 0,
-    "parameters": "",
-    "minValue": 0,
-    "maxValue": ""
-  },
-  "logicalId": "IHeuresDepuisEntretien",
-  "type": "info",
-  "subType": "numeric",
-  "unite": "h",
-  "isHistorized": 0,
-  "isVisible": 1
-}, {
-  "name": "Temp\u00e9rature ambiance",
-  "configuration": {
-    "actionCmd": "",
-    "updateLogicalId": "",
-    "nparams": 0,
-    "parameters": "",
-    "minValue": 10,
-    "maxValue": 48
-  },
-  "logicalId": "ITemp",
-  "type": "info",
-  "subType": "numeric",
-  "unite": "°C",
-  "isHistorized": 1,
-  "isVisible": 1
-}, {
-  "name": "Temp\u00e9rature granul\u00e9s",
-  "configuration": {
-    "actionCmd": "",
-    "updateLogicalId": "",
-    "nparams": 0
-  },
-  "logicalId": "ITemp2",
-  "type": "info",
-  "subType": "numeric",
-  "unite": "°C",
-  "isHistorized": 1,
-  "isVisible": 1
-}, {
-  "name": "Temp\u00e9rature combustion",
-  "configuration": {
-    "actionCmd": "",
-    "updateLogicalId": "",
-    "nparams": 0
-  },
-  "logicalId": "ITemp3",
-  "type": "info",
-  "subType": "numeric",
-  "unite": "°C",
-  "isHistorized": 1,
-  "isVisible": 1
-}, {
-  "name": "Temp\u00e9rature de consigne",
-  "configuration": {
-    "actionCmd": "",
-    "updateLogicalId": "",
-    "nparams": 0
-  },
-  "logicalId": "IConsigne",
-  "type": "info",
-  "subType": "numeric",
-  "unite": "°C",
-  "isHistorized": 1,
-  "isVisible": 1
-}, {
-  "name": "Quantit\u00e9 de pellets",
-  "configuration": {
-    "actionCmd": "",
-    "updateLogicalId": "",
-    "nparams": 0,
-    "parameters": "",
-    "minValue": 0,
-    "maxValue": ""
-  },
-  "logicalId": "IQuantite",
-  "type": "info",
-  "subType": "numeric",
-  "unite": "kg",
-  "isHistorized": 1,
-  "isVisible": 1
-}, {
-  "name": "Rafraîchir",
-  "logicalId": "refresh",
-  "type": "action",
-  "subType": "other",
-  "isHistorized": 1,
-  "isVisible": 1
-}]
+[
+    {
+        "name": "Heure du po\u00eale",
+        "configuration": {
+            "actionCmd": "",
+            "updateLogicalId": ""
+        },
+        "logicalId": "ITime",
+        "type": "info",
+        "subType": "string",
+        "unite": "",
+        "isHistorized": 0,
+        "isVisible": 1
+    },
+    {
+        "name": "Lire horodatage",
+        "configuration": {
+            "actionCmd": "GET+TIME",
+            "updateLogicalId": "ITime"
+        },
+        "logicalId": "RTime",
+        "type": "action",
+        "subType": "other",
+        "unite": "",
+        "isHistorized": 0,
+        "isVisible": 0
+    },
+    {
+        "name": "Informations",
+        "configuration": {
+            "actionCmd": "",
+            "updateLogicalId": ""
+        },
+        "logicalId": "ISnap",
+        "type": "info",
+        "subType": "string",
+        "unite": "",
+        "isHistorized": 0,
+        "isVisible": 1
+    },
+    {
+        "name": "R\u00e9seau",
+        "configuration": {
+            "actionCmd": "",
+            "updateLogicalId": ""
+        },
+        "logicalId": "INetwork",
+        "type": "info",
+        "subType": "string",
+        "unite": "",
+        "isHistorized": 0,
+        "isVisible": 1
+    },
+    {
+        "name": "Allumage po\u00eale",
+        "configuration": {
+            "actionCmd": "CMD+ON",
+            "updateLogicalId": "IStatus"
+        },
+        "logicalId": "WOn",
+        "type": "action",
+        "subType": "other",
+        "unite": "",
+        "isHistorized": 0,
+        "isVisible": 1
+    },
+    {
+        "name": "Extinction po\u00eale",
+        "configuration": {
+            "actionCmd": "CMD+OFF",
+            "updateLogicalId": "IStatus"
+        },
+        "logicalId": "WOff",
+        "type": "action",
+        "subType": "other",
+        "unite": "",
+        "isHistorized": 0,
+        "isVisible": 1
+    },
+    {
+        "name": "Lecture \u00e9tat po\u00eale",
+        "configuration": {
+            "actionCmd": "GET+STAT",
+            "updateLogicalId": "IStatus"
+        },
+        "logicalId": "RStatus",
+        "type": "action",
+        "subType": "other",
+        "unite": "",
+        "isHistorized": 0,
+        "isVisible": 0
+    },
+    {
+        "name": "Etat du po\u00eale",
+        "configuration": {
+            "actionCmd": "",
+            "updateLogicalId": ""
+        },
+        "logicalId": "IStatus",
+        "type": "info",
+        "subType": "string",
+        "unite": "",
+        "isHistorized": 0,
+        "isVisible": 1
+    },
+    {
+        "name": "Nom",
+        "configuration": {
+            "actionCmd": "",
+            "updateLogicalId": ""
+        },
+        "logicalId": "IName",
+        "type": "info",
+        "subType": "string",
+        "isHistorized": 0,
+        "isVisible": 1
+    },
+    {
+        "name": "Ecrire nom",
+        "configuration": {
+            "actionCmd": "SET+LABL+",
+            "updateLogicalId": "IName"
+        },
+        "logicalId": "WName",
+        "type": "action",
+        "subType": "other",
+        "isHistorized": 0,
+        "isVisible": 0
+    },
+    {
+        "name": "Lire nom",
+        "configuration": {
+            "actionCmd": "GET+LABL",
+            "updateLogicalId": "IName"
+        },
+        "logicalId": "RName",
+        "type": "action",
+        "subType": "other",
+        "isHistorized": 0,
+        "isVisible": 0
+    },
+    {
+        "name": "Ecrire force du feu",
+        "configuration": {
+            "actionCmd": "SET+POWR+",
+            "updateLogicalId": "IPower",
+            "nparams": 1,
+            "parameters": "#slider#",
+            "minValue": 1,
+            "maxValue": 5
+        },
+        "logicalId": "WPower",
+        "type": "action",
+        "subType": "slider",
+        "isHistorized": 0,
+        "isVisible": 0
+    },
+    {
+        "name": "Force du feu",
+        "configuration": {
+            "actionCmd": "",
+            "updateLogicalId": "",
+            "nparams": 0,
+            "parameters": "",
+            "minValue": 1,
+            "maxValue": 5
+        },
+        "logicalId": "IPower",
+        "type": "info",
+        "subType": "string",
+        "isHistorized": 1,
+        "isVisible": 1
+    },
+    {
+        "name": "Ecrire temp\u00e9rature de consigne",
+        "configuration": {
+            "actionCmd": "SET+SETP+",
+            "updateLogicalId": "IConsigne",
+            "nparams": 1,
+            "parameters": "#slider#",
+            "minValue": 0,
+            "maxValue": 40
+        },
+        "logicalId": "WConsigne",
+        "type": "action",
+        "subType": "slider",
+        "isHistorized": 0,
+        "isVisible": 0
+    },
+    {
+        "name": "Lire temp\u00e9rature de consigne",
+        "configuration": {
+            "actionCmd": "GET+SETP",
+            "updateLogicalId": "IConsigne",
+            "nparams": 0,
+            "parameters": ""
+        },
+        "logicalId": "RConsigne",
+        "type": "action",
+        "subType": "other",
+        "isHistorized": 0,
+        "isVisible": 0
+    },
+    {
+        "name": "Ecriture force ventilateur",
+        "configuration": {
+            "actionCmd": "SET+RFAN+",
+            "updateLogicalId": "IFan",
+            "nparams": 1,
+            "parameters": "#slider#",
+            "minValue": 0,
+            "maxValue": 5
+        },
+        "logicalId": "WFan",
+        "type": "action",
+        "subType": "slider",
+        "isHistorized": 0,
+        "isVisible": 0
+    },
+    {
+        "name": "Lire force ventilateur",
+        "configuration": {
+            "actionCmd": "GET+FAND",
+            "updateLogicalId": "IFan",
+            "nparams": 0,
+            "parameters": ""
+        },
+        "logicalId": "RFan",
+        "type": "action",
+        "subType": "other",
+        "isHistorized": 0,
+        "isVisible": 0
+    },
+    {
+        "name": "Force ventilateur",
+        "configuration": {
+            "actionCmd": "",
+            "updateLogicalId": "",
+            "nparams": 0
+        },
+        "logicalId": "IFan",
+        "type": "info",
+        "subType": "string",
+        "unite": "",
+        "isHistorized": 1,
+        "isVisible": 1
+    },
+    {
+        "name": "Ecriture force ventilateur F3L",
+        "configuration": {
+            "actionCmd": "SET+FN3L+",
+            "updateLogicalId": "IFanF3L",
+            "nparams": 1,
+            "parameters": "#slider#",
+            "minValue": 0,
+            "maxValue": 1
+        },
+        "logicalId": "WFanF3L",
+        "type": "action",
+        "subType": "slider",
+        "isHistorized": 0,
+        "isVisible": 0
+    },
+    {
+        "name": "Lire force ventilateur F3L",
+        "configuration": {
+            "actionCmd": "GET+ALLS",
+            "updateLogicalId": "IFanF3L",
+            "nparams": 0
+        },
+        "logicalId": "RFanF3L",
+        "type": "action",
+        "subType": "other",
+        "unite": "",
+        "isHistorized": 0,
+        "isVisible": 0
+    },
+    {
+        "name": "Force ventilateur F3L",
+        "configuration": {
+            "actionCmd": "",
+            "updateLogicalId": "",
+            "nparams": 0
+        },
+        "logicalId": "IFanF3L",
+        "type": "info",
+        "subType": "string",
+        "unite": "",
+        "isHistorized": 0,
+        "isVisible": 1
+    },
+    {
+        "name": "Ecriture force ventilateur F4L",
+        "configuration": {
+            "actionCmd": "SET+FN4L+",
+            "updateLogicalId": "IFanF4L",
+            "nparams": 1,
+            "parameters": "#slider#",
+            "minValue": "0",
+            "maxValue": "1"
+        },
+        "logicalId": "WFanF4L",
+        "type": "action",
+        "subType": "slider",
+        "isHistorized": 0,
+        "isVisible": 0
+    },
+    {
+        "name": "Lire force ventilateur F4L",
+        "configuration": {
+            "actionCmd": "GET+ALLS",
+            "updateLogicalId": "IFanF4L",
+            "nparams": 0
+        },
+        "logicalId": "RFanF4L",
+        "type": "action",
+        "subType": "other",
+        "isHistorized": 0,
+        "isVisible": 0
+    },
+    {
+        "name": "Force ventilateur F4L",
+        "configuration": {
+            "actionCmd": "",
+            "updateLogicalId": "",
+            "nparams": 0
+        },
+        "logicalId": "IFanF4L",
+        "type": "info",
+        "subType": "string",
+        "isHistorized": 0,
+        "isVisible": 1
+    },
+    {
+        "name": "Lire temp\u00e9ratures",
+        "configuration": {
+            "actionCmd": "GET+TMPS",
+            "updateLogicalId": "ITemp",
+            "nparams": 0
+        },
+        "logicalId": "RTemp",
+        "type": "action",
+        "subType": "other",
+        "unite": "°C",
+        "isHistorized": 0,
+        "isVisible": 0
+    },
+    {
+        "name": "On\/Off Programmes horaires",
+        "configuration": {
+            "actionCmd": "SET+CSST+",
+            "updateLogicalId": "",
+            "nparams": 0
+        },
+        "logicalId": "WPH",
+        "type": "action",
+        "subType": "other",
+        "isHistorized": 0,
+        "isVisible": 1
+    },
+    {
+        "name": "Lecture programmes horaires",
+        "configuration": {
+            "actionCmd": "GET+CHRD",
+            "updateLogicalId": "IPH",
+            "nparams": 0
+        },
+        "logicalId": "RPH",
+        "type": "action",
+        "subType": "other",
+        "unite": "",
+        "isHistorized": 0,
+        "isVisible": 0
+    },
+    {
+        "name": "Programmes horaires",
+        "configuration": {
+            "actionCmd": "",
+            "updateLogicalId": "",
+            "nparams": 0
+        },
+        "logicalId": "IPH",
+        "type": "info",
+        "subType": "string",
+        "isHistorized": 0,
+        "isVisible": 1
+    },
+    {
+        "name": "Affectation programme horaire",
+        "configuration": {
+            "actionCmd": "SET+CDAY+",
+            "updateLogicalId": "",
+            "nparams": 0
+        },
+        "logicalId": "WPHtoDay",
+        "type": "action",
+        "subType": "other",
+        "unite": "",
+        "isHistorized": 0,
+        "isVisible": 1
+    },
+    {
+        "name": "Configuration tranche horaire",
+        "configuration": {
+            "actionCmd": "SET+CPRD+",
+            "updateLogicalId": "",
+            "nparams": 0
+        },
+        "logicalId": "WPHtranche",
+        "type": "action",
+        "subType": "other",
+        "isHistorized": 0,
+        "isVisible": 1
+    },
+    {
+        "name": "Lecture nombre d'allumages",
+        "configuration": {
+            "actionCmd": "EXT+ADRD+2066+1",
+            "updateLogicalId": "INbAllumage",
+            "nparams": 0
+        },
+        "logicalId": "RNbAllumage",
+        "type": "action",
+        "subType": "other",
+        "isHistorized": 0,
+        "isVisible": 0
+    },
+    {
+        "name": "Nombre d'allumages",
+        "configuration": {
+            "actionCmd": "",
+            "updateLogicalId": "",
+            "nparams": 0,
+            "parameters": "",
+            "minValue": 0,
+            "maxValue": ""
+        },
+        "logicalId": "INbAllumage",
+        "type": "info",
+        "subType": "numeric",
+        "isHistorized": 1,
+        "isVisible": 1
+    },
+    {
+        "name": "Lecture nombre d'allumages \u00e9chou\u00e9s",
+        "configuration": {
+            "actionCmd": "EXT+ADRD+207C+1",
+            "updateLogicalId": "INbAllumageFailed",
+            "nparams": 0
+        },
+        "logicalId": "RNbAllumageFailed",
+        "type": "action",
+        "subType": "other",
+        "isHistorized": 0,
+        "isVisible": 0
+    },
+    {
+        "name": "Lecture de tous les compteurs",
+        "configuration": {
+            "actionCmd": "GET+CNTR",
+            "updateLogicalId": "",
+            "nparams": 0
+        },
+        "logicalId": "RAllCounters",
+        "type": "action",
+        "subType": "other",
+        "isHistorized": 0,
+        "isVisible": 0
+    },
+    {
+        "name": "Nombre d'allumages \u00e9chou\u00e9s",
+        "configuration": {
+            "actionCmd": "",
+            "updateLogicalId": "",
+            "nparams": 0,
+            "parameters": "",
+            "minValue": 0,
+            "maxValue": ""
+        },
+        "logicalId": "INbAllumageFailed",
+        "type": "info",
+        "subType": "numeric",
+        "isHistorized": 1,
+        "isVisible": 1
+    },
+    {
+        "name": "Lecture heures alimentation \u00e9lectrique",
+        "configuration": {
+            "actionCmd": "EXT+ADRD+206A+1",
+            "updateLogicalId": "IHeuresAlimElec",
+            "nparams": 0
+        },
+        "logicalId": "RHeuresAlimElec",
+        "type": "action",
+        "subType": "other",
+        "isHistorized": 0,
+        "isVisible": 0
+    },
+    {
+        "name": "Nombre d'heures alimentation \u00e9lectrique",
+        "configuration": {
+            "actionCmd": "",
+            "updateLogicalId": "",
+            "nparams": 0,
+            "parameters": "",
+            "minValue": 0,
+            "maxValue": ""
+        },
+        "logicalId": "IHeuresAlimElec",
+        "type": "info",
+        "subType": "numeric",
+        "unite": "h",
+        "isHistorized": 1,
+        "isVisible": 1
+    },
+    {
+        "name": "Lecture heures de chauffe",
+        "configuration": {
+            "actionCmd": "EXT+ADRD+2070+1",
+            "updateLogicalId": "IHeuresChauffe",
+            "nparams": 0
+        },
+        "logicalId": "RHeuresChauffe",
+        "type": "action",
+        "subType": "other",
+        "isHistorized": 0,
+        "isVisible": 0
+    },
+    {
+        "name": "Nombre d'heures de chauffe",
+        "configuration": {
+            "actionCmd": "",
+            "updateLogicalId": "",
+            "nparams": 0,
+            "parameters": "",
+            "minValue": 0,
+            "maxValue": ""
+        },
+        "logicalId": "IHeuresChauffe",
+        "type": "info",
+        "subType": "numeric",
+        "unite": "h",
+        "isHistorized": 1,
+        "isVisible": 1
+    },
+    {
+        "name": "Lecture heures de surchauffe",
+        "configuration": {
+            "actionCmd": "EXT+ADRD+207A+1",
+            "updateLogicalId": "IHeuresSurChauffe",
+            "nparams": 0
+        },
+        "logicalId": "RHeuresSurChauffe",
+        "type": "action",
+        "subType": "other",
+        "isHistorized": 0,
+        "isVisible": 0
+    },
+    {
+        "name": "Nombre d'heures de surchauffe",
+        "configuration": {
+            "actionCmd": "",
+            "updateLogicalId": "",
+            "nparams": 0,
+            "parameters": "",
+            "minValue": 0,
+            "maxValue": ""
+        },
+        "logicalId": "IHeuresSurChauffe",
+        "type": "info",
+        "subType": "numeric",
+        "unite": "h",
+        "isHistorized": 1,
+        "isVisible": 1
+    },
+    {
+        "name": "Lecture heures depuis entretien",
+        "configuration": {
+            "actionCmd": "EXT+ADRD+2076+1",
+            "updateLogicalId": "IHeuresDepuisEntretien",
+            "nparams": 0
+        },
+        "logicalId": "RHeuresDepuisEntretien",
+        "type": "action",
+        "subType": "other",
+        "unite": "",
+        "isHistorized": 0,
+        "isVisible": 0
+    },
+    {
+        "name": "Nombre d'heures depuis entretien",
+        "configuration": {
+            "actionCmd": "",
+            "updateLogicalId": "",
+            "nparams": 0,
+            "parameters": "",
+            "minValue": 0,
+            "maxValue": ""
+        },
+        "logicalId": "IHeuresDepuisEntretien",
+        "type": "info",
+        "subType": "numeric",
+        "unite": "h",
+        "isHistorized": 1,
+        "isVisible": 1
+    },
+    {
+        "name": "Temp\u00e9rature ambiance",
+        "configuration": {
+            "actionCmd": "",
+            "updateLogicalId": "",
+            "nparams": 0,
+            "parameters": "",
+            "minValue": 10,
+            "maxValue": 48
+        },
+        "logicalId": "ITemp",
+        "type": "info",
+        "subType": "numeric",
+        "unite": "°C",
+        "isHistorized": 1,
+        "isVisible": 1
+    },
+    {
+        "name": "Temp\u00e9rature granul\u00e9s",
+        "configuration": {
+            "actionCmd": "",
+            "updateLogicalId": "",
+            "nparams": 0
+        },
+        "logicalId": "ITemp2",
+        "type": "info",
+        "subType": "numeric",
+        "unite": "°C",
+        "isHistorized": 1,
+        "isVisible": 1
+    },
+    {
+        "name": "Temp\u00e9rature combustion",
+        "configuration": {
+            "actionCmd": "",
+            "updateLogicalId": "",
+            "nparams": 0
+        },
+        "logicalId": "ITemp3",
+        "type": "info",
+        "subType": "numeric",
+        "unite": "°C",
+        "isHistorized": 1,
+        "isVisible": 1
+    },
+    {
+        "name": "Temp\u00e9rature de consigne",
+        "configuration": {
+            "actionCmd": "",
+            "updateLogicalId": "",
+            "nparams": 0
+        },
+        "logicalId": "IConsigne",
+        "type": "info",
+        "subType": "numeric",
+        "unite": "°C",
+        "isHistorized": 1,
+        "isVisible": 1
+    },
+    {
+        "name": "Quantit\u00e9 de pellets",
+        "configuration": {
+            "actionCmd": "",
+            "updateLogicalId": "",
+            "nparams": 0,
+            "parameters": "",
+            "minValue": 0,
+            "maxValue": ""
+        },
+        "logicalId": "IQuantite",
+        "type": "info",
+        "subType": "numeric",
+        "unite": "kg",
+        "isHistorized": 1,
+        "isVisible": 1
+    },
+    {
+        "name": "Rafraîchir",
+        "logicalId": "refresh",
+        "type": "action",
+        "subType": "other",
+        "isHistorized": 1,
+        "isVisible": 1
+    }
+]
