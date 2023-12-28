@@ -180,48 +180,38 @@ class Palazzetti extends eqLogic
     {
         switch ($num) {
             case 0:
-                $value = $this->getConfiguration('invertFanSpeed', false) ? 'OFF' : 'AUTO';
-                break;
+                return $this->getConfiguration('invertFanSpeed', false) ? 'OFF' : 'AUTO';
             case 6:
-                $value = 'HIGH';
-                break;
+                return 'HIGH';
             case 7:
-                $value = $this->getConfiguration('invertFanSpeed', false) ? 'AUTO' : 'OFF';
-                break;
+                return $this->getConfiguration('invertFanSpeed', false) ? 'AUTO' : 'OFF';
             default:
-                $value = $num;
+                return $num;
         }
-        return $value;
     }
 
     public static function getFanStateF3L($num)
     {
         switch ($num) {
             case 0:
-                $value = 'OFF';
-                break;
+                return 'OFF';
             case 1:
-                $value = 'ON';
-                break;
+                return 'ON';
             default:
-                $value = $num;
+                return $num;
         }
-        return $value;
     }
 
     public static function getFanStateF4L($num)
     {
         switch ($num) {
             case 0:
-                $value = 'OFF';
-                break;
+                return 'OFF';
             case 1:
-                $value = 'ON';
-                break;
+                return 'ON';
             default:
-                $value = $num;
+                return $num;
         }
-        return $value;
     }
 
     // interpretation valeur status poele
