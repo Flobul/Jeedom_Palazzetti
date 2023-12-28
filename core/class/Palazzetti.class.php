@@ -593,6 +593,45 @@ class Palazzetti extends eqLogic
         return $html;
     }
 
+    public static function cronDaily()
+    {
+        $eqLogics = eqLogic::byType(__CLASS__);
+
+        foreach ($eqLogics as $eqLogic) {
+            if ($eqLogic->getIsEnable()) {
+                try {
+                    $request_http = new com_http('http://' . $eqLogic->getConfiguration('addressip') . '/ffffffff');
+                    $return = $request_http->exec(6, 2);
+                } catch (Exception $e) {
+                    if ($e->getCode() == 404) {
+                        log::add(__CLASS__, 'debug', __FUNCTION__.' - '. $e->getCode() . __(' erreur de connexion : ', __FILE__) . $e->getMessage());
+                        //throw $e;
+                    }
+                    return false;
+                }
+
+                $toSave = false;
+                $return = json_decode($return);
+                log::add(__CLASS__, 'debug', __FUNCTION__ . __(' - resultat : ', __FILE__) . json_encode($return));
+                if ($return->sn) {
+                    $eqLogic->setConfiguration('serialNumber', $return->sn);
+                    $toSave = true;
+                }
+                if ($return->m) {
+                    $eqLogic->setConfiguration('model', $return->m);
+                    $toSave = true;
+                }
+                if ($return->v) {
+                    $eqLogic->setConfiguration('versions', $return->v);
+                    $toSave = true;
+                }
+                if ($toSave) {
+                    $eqLogic->save();
+                    return true;
+                }
+            }
+        }
+    }
     // recuperation automatique des informations
     public function getInformations()
     {
