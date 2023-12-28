@@ -467,11 +467,13 @@ class Palazzetti extends eqLogic
         $replace['#consigne_minValue#'] = is_object($consigne) ? $consigne->getConfiguration('minValue') : '';
         $replace['#consigne_maxValue#'] = is_object($consigne) ? $consigne->getConfiguration('maxValue') : '';
         $replace['#consigne_display#'] = (is_object($consigne) && $consigne->getIsVisible()) ? '#consigne_display#' : 'none';
-        $Wconsigne = $this->getCmd('info', 'WConsigne');
+        $Wconsigne = $this->getCmd('action', 'WConsigne');
         $replace['#consigneSet_id#'] = is_object($Wconsigne) ? $Wconsigne->getId() : '';
-        if (is_array($Wconsigne->getDisplay('parameters'))) {
-            foreach ($Wconsigne->getDisplay('parameters') as $key => $value) {
-                $replace['#consigne_' . $key . '#'] = $value;
+        if (is_object($Wconsigne)) {
+            if (is_array($Wconsigne->getDisplay('parameters'))) {
+                foreach ($Wconsigne->getDisplay('parameters') as $key => $value) {
+                    $replace['#consigne_' . $key . '#'] = $value;
+                }
             }
         }
 
@@ -485,9 +487,11 @@ class Palazzetti extends eqLogic
         $replace['#power_display#'] = (is_object($power) && $power->getIsVisible()) ? '#power_display#' : 'none';
         $Wpower = $this->getCmd('action', 'Wpower');
         $replace['#powerSet_id#'] = is_object($Wpower) ? $Wpower->getId() : '';
-        if (is_array($Wpower->getDisplay('parameters'))) {
-            foreach ($Wpower->getDisplay('parameters') as $key => $value) {
-                $replace['#power_' . $key . '#'] = $value;
+        if (is_object($Wpower)) {
+            if (is_array($Wpower->getDisplay('parameters'))) {
+                foreach ($Wpower->getDisplay('parameters') as $key => $value) {
+                    $replace['#power_' . $key . '#'] = $value;
+                }
             }
         }
 
@@ -501,9 +505,11 @@ class Palazzetti extends eqLogic
         $replace['#fan_display#'] = (is_object($fan) && $fan->getIsVisible()) ? '#fan_display#' : 'none';
         $Wfan = $this->getCmd('action', 'WFan');
         $replace['#fanSet_id#'] = is_object($Wfan) ? $Wfan->getId() : '';
-        if (is_array($Wfan->getDisplay('parameters'))) {
-            foreach ($Wfan->getDisplay('parameters') as $key => $value) {
-                $replace['#fan_' . $key . '#'] = $value;
+        if (is_object($Wfan)) {
+            if (is_array($Wfan->getDisplay('parameters'))) {
+                foreach ($Wfan->getDisplay('parameters') as $key => $value) {
+                    $replace['#fan_' . $key . '#'] = $value;
+                }
             }
         }
 
@@ -732,7 +738,7 @@ class Palazzetti extends eqLogic
         }
         log::add(__CLASS__, 'debug', __('Fin', __FILE__) . ' : ' . __FUNCTION__);
     }
-
+  
     public static function convertTimeToDec($_time) {
         $time = explode(':', $_time);
         return floatval($time[0] .'.'. round($time[1]/0.60));

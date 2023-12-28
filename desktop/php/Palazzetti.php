@@ -193,7 +193,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
 									<span class="eqLogicAttr" data-l1key="configuration" data-l2key="versions"></span> <a href="https://github.com/Domochip/WirelessPalaControl/releases" class="btn btn-xs btn-info">{{Vérifier les mises à jour}}</a></li>
 								</div>
 							</div>
-
+                            
 						</div>
 					</fieldset>
 				</form>
