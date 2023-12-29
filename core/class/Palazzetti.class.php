@@ -345,20 +345,20 @@ class Palazzetti extends eqLogic
             case 'GET+FAND':
                 // force du ventilateur
                 //"DATA":{"F1V":0,"F2V":0,"F1RPM":0,"F2L":0,"F2LF":0}}
-                $value = $this->getFanState($DATA->DATA->F2L);
+                $value = $DATA->DATA->F2L;
                 break;
             case 'SET+RFAN':
                 //"DATA":{"PWR":1,"F2L":1,"F2LF":0}
                 $this->checkAndUpdateCmd('IPower', $DATA->DATA->PWR);
-                $value = $this->getFanState($DATA->DATA->F2L);
+                $value = $DATA->DATA->F2L;
                 break;
             case 'SET+FN3L':
                 // force ventilateur F3L
-                $value = $this->getFanState($DATA->DATA->F3L);
+                $value = $DATA->DATA->F3L;
                 break;
             case 'SET+FN4L':
                 // force ventilateur F4L
-                $value = $this->getFanState($DATA->DATA->F4L);
+                $value = $DATA->DATA->F4L;
                 break;
             case 'GET+TMPS':
                 // toutes les températures
@@ -738,7 +738,7 @@ class Palazzetti extends eqLogic
         }
         log::add(__CLASS__, 'debug', __('Fin', __FILE__) . ' : ' . __FUNCTION__);
     }
-  
+
     public static function convertTimeToDec($_time) {
         $time = explode(':', $_time);
         return floatval($time[0] .'.'. round($time[1]/0.60));
