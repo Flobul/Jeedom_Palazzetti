@@ -167,7 +167,7 @@
         },
         "logicalId": "IPower",
         "type": "info",
-        "subType": "string",
+        "subType": "numeric",
         "isHistorized": 1,
         "isVisible": 1
     },
