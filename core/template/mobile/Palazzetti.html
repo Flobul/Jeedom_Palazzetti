@@ -278,7 +278,6 @@
 
 		.classConsigneAction#id# {
 			display: flex;
-			margin: 10px;
 		}
 
 		.classConsigneCmd#id# {
@@ -291,7 +290,7 @@
 
 		.btnConsigne#id# {
 			margin: auto;
-			font-size: 28px;
+			font-size: 40px;
 			font-weight: bold;
 		}
 
@@ -393,7 +392,7 @@
 			try {
 				var date = JSON.parse(_options.display_value);
 				$('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#heure_id#][data-time="heure"]').html(date.STOVE_DATETIME)
-				$('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#heure_id#][data-time="jour"]').html(dayNames#id#[(parseInt(date.STOVE_WDAY) - 1)])
+				$('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#heure_id#][data-time="jour"]').html(dayNames#id#[(parseInt(date.STOVE_WDAY))])
 			} catch (e) {}
 		});
 		jeedom.cmd.refreshValue([{
@@ -530,12 +529,12 @@
 
 		jeedom.cmd.addUpdateFunction('#power_id#', function(_options) {
 			$('#idPower#id#').html(_options.display_value);
-			$('#idPowerPlus#id#').removeClass('disabled');
-			$('#idPowerMoins#id#').removeClass('disabled');
+			$('#idPowerPlus#id#').removeClass('disabled').css('opacity', '1');
+			$('#idPowerMoins#id#').removeClass('disabled').css('opacity', '1');
 			if (parseInt(_options.display_value) == 5) {
-				$('#idPowerPlus#id#').addClass('disabled');
+				$('#idPowerPlus#id#').addClass('disabled').css('opacity', '.25');
 			} else if (parseInt(_options.display_value) == 1) {
-				$('#idPowerMoins#id#').addClass('disabled');
+				$('#idPowerMoins#id#').addClass('disabled').css('opacity', '.25');;
 			}
 			$('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#power_id#]').html(_options.display_value);
 		});
@@ -579,7 +578,7 @@
 						slider: $('#idPower#id#').value()
 					}
 				})
-			}, 1000)
+			}, 1500)
 		})
 
 		jeedom.cmd.addUpdateFunction('#fan_id#', function(_options) {
