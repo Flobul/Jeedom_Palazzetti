@@ -582,25 +582,25 @@
 		})
 
 		jeedom.cmd.addUpdateFunction('#fan_id#', function(_options) {
-			$('#idVentilationMoins#id#').removeClass('disabled');
-			$('#idVentilationPlus#id#').removeClass('disabled');
+			$('#idVentilationMoins#id#').removeClass('disabled').css('opacity', '1');
+			$('#idVentilationPlus#id#').removeClass('disabled').css('opacity', '1');
 			if (_options.display_value == 0) {
                 if ('#invertFanSpeed#'=='1') {
                     $('#idVentilation#id#').html('AUTO');
-                    $('#idVentilationPlus#id#').addClass('disabled');
+                    $('#idVentilationPlus#id#').addClass('disabled').css('opacity', '.25');
                 } else {
                     $('#idVentilation#id#').html('OFF');
-                    $('#idVentilationMoins#id#').addClass('disabled');
+                    $('#idVentilationMoins#id#').addClass('disabled').css('opacity', '.25');
                 }
 			} else if (_options.display_value == 6) {
 				$('#idVentilation#id#').html('HIGH');
 			} else if (_options.display_value == 7) {
                 if ('#invertFanSpeed#'=='1') {
                     $('#idVentilation#id#').html('OFF');
-                    $('#idVentilationMoins#id#').addClass('disabled');
+                    $('#idVentilationMoins#id#').addClass('disabled').css('opacity', '.25');
                 } else {
                     $('#idVentilation#id#').html('AUTO');
-                    $('#idVentilationPlus#id#').addClass('disabled');
+                    $('#idVentilationPlus#id#').addClass('disabled').css('opacity', '.25');
                 }
 			} else {
 				$('#idVentilation#id#').html(_options.display_value);
@@ -648,7 +648,7 @@
 						slider: $('#idVentilation#id#').data('value')
 					}
 				})
-			}, 1000)
+			}, 1500)
 		})
 
 		jeedom.cmd.addUpdateFunction('#nbAll_id#', function(_options) {
