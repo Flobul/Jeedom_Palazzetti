@@ -42,7 +42,13 @@
 					<span type="button" class="cursor btnConsigne#id#" id="idVentilationPlus#id#">+</span>
 				</div>
 			</div>
+            <?php if ('#invertFanSpeed#'=='1') { ?>
+                <i class="wpalacontrolMenus#id# parameters fas fa-cog icon_green" title="{{Paramètres du poêle}}"></i>
+            <?php } ?>
 			<img class="calendar" style="cursor: pointer;" width="100px" src="plugins/Palazzetti/core/config/calendar.png">
+            <?php if ('#invertFanSpeed#'=='1') { ?>
+			    <i class="wpalacontrolMenus#id# hidden_parameters fas fa-cogs icon_orange" title="{{Paramètres cachés du poêle}}"></i>
+            <?php } ?>
 		</div>
 	</div>
 	<div id="idInfos#id#" style="display:none">
@@ -345,6 +351,21 @@
 
         #idTablePalazzettiInfo#id# tr > td {
             text-align: left;
+        }
+
+        .wpalacontrolMenus#id# {
+            font-size: 6em;
+            cursor: pointer;
+            vertical-align: middle;
+            padding: 10px;
+        }
+
+        .wpalacontrolMenus#id#:hover {
+            opacity: .65;
+        }
+
+        .eqLogic[data-eqLogic_uid="#uid#"] .calendar:hover {
+            opacity: .65;
         }
 	</style>
 	<script>
@@ -776,13 +797,30 @@
 			display_value: '#network#'
 		}]);
 
+		/* paramètres du poêle */
+		$('.eqLogic[data-eqLogic_id=#id#] .parameters').on('click', function() {
+			$('#md_modal').dialog({
+				title: "{{Paramètres du poêle}}"
+			});
+            $('#md_modal').load('index.php?v=d&plugin=Palazzetti&modal=parametres&id=#id#').dialog('open');
+		});
+
 		/* planning */
 		$('.eqLogic[data-eqLogic_id=#id#] .calendar').on('click', function() {
 			$('#md_modal').dialog({
-				title: "Planning horaires"
+				title: "{{Planning horaires}}"
 			});
 			$('#md_modal').load('index.php?v=d&plugin=Palazzetti&modal=planning&id=#id#').dialog('open');
 		});
+
+		/* paramètres cachés du poêle */
+		$('.eqLogic[data-eqLogic_id=#id#] .hidden_parameters').on('click', function() {
+			$('#md_modal').dialog({
+				title: "{{Paramètres cachés du poêle}}"
+			});
+            $('#md_modal').load('index.php?v=d&plugin=Palazzetti&modal=hidden.parametres&id=#id#').dialog('open');
+		});
+
 
 		/* refresh */
         if ('#refresh_id#' != '') {
