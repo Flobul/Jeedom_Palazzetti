@@ -71,8 +71,8 @@
 
 	 	for($i = 1; $i < 7; $i++) {
 	 		echo '<tr data-numero="'.$i.'"><td>Tranche '.$i.'</td>';
-	 		echo '<td><input class="form-control input-sm" data-type="start" value="'.$PH->{'P'.$i}->{'START'}.'" /></td>';
-	 		echo '<td><input class="form-control input-sm" data-type="end" value="'.$PH->{'P'.$i}->{'STOP'}.'" /></td>';
+	 		echo '<td><input class="form-control input-sm in_timepicker" data-type="start" value="'.$PH->{'P'.$i}->{'START'}.'" /></td>';
+	 		echo '<td><input class="form-control input-sm in_timepicker" data-type="end" value="'.$PH->{'P'.$i}->{'STOP'}.'" /></td>';
 	 		echo '<td><input type="text" data-type="temperature" value="'.$PH->{'P'.$i}->{'CHRSETP'}.'" />°C</td>';
 	 		echo '</tr>';
 	 	}
@@ -91,13 +91,26 @@
 <script>
 		// nettoyage multiples ouvertures
 		$("#Palazzetti_PH").find("*").off();
- 		$("#table_Palazzetti_tranche input[data-type='start'], #table_Palazzetti_tranche input[data-type='end']").datetimepicker({
- 			timepicker:true,
- 			datepicker:false,
- 			format:'H:i',
- 			step:05,
- 			theme:'dark'
- 		});
+
+        // indiquer que la version de Jeedom est inférieur à 4.0
+        jeedom.version({
+          success: function(actualJeedomVersion) {
+            if (actualJeedomVersion.localeCompare('4.4', undefined, {
+                  numeric: true,
+                  sensitivity: 'base'
+                }) == -1) {
+                    $("#table_Palazzetti_tranche input[data-type='start'], #table_Palazzetti_tranche input[data-type='end']").datetimepicker({
+                        timepicker:true,
+                        datepicker:false,
+                        format:'H:i',
+                        step:05,
+                        theme:'dark'
+                    });
+                } else {
+                    jeedomUtils.dateTimePickerInit(5) //Will init myCustomDatetime input with custom format
+                }
+            }
+        });
  		// activation / desactivation
  		$('#Palazzetti_ph_onoff').on('click',function() {
 			if($(this).text() == 'ACTIF') {
@@ -118,14 +131,14 @@
 			var P = $(this).find('option:selected').val();
 			jeedom.cmd.execute({id: <?php echo $PHDayID; ?>, value :{jour: J, tranche: T, programme: P}});
 			setTimeout(jeedom.cmd.execute({id: <?php echo $PHRefresh; ?>}), 1500);
-		});	
- 			
+		});
+
 
  		// enregistement du planning
  		$('#table_Palazzetti_tranche input').on('change',function() {
  			var tr = $(this).parent().parent();
  			var numero 		= tr.data("numero");
- 			var temperature = tr.find("td input[data-type='temperature']").val(); 
+ 			var temperature = tr.find("td input[data-type='temperature']").val();
  			var start = tr.find("td input[data-type='start']").val().split(':');
  			var end = tr.find("td input[data-type='end']").val().split(':');
 			jeedom.cmd.execute({id: <?php echo $PHTrancheID; ?>, value :{numero: numero, temperature: temperature, h1: parseInt(start[0]), m1: parseInt(start[1]), h2: parseInt(end[0]), m2: parseInt(end[1])}});
