@@ -27,7 +27,7 @@ function Palazzetti_install() {
         $cron->setFunction('pull');
         $cron->setEnable(1);
         $cron->setDeamon(0);
-        $cron->setSchedule('*/5 * * * *');
+        $cron->setSchedule('* * * * *');
         $cron->setTimeout(10);
         $cron->save();
     }
@@ -43,7 +43,7 @@ function Palazzetti_update() {
     $cron->setFunction('pull');
     $cron->setEnable(1);
     $cron->setDeamon(0);
-    $cron->setSchedule('*/5 * * * *');
+    $cron->setSchedule('* * * * *');
     $cron->setTimeout(15);
     $cron->save();
     $cron->stop();
