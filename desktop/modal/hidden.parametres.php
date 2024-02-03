@@ -3,7 +3,7 @@
     if (!is_object($eqLogic)) {
         throw new Exception(__('Objet non trouvé', __FILE__));
     }
-    sendVarToJS('id', $_GET['id']);
+    sendVarToJS('idHParamPala', $_GET['id']);
     sendVarToJS('eqLogic', utils::o2a($eqLogic));
 ?>
 <div role="tabpanel" class="tab-pane" id="paramtab">

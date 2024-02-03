@@ -131,7 +131,7 @@ var palaHiddenParam = {
 for (var i in palaHiddenParam) {
   addHiddenParamToTable({id:i, description: palaHiddenParam[i]})
 }
-getHiddenParamValue(id);
+getHiddenParamValue(idHParamPala);
 for (var j in eqLogic.configuration.commentaire_caches[0]) {
   $('#table_param tbody tr').find('.eqLogicAttr[data-l1key=configuration][data-l2key=commentaire_caches][data-l3key=' + j + ']').value(eqLogic.configuration.commentaire_caches[0][j])
 }
@@ -170,7 +170,7 @@ function getHiddenParamValue(_id) {
 }
 
 $('.paramAction[data-action=refresh]').off('click').on('click', function () {
-    getHiddenParamValue($('.eqLogicAttr[data-l1key=id]').value());
+    getHiddenParamValue(idHParamPala);
 });
 
 $("#table_param").delegate('.paramAction[data-action=update]', 'click', function() {
@@ -187,7 +187,7 @@ $("#table_param").delegate('.paramAction[data-action=update]', 'click', function
         data: {
             async: false,
             action: "getHiddenParam",
-            id: $('.eqLogicAttr[data-l1key=id]').value(),
+            id: idHParamPala,
             hidden_param_id: id
         },
         dataType: 'json',
@@ -205,10 +205,10 @@ $("#table_param").delegate('.paramAction[data-action=update]', 'click', function
 			    $.fn.showAlert({message: 'Result: ' + data.result.INFO.RSP, level: 'danger'});
                 return;
             }
-            if (data.result.DATA.HPAR && val != data.result.DATA.HPAR) {
+            if (data.result.DATA['HPAR'+id] && val != data.result.DATA['HPAR'+id]) {
                 el.closest('tr').find('.paramAttr[data-l1key=value]').css({'font-weight': 'bold','font-style': 'oblique'});
-                el.closest('tr').find('.paramAttr[data-l1key=value]').value(data.result.DATA.HPAR)
-                el.closest('tr').find('.paramAttr[data-l1key=value]').data('value',data.result.DATA.HPAR);
+                el.closest('tr').find('.paramAttr[data-l1key=value]').value(data.result.DATA['HPAR'+id])
+                el.closest('tr').find('.paramAttr[data-l1key=value]').data('value',data.result.DATA['HPAR'+id]);
             }
         }
     });
@@ -222,8 +222,8 @@ $("#table_param").delegate('.paramAction[data-action=modify]', 'click', function
     var val = $(this).closest('tr').find('.paramAttr[data-l1key=value]').value();
     var oldVal = $(this).closest('tr').find('.paramAttr[data-l1key=value]').data('value');
     if (val != '') {
-        var text = '{{Êtes-vous sûr de vouloir modifier le paramètre}} ' + id + ' : <i>' + description + '</i> ?<br/>';
-        text += '{{De}} : ' + oldVal + ' {{à}} ' + val;
+        var text = '{{Êtes-vous sûr de vouloir modifier le paramètre}} <strong>' + id + '</strong> : <i>' + description + '</i> ?<br/>';
+        text += '{{De}} : <strong style="color:red;">' + oldVal + '</strong> {{à}} <strong style="color:green;">' + val + '</strong>';
         bootbox.confirm(text, function(result) {
             if (result) {
                 $.ajax({
@@ -232,7 +232,7 @@ $("#table_param").delegate('.paramAction[data-action=modify]', 'click', function
                     data: {
                         async: true,
                         action: "setHiddenParam",
-                        id: $('.eqLogicAttr[data-l1key=id]').value(),
+                        id: idHParamPala,
                         hidden_param_id: id,
                         hidden_param_value: val
                     },
