@@ -49,9 +49,9 @@ try {
 		if (!is_object($eqLogic)) {
 			throw new Exception(__('Equipement inconnu : ', __FILE__) . init('id'), 9999);
 		}
-        if (init('hidden_param_id') != '') {
-            if (init('hidden_param_value') != '') {
-                $result = $eqLogic->makeRequest('SET+PARM+' . init('hidden_param_id') . '+' . init('hidden_param_value'),3);
+        if (init('param_id') != '') {
+            if (init('param_value') != '') {
+                $result = $eqLogic->makeRequest('SET+PARM+' . init('param_id') . '+' . init('param_value'),3);
             }
         }
         ajax::success($result);
