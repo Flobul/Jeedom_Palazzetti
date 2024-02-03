@@ -21,7 +21,7 @@ require_once dirname(__FILE__) . '/../../../../core/php/core.inc.php';
 
 class Palazzetti extends eqLogic
 {
-    public static $_pluginVersion = '1.10';
+    public static $_pluginVersion = '1.20';
 
     public static function pull()
     {
@@ -37,6 +37,7 @@ class Palazzetti extends eqLogic
                             if ($eqLogic->getIsEnable()) {
                                 try {
                                     $eqLogic->getInformations();
+                                    $eqLogic->refreshWidget();
                                 } catch (Exception $exc) {
                                 }
                             }
@@ -70,6 +71,7 @@ class Palazzetti extends eqLogic
         /** si équipement actif, rafraichir les infos de cet équipement **/
         if ($this->getIsEnable()) {
             $this->getInformations();
+            $this->refreshWidget();
         }
         log::add(__CLASS__, 'debug', __('Fin', __FILE__) . ' : ' . __FUNCTION__);
     }
@@ -425,6 +427,7 @@ class Palazzetti extends eqLogic
         $version = jeedom::versionAlias($_version);
 
         $replace['#invertFanSpeed#'] = $this->getConfiguration('invertFanSpeed', false);
+        $replace['#lastCommunication#'] = $this->getStatus('lastCommunication');
 
         $heure = $this->getCmd('info', 'ITime');
         $replace['#heure#'] = is_object($heure) ? $heure->execCmd() : '';
@@ -597,7 +600,7 @@ class Palazzetti extends eqLogic
         $replace['#refresh_id#'] = is_object($refresh) ? $refresh->getId() : '';
 
         $html = template_replace($replace, getTemplate('core', $version, __CLASS__, __CLASS__));
-        $html = translate::exec($html, 'plugins/Palazzetti/core/template/' . $version . '/Palazzetti.html');
+        $html = translate::exec($html, 'plugins/' . __CLASS__ . '/core/template/' . $version . '/' . __CLASS__ . '.html');
         cache::set('PalazzettiWidget' . $_version . $this->getId(), $html, 0);
         return $html;
     }
@@ -760,6 +763,7 @@ class PalazzettiCmd extends cmd
         log::add('Palazzetti', 'debug', __FUNCTION__ . ' $options ' . json_encode($_options));
         if ($this->getLogicalId('') == 'refresh') {
             $eqLogic->getInformations();
+            $eqLogic->refreshWidget();
         } else {
             $return = $eqLogic->sendCommand($this, $_options);
             log::add('Palazzetti', 'debug', __FUNCTION__ . __(' resultat ', __FILE__) . $return);
