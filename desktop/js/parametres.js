@@ -290,10 +290,14 @@ for (var i in palaParam) {
   addParamToTable({id:i, description: palaParam[i]})
 }
 getParamValue(eqPalaId);
-for (var j in eqLogic.configuration.commentaire[0]) {
-  $('#table_param tbody tr').find('.eqLogicAttr[data-l1key=configuration][data-l2key=commentaire][data-l3key=' + j + ']').value(eqLogic.configuration.commentaire[0][j])
+
+if (eqLogic.configuration.commentaire && Array.isArray(eqLogic.configuration.commentaire) && eqLogic.configuration.commentaire.length > 0) {
+    var comments = eqLogic.configuration.commentaire[0];
+    for (var j in comments) {
+      $('#table_param tbody tr').find('.eqLogicAttr[data-l1key=configuration][data-l2key=commentaire][data-l3key=' + j + ']').value(comments[j]);
+    }
 }
-modifyWithoutSave = false;
+jeeFrontEnd.modifyWithoutSave = false;
 $.hideLoading();
 getStaticComments();
 
@@ -310,7 +314,7 @@ function getParamValue(_id) {
         },
         dataType: 'json',
         error: function (request, status, error) {
-            handleAjaxError(request, status, error,$('#div_alert'));
+            handleAjaxError(request, status, error, $('#div_alert'));
         },
         success: function (data) {
             $('.paramAction[data-action=refresh]').removeClass('btn-warning').addClass('btn-success').removeClass('disabled');
