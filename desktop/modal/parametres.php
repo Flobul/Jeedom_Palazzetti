@@ -34,7 +34,6 @@
 <div role="tabpanel" class="tab-pane" id="paramtab">
     <span class="input-group pull-right">
         <a class="btn btn-success btn-sm paramAction roundedLeft" data-action="saveComments"><i class="fas fa-save"></i> {{Sauvegarder les commentaires}}</a>
-        <a class="btn btn-info btn-sm paramAction" data-action="getStaticComment"><i class="fas fa-comment-medical"></i> {{Récupérer les commentaires}}</a>
         <a class="btn btn-success btn-sm paramAction roundedRight" data-action="refresh"><i class="fas fa-sync"></i> {{Rafraîchir les paramètres}}</a>
     </span>
     <table id="table_param" class="table table-bordered table-condensed">

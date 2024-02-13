@@ -336,10 +336,6 @@ $('.paramAction[data-action=refresh]').off('click').on('click', function () {
     getParamValue(eqPalaId);
 });
 
-$('.paramAction[data-action=getStaticComment]').off('click').on('click', function () {
-    getStaticComments();
-});
-
 $("#table_param").delegate('.paramAction[data-action=update]', 'click', function() {
     var el = $(this)
     el.removeClass('btn-success').addClass('btn-warning').addClass('disabled');
@@ -390,7 +386,7 @@ $("#table_param").delegate('.paramAction[data-action=modify]', 'click', function
     var oldVal = $(this).closest('tr').find('.paramAttr[data-l1key=value]').data('value');
     if (val != '') {
         var text = '{{Êtes-vous sûr de vouloir modifier le paramètre}} <strong>' + id + '</strong> : <i>' + description + '</i> ?<br/>';
-        text += '{{De}} : <strong style="color:red;">' + oldVal + '</strong> {{à}} <strong style="color:green;">' + val + '</strong>';
+        text += '{{De}} : <strong style="color:red;font-size:2em;">' + oldVal + '</strong> {{à}} <strong style="color:green;font-size:2em;">' + val + '</strong>';
         bootbox.confirm(text, function(result) {
             if (result) {
                 $.ajax({
@@ -457,19 +453,38 @@ function getStaticComments() {
     });
 }
 
-function saveEqLogic(_eqLogic) {
-    if (!isset(_eqLogic.configuration)) {
-        _eqLogic.configuration = {};
-    }
-    _eqLogic.configuration.commentaire = [];
-    var eqLogic = $('#paramtab').getValues('.eqLogicAttr');
-    eqLogic = eqLogic[0];
-    _eqLogic.configuration.commentaire.push(eqLogic.configuration.commentaire);
-    return _eqLogic;
-}
-
 $('.paramAction[data-action=saveComments]').off('click').on('click', function () {
-    $('.eqLogicAction[data-action=save]').click();
+    $('.paramAction[data-action=saveComments]').removeClass('btn-success').addClass('btn-warning').addClass('disabled');
+    $('.paramAction[data-action=saveComments]').html('<i class="fas fa-save fa-spin"></i> {{Sauvegarde en cours}}');
+    if (!isset(eqLogic.configuration)) {
+        eqLogic.configuration = {};
+    }
+    eqLogic.configuration.commentaire = [];
+    var eqLogicComment = $('#paramtab').getValues('.eqLogicAttr')[0];
+    eqLogic.configuration.commentaire.push(eqLogicComment.configuration.commentaire);
+    jeedom.eqLogic.save({
+        type: 'Palazzetti',
+        eqLogics: [eqLogic],
+        error: function(error) {
+            $('.paramAction[data-action=saveComments]').removeClass('btn-warning').addClass('btn-success').removeClass('disabled');
+            $('.paramAction[data-action=saveComments]').html('<i class="fas fa-save"></i> {{Sauvegarder les commentaires}}');
+            $.fn.showAlert({
+                message: error.message,
+                level: 'danger'
+            })
+        },
+        success: function(_data) {
+            $('.paramAction[data-action=saveComments]').removeClass('btn-warning').addClass('btn-success').removeClass('disabled');
+            $('.paramAction[data-action=saveComments]').html('<i class="fas fa-save"></i> {{Sauvegarder les commentaires}}');
+            $.fn.showAlert({
+                message: '{{Commentaires sauvegardés avec succès}}',
+                level: 'success'
+            })
+        }
+    })
+
+
+    return eqLogic;
 });
 
 function addParamToTable(_param) {
