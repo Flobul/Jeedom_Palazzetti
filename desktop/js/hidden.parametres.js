@@ -132,10 +132,14 @@ for (var i in palaHiddenParam) {
   addHiddenParamToTable({id:i, description: palaHiddenParam[i]})
 }
 getHiddenParamValue(idHParamPala);
-for (var j in eqLogic.configuration.commentaire_caches[0]) {
-  $('#table_param tbody tr').find('.eqLogicAttr[data-l1key=configuration][data-l2key=commentaire_caches][data-l3key=' + j + ']').value(eqLogic.configuration.commentaire_caches[0][j])
+
+if (eqLogic.configuration.commentaire_caches && Array.isArray(eqLogic.configuration.commentaire_caches) && eqLogic.configuration.commentaire_caches.length > 0) {
+    var comments = eqLogic.configuration.commentaire_caches[0];
+    for (var j in comments) {
+        $('#table_param tbody tr').find('.eqLogicAttr[data-l1key=configuration][data-l2key=commentaire_caches][data-l3key=' + j + ']').value(comments[j])
+    }
 }
-modifyWithoutSave = false;
+jeeFrontEnd.modifyWithoutSave = false;
 $.hideLoading();
 
 function getHiddenParamValue(_id) {
@@ -223,7 +227,7 @@ $("#table_param").delegate('.paramAction[data-action=modify]', 'click', function
     var oldVal = $(this).closest('tr').find('.paramAttr[data-l1key=value]').data('value');
     if (val != '') {
         var text = '{{Êtes-vous sûr de vouloir modifier le paramètre}} <strong>' + id + '</strong> : <i>' + description + '</i> ?<br/>';
-        text += '{{De}} : <strong style="color:red;">' + oldVal + '</strong> {{à}} <strong style="color:green;">' + val + '</strong>';
+        text += '{{De}} : <strong style="color:red;font-size:2em;">' + oldVal + '</strong> {{à}} <strong style="color:green;font-size:2em;">' + val + '</strong>';
         bootbox.confirm(text, function(result) {
             if (result) {
                 $.ajax({
@@ -271,29 +275,46 @@ $("#table_param").delegate('.paramAction[data-action=modify]', 'click', function
     }
 });
 
-function saveEqLogic(_eqLogic) {
-    if (!isset(_eqLogic.configuration)) {
-        _eqLogic.configuration = {};
-    }
-    _eqLogic.configuration.commentaire_caches = [];
-    var eqLogic = $('#paramtab').getValues('.eqLogicAttr');
-    eqLogic = eqLogic[0];
-    _eqLogic.configuration.commentaire_caches.push(eqLogic.configuration.commentaire_caches);
-    return _eqLogic;
-}
-
 $('.paramAction[data-action=saveComments]').off('click').on('click', function () {
-    $('.eqLogicAction[data-action=save]').click();
+    $('.paramAction[data-action=saveComments]').removeClass('btn-success').addClass('btn-warning').addClass('disabled');
+    $('.paramAction[data-action=saveComments]').html('<i class="fas fa-save fa-spin"></i> {{Sauvegarde en cours}}');
+    if (!isset(eqLogic.configuration)) {
+        eqLogic.configuration = {};
+    }
+    eqLogic.configuration.commentaire_caches = [];
+    var eqLogicComment = $('#paramtab').getValues('.eqLogicAttr')[0];
+    eqLogic.configuration.commentaire_caches.push(eqLogicComment.configuration.commentaire_caches);
+    jeedom.eqLogic.save({
+        type: 'Palazzetti',
+        eqLogics: [eqLogic],
+        error: function(error) {
+            $('.paramAction[data-action=saveComments]').removeClass('btn-warning').addClass('btn-success').removeClass('disabled');
+            $('.paramAction[data-action=saveComments]').html('<i class="fas fa-save"></i> {{Sauvegarder les commentaires}}');
+            $.fn.showAlert({
+                message: error.message,
+                level: 'danger'
+            })
+        },
+        success: function(_data) {
+            $('.paramAction[data-action=saveComments]').removeClass('btn-warning').addClass('btn-success').removeClass('disabled');
+            $('.paramAction[data-action=saveComments]').html('<i class="fas fa-save"></i> {{Sauvegarder les commentaires}}');
+            $.fn.showAlert({
+                message: '{{Commentaires sauvegardés avec succès}}',
+                level: 'success'
+            })
+        }
+    })
+    return eqLogic;
 });
 
 function addHiddenParamToTable(_param) {
     var tr = '<tr class="param" data-param_id="' + init(_param.id) + '">'
     tr += '<td>'
-    tr += '    <input class="paramAttr form-control input-sm roundedLeft" disabled data-l1key="id" placeholder="{{Numéro du paramètre}}" style="width:100px">'
+    tr += '    <input class="paramAttr form-control input-sm roundedLeft" disabled data-l1key="id" placeholder="{{Numéro du paramètre}}">'
     tr += '</td>'
 
     tr += '<td>'
-    tr += '    <span class="paramAttr roundedLeft" disabled data-l1key="description" title="{{Description du paramètre}}"></span>'
+    tr += '    <span class="paramAttr roundedLeft" disabled data-l1key="description"></span>'
     tr += '</td>'
 
     tr += '<td>'
@@ -301,7 +322,7 @@ function addHiddenParamToTable(_param) {
     tr += '</td>'
 
     tr += '<td>'
-    tr += '    <input class="paramAttr form-control input-sm roundedLeft" data-l1key="value" title="{{Valeur du paramètre}}" placeholder="{{Valeur du paramètre}}" style="width:100px">'
+    tr += '    <input class="paramAttr form-control input-sm roundedLeft" data-l1key="value" title="{{Valeur}}" placeholder="{{Valeur}}" style="width:100px">'
     tr += '</td>'
 
     tr += '<td>'

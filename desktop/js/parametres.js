@@ -482,8 +482,6 @@ $('.paramAction[data-action=saveComments]').off('click').on('click', function ()
             })
         }
     })
-
-
     return eqLogic;
 });
 
