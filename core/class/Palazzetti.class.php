@@ -611,6 +611,7 @@ class Palazzetti extends eqLogic
 
         foreach ($eqLogics as $eqLogic) {
             if ($eqLogic->getIsEnable()) {
+                // old WirelessPalaControl version
                 try {
                     $request_http = new com_http('http://' . $eqLogic->getConfiguration('addressip') . '/ffffffff');
                     $return = $request_http->exec(6, 2);
@@ -635,6 +636,39 @@ class Palazzetti extends eqLogic
                 }
                 if ($return->v) {
                     $eqLogic->setConfiguration('versions', $return->v);
+                    $toSave = true;
+                }
+                if ($toSave) {
+                    $eqLogic->setConfiguration('isWirelessPalaControl', true);
+                    $eqLogic->save();
+                    return true;
+                }
+
+                // new WirelessPalaControl version
+                try {
+                    $request_http = new com_http('http://' . $eqLogic->getConfiguration('addressip') . '/gs0');
+                    $return = $request_http->exec(6, 2);
+                } catch (Exception $e) {
+                    if ($e->getCode() == 404) {
+                        log::add(__CLASS__, 'debug', __FUNCTION__.' - '. $e->getCode() . __(' erreur de connexion : ', __FILE__) . $e->getMessage());
+                        //throw $e;
+                    }
+                    return false;
+                }
+
+                $toSave = false;
+                $return = json_decode($return);
+                log::add(__CLASS__, 'debug', __FUNCTION__ . __(' - resultat : ', __FILE__) . json_encode($return));
+                if ($return->sn) {
+                    $eqLogic->setConfiguration('serialNumber', $return->sn);
+                    $toSave = true;
+                }
+                if ($return->model) {
+                    $eqLogic->setConfiguration('model', $return->model);
+                    $toSave = true;
+                }
+                if ($return->version) {
+                    $eqLogic->setConfiguration('versions', $return->version);
                     $toSave = true;
                 }
                 if ($toSave) {
