@@ -1,9 +1,13 @@
 <?php
-	$eqLogic = eqLogic::byId($_GET['id']);
+	if (!isConnect('admin')) {
+		throw new Exception('401 Unauthorized');
+	}
+	$eqLogicId = (int) init('id');
+	$eqLogic = eqLogic::byId($eqLogicId);
     if (!is_object($eqLogic)) {
         throw new Exception(__('Objet non trouvé', __FILE__));
     }
-    sendVarToJS('idHParamPala', $_GET['id']);
+    sendVarToJS('idHParamPala', $eqLogicId);
     sendVarToJS('eqLogic', utils::o2a($eqLogic));
 ?>
 <style>

@@ -286,205 +286,6 @@ var palaParam = {
     104: 'Water Pump Maximum Speed'
 };
 
-for (var i in palaParam) {
-  addParamToTable({id:i, description: palaParam[i]})
-}
-getParamValue(eqPalaId);
-
-if (eqLogic.configuration.commentaire && Array.isArray(eqLogic.configuration.commentaire) && eqLogic.configuration.commentaire.length > 0) {
-    var comments = eqLogic.configuration.commentaire[0];
-    for (var j in comments) {
-      $('#table_param tbody tr').find('.eqLogicAttr[data-l1key=configuration][data-l2key=commentaire][data-l3key=' + j + ']').value(comments[j]);
-    }
-}
-jeeFrontEnd.modifyWithoutSave = false;
-$.hideLoading();
-getStaticComments();
-
-function getParamValue(_id) {
-    $('.paramAction[data-action=refresh]').removeClass('btn-success').addClass('btn-warning').addClass('disabled');
-    $('.paramAction[data-action=refresh]').html('<i class="fas fa-sync fa-spin"></i> {{Rafraîchissement en cours}}');
-    $.ajax({
-        type: "POST",
-        url: "plugins/Palazzetti/core/ajax/Palazzetti.ajax.php",
-        data: {
-            async: true,
-            action: "getParam",
-            id: _id
-        },
-        dataType: 'json',
-        error: function (request, status, error) {
-            handleAjaxError(request, status, error, $('#div_alert'));
-        },
-        success: function (data) {
-            $('.paramAction[data-action=refresh]').removeClass('btn-warning').addClass('btn-success').removeClass('disabled');
-            $('.paramAction[data-action=refresh]').html('<i class="fas fa-sync"></i> {{Rafraîchir les paramètres}}');
-            if (data.state == 'error' || !data.result.PARM || data.result.PARM.length == 0) {
-			    $.fn.showAlert({message: 'Code: ' + data.code + ' - Result: ' + data.result, level: 'danger'});
-                return;
-            }
-            for (var i = 0; i < data.result.PARM.length; ++i) {
-                $('#table_param tbody tr[data-param_id="' + i + '"]').find('.paramAttr[data-l1key="value"]').val(data.result.PARM[i]);
-                $('#table_param tbody tr[data-param_id="' + i + '"]').find('.paramAttr[data-l1key="value"]').data('value',data.result.PARM[i]);
-
-            }
-        }
-    });
-}
-
-$('.paramAction[data-action=refresh]').off('click').on('click', function () {
-    getParamValue(eqPalaId);
-});
-
-$("#table_param").delegate('.paramAction[data-action=update]', 'click', function() {
-    var el = $(this)
-    el.removeClass('btn-success').addClass('btn-warning').addClass('disabled');
-    el.html('<i class="fas fa-sync fa-spin"></i>');
-    var id = el.closest('tr').find('.paramAttr[data-l1key=id]').value();
-    var val = el.closest('tr').find('.paramAttr[data-l1key=value]').value();
-    var oldVal = el.closest('tr').find('.paramAttr[data-l1key=value]').data('value');
-    $.hideLoading();
-    $.ajax({
-        type: "POST",
-        url: "plugins/Palazzetti/core/ajax/Palazzetti.ajax.php",
-        data: {
-            async: false,
-            action: "getParam",
-            id: eqPalaId,
-            param_id: id
-        },
-        dataType: 'json',
-        error: function (request, status, error) {
-            handleAjaxError(request, status, error,$('#div_alert'));
-        },
-        success: function (data) {
-            if (data.state == 'error') {
-                $.hideLoading();
-			    $.fn.showAlert({message: 'Code: ' + data.code + ' - Result: ' + data.result, level: 'danger'});
-                return;
-            }
-            if (data.result.INFO.RSP != 'OK') {
-                $.hideLoading();
-			    $.fn.showAlert({message: 'Result: ' + data.result.INFO.RSP, level: 'danger'});
-                return;
-            }
-            if (data.result.DATA['PAR'+id] && val != data.result.DATA['PAR'+id]) {
-                el.closest('tr').find('.paramAttr[data-l1key=value]').css({'font-weight': 'bold','font-style': 'oblique'});
-                el.closest('tr').find('.paramAttr[data-l1key=value]').value(data.result.DATA['PAR'+id])
-                el.closest('tr').find('.paramAttr[data-l1key=value]').data('value',data.result.DATA['PAR'+id]);
-            }
-        }
-    });
-    el.removeClass('btn-warning').addClass('btn-success').removeClass('disabled');
-    el.html('<i class="fas fa-sync"></i>');
-});
-
-$("#table_param").delegate('.paramAction[data-action=modify]', 'click', function() {
-    var id = $(this).closest('tr').find('.paramAttr[data-l1key=id]').value();
-    var description = $(this).closest('tr').find('.paramAttr[data-l1key=description]').value();
-    var val = $(this).closest('tr').find('.paramAttr[data-l1key=value]').value();
-    var oldVal = $(this).closest('tr').find('.paramAttr[data-l1key=value]').data('value');
-    if (val != '') {
-        var text = '{{Êtes-vous sûr de vouloir modifier le paramètre}} <strong>' + id + '</strong> : <i>' + description + '</i> ?<br/>';
-        text += '{{De}} : <strong style="color:red;font-size:2em;">' + oldVal + '</strong> {{à}} <strong style="color:green;font-size:2em;">' + val + '</strong>';
-        bootbox.confirm(text, function(result) {
-            if (result) {
-                $.ajax({
-                    type: "POST",
-                    url: "plugins/Palazzetti/core/ajax/Palazzetti.ajax.php",
-                    data: {
-                        action: "setParam",
-                        id: eqPalaId,
-                        param_id: id,
-                        param_value: val
-                    },
-                    dataType: 'json',
-                    error: function (request, status, error) {
-                        handleAjaxError(request, status, error, $('#div_alert'));
-                    },
-                    success: function (data) {
-                        $.hideLoading();
-                        if (data.state == 'error' || data.result.length == 0) {
-                            $.fn.showAlert({message: 'Code: ' + data.code + ' - Result: ' + data.result, level: 'danger'});
-                            return;
-                        }
-                        if (data.result.INFO.RSP != 'OK') {
-                            $.fn.showAlert({message: 'Result: ' + data.result.INFO.RSP, level: 'danger'});
-                            return;
-                        }
-                        if (data.result.DATA) {
-                            if (data.result.DATA['PAR'+id]) {
-                                if (data.result.DATA['PAR'+id] == val) {
-                                    $.fn.showAlert({message: '{{Valeur}} ' + val + ' {{envoyée avec succès dans le paramètre}} ' + id, level: 'success'});
-                                    return;
-                                }
-                            }
-                        }
-                        $.fn.showAlert({message: 'Result: ' + data.result, level: 'danger'});
-                    }
-                });
-            }
-        })
-    } else {
-        $.fn.showAlert({
-            message: '{{Veuillez entrer une valeur}}',
-            level: 'danger'
-        })
-    }
-});
-
-function getStaticComments() {
-    //$('#table_param tbody tr').setValues({ configuration: { commentaire: palaParamComment } }, '.eqLogicAttr');
-    //$('.paramAction[data-action=getStaticComment]').removeClass('btn-info').addClass('btn-success').addClass('disabled');
-    //$('.paramAction[data-action=getStaticComment]').html('<i class="fas fa-check-double"></i> {{Commentaires récupérés}}');
-    $('#table_param tbody tr').each(function () {
-        var id = $(this).closest('tr').find('.paramAttr[data-l1key="id"]').value();
-        var comment = palaParamComment[id];
-        var tooltip = $(this).find('.fa-question-circle');
-        if (comment) {
-            var descriptionCell = $(this).find('.paramAttr[data-l1key="description"]');
-            var tooltip = $('<sup> <i class="fas fa-question-circle tooltipstered" title="'+palaParamComment[id]+'"></i></sup>');
-            descriptionCell.append(tooltip);
-        }
-        var unite = palaParamUnit[id];
-        if (unite) {
-            $(this).find('.paramAttr[data-l1key="unit"]').value(palaParamUnit[id]);
-        }
-    });
-}
-
-$('.paramAction[data-action=saveComments]').off('click').on('click', function () {
-    $('.paramAction[data-action=saveComments]').removeClass('btn-success').addClass('btn-warning').addClass('disabled');
-    $('.paramAction[data-action=saveComments]').html('<i class="fas fa-save fa-spin"></i> {{Sauvegarde en cours}}');
-    if (!isset(eqLogic.configuration)) {
-        eqLogic.configuration = {};
-    }
-    eqLogic.configuration.commentaire = [];
-    var eqLogicComment = $('#paramtab').getValues('.eqLogicAttr')[0];
-    eqLogic.configuration.commentaire.push(eqLogicComment.configuration.commentaire);
-    jeedom.eqLogic.save({
-        type: 'Palazzetti',
-        eqLogics: [eqLogic],
-        error: function(error) {
-            $('.paramAction[data-action=saveComments]').removeClass('btn-warning').addClass('btn-success').removeClass('disabled');
-            $('.paramAction[data-action=saveComments]').html('<i class="fas fa-save"></i> {{Sauvegarder les commentaires}}');
-            $.fn.showAlert({
-                message: error.message,
-                level: 'danger'
-            })
-        },
-        success: function(_data) {
-            $('.paramAction[data-action=saveComments]').removeClass('btn-warning').addClass('btn-success').removeClass('disabled');
-            $('.paramAction[data-action=saveComments]').html('<i class="fas fa-save"></i> {{Sauvegarder les commentaires}}');
-            $.fn.showAlert({
-                message: '{{Commentaires sauvegardés avec succès}}',
-                level: 'success'
-            })
-        }
-    })
-    return eqLogic;
-});
-
 function addParamToTable(_param) {
     var tr = '<tr class="param" data-param_id="' + init(_param.id) + '">'
     tr += '<td>'
@@ -513,6 +314,136 @@ function addParamToTable(_param) {
     tr += '</td>'
     tr += '</tr>';
 
-    $('#table_param tbody').append(tr);
-    $('#table_param tbody tr:last').setValues(_param, '.paramAttr');
+	    const body = document.querySelector('#table_param tbody');
+	    body.insertAdjacentHTML('beforeend', tr);
+	    body.lastElementChild.setJeeValues(_param, '.paramAttr');
 }
+
+Object.keys(palaParam).forEach(function(id) { addParamToTable({id: id, description: palaParam[id]}); });
+
+const parameterTable = document.getElementById('table_param');
+const refreshButton = document.querySelector('.paramAction[data-action="refresh"]');
+const saveCommentsButton = document.querySelector('.paramAction[data-action="saveComments"]');
+
+function setParameterButtonState(button, busy, busyLabel, idleLabel) {
+    if (!button) return;
+    button.classList.toggle('btn-warning', busy);
+    button.classList.toggle('btn-success', !busy);
+    button.classList.toggle('disabled', busy);
+	    const icon = button === saveCommentsButton ? 'save' : 'sync';
+	    button.innerHTML = '<i class="fas fa-' + icon + (busy ? ' fa-spin' : '') + '"></i> ' + (busy ? busyLabel : idleLabel);
+}
+
+function getParamValue(id, paramId) {
+    if (paramId === undefined) setParameterButtonState(refreshButton, true, '{{Rafraîchissement en cours}}', '{{Rafraîchir les paramètres}}');
+    domUtils.ajax({
+        type: 'POST',
+        url: 'plugins/Palazzetti/core/ajax/Palazzetti.ajax.php',
+        data: {action: 'getParam', id: id, param_id: paramId},
+        dataType: 'json',
+        error: function(request, status, error) {
+            if (paramId === undefined) setParameterButtonState(refreshButton, false, '', '{{Rafraîchir les paramètres}}');
+            handleAjaxError(request, status, error);
+        },
+        success: function(data) {
+            if (paramId === undefined) setParameterButtonState(refreshButton, false, '', '{{Rafraîchir les paramètres}}');
+            if (data.state !== 'ok' || !data.result || (!data.result.PARM && !data.result.DATA)) {
+                jeedomUtils.showAlert({message: 'Code: ' + (data.code || '') + ' - Result: ' + JSON.stringify(data.result), level: 'danger'});
+                return;
+            }
+            if (Array.isArray(data.result.PARM)) {
+                data.result.PARM.forEach(function(value, index) {
+                    const input = parameterTable.querySelector('tr[data-param_id="' + index + '"] .paramAttr[data-l1key="value"]');
+                    if (input) { input.value = value; input.dataset.value = value; }
+                });
+                return;
+            }
+            const key = 'PAR' + paramId;
+            const input = parameterTable.querySelector('tr[data-param_id="' + paramId + '"] .paramAttr[data-l1key="value"]');
+            if (input && Object.prototype.hasOwnProperty.call(data.result.DATA || {}, key)) {
+                input.value = data.result.DATA[key];
+                input.dataset.value = data.result.DATA[key];
+                input.style.fontWeight = 'bold';
+                input.style.fontStyle = 'oblique';
+            }
+        }
+    });
+}
+
+refreshButton?.addEventListener('click', function() { getParamValue(eqPalaId); });
+parameterTable?.addEventListener('click', function(event) {
+    const button = event.target.closest('.paramAction[data-action]');
+    if (!button) return;
+    const row = button.closest('tr');
+    const id = row.querySelector('.paramAttr[data-l1key="id"]').value;
+    const input = row.querySelector('.paramAttr[data-l1key="value"]');
+    if (button.dataset.action === 'update') {
+        getParamValue(eqPalaId, id);
+        return;
+    }
+    if (button.dataset.action !== 'modify') return;
+    if (input.value === '') {
+        jeedomUtils.showAlert({message: '{{Veuillez entrer une valeur}}', level: 'danger'});
+        return;
+    }
+    const description = row.querySelector('.paramAttr[data-l1key="description"]').textContent;
+    const oldValue = input.dataset.value || '';
+    jeeDialog.confirm('{{Êtes-vous sûr de vouloir modifier le paramètre}} ' + id + ' : ' + description + ' ? {{De}} ' + oldValue + ' {{à}} ' + input.value, function(confirmed) {
+        if (!confirmed) return;
+        domUtils.ajax({
+            type: 'POST', url: 'plugins/Palazzetti/core/ajax/Palazzetti.ajax.php', dataType: 'json',
+            data: {action: 'setParam', id: eqPalaId, param_id: id, param_value: input.value},
+            error: function(request, status, error) { handleAjaxError(request, status, error); },
+            success: function(data) {
+                if (data.state === 'ok' && data.result?.INFO?.RSP === 'OK') {
+                    input.dataset.value = input.value;
+                    jeedomUtils.showAlert({message: '{{Valeur}} ' + input.value + ' {{envoyée avec succès dans le paramètre}} ' + id, level: 'success'});
+                } else {
+                    jeedomUtils.showAlert({message: 'Result: ' + JSON.stringify(data.result), level: 'danger'});
+                }
+            }
+        });
+    });
+});
+
+if (eqLogic.configuration.commentaire && Array.isArray(eqLogic.configuration.commentaire)) {
+    const comments = eqLogic.configuration.commentaire[0] || {};
+    Object.keys(comments).forEach(function(id) {
+        const input = parameterTable.querySelector('.eqLogicAttr[data-l2key="commentaire"][data-l3key="' + id + '"]');
+        if (input) input.value = comments[id];
+    });
+}
+
+parameterTable.querySelectorAll('tbody tr').forEach(function(row) {
+    const id = row.querySelector('.paramAttr[data-l1key="id"]').value;
+    const description = row.querySelector('.paramAttr[data-l1key="description"]');
+    if (palaParamComment[id]) {
+        const tooltip = document.createElement('sup');
+        tooltip.innerHTML = ' <i class="fas fa-question-circle tooltipstered"></i>';
+        tooltip.firstElementChild.title = palaParamComment[id];
+        description.appendChild(tooltip);
+    }
+    const unit = row.querySelector('.paramAttr[data-l1key="unit"]');
+    if (unit && palaParamUnit[id]) unit.textContent = palaParamUnit[id];
+});
+
+saveCommentsButton?.addEventListener('click', function() {
+    setParameterButtonState(saveCommentsButton, true, '{{Sauvegarde en cours}}', '{{Sauvegarder les commentaires}}');
+    eqLogic.configuration = eqLogic.configuration || {};
+    const values = document.getElementById('paramtab').getJeeValues('.eqLogicAttr')[0];
+    eqLogic.configuration.commentaire = [values.configuration.commentaire || {}];
+    jeedom.eqLogic.save({
+        type: 'Palazzetti', eqLogics: [eqLogic],
+        error: function(error) {
+            setParameterButtonState(saveCommentsButton, false, '', '{{Sauvegarder les commentaires}}');
+            jeedomUtils.showAlert({message: error.message, level: 'danger'});
+        },
+        success: function() {
+            setParameterButtonState(saveCommentsButton, false, '', '{{Sauvegarder les commentaires}}');
+            jeedomUtils.showAlert({message: '{{Commentaires sauvegardés avec succès}}', level: 'success'});
+        }
+    });
+});
+
+jeeFrontEnd.modifyWithoutSave = false;
+getParamValue(eqPalaId);

@@ -128,185 +128,6 @@ var palaHiddenParam = {
     110: 'FactoryReload'
 };
 
-for (var i in palaHiddenParam) {
-  addHiddenParamToTable({id:i, description: palaHiddenParam[i]})
-}
-getHiddenParamValue(idHParamPala);
-
-if (eqLogic.configuration.commentaire_caches && Array.isArray(eqLogic.configuration.commentaire_caches) && eqLogic.configuration.commentaire_caches.length > 0) {
-    var comments = eqLogic.configuration.commentaire_caches[0];
-    for (var j in comments) {
-        $('#table_param tbody tr').find('.eqLogicAttr[data-l1key=configuration][data-l2key=commentaire_caches][data-l3key=' + j + ']').value(comments[j])
-    }
-}
-jeeFrontEnd.modifyWithoutSave = false;
-$.hideLoading();
-
-function getHiddenParamValue(_id) {
-    $('.paramAction[data-action=refresh]').removeClass('btn-success').addClass('btn-warning').addClass('disabled');
-    $('.paramAction[data-action=refresh]').html('<i class="fas fa-sync fa-spin"></i> {{Rafraîchissement en cours}}');
-    $.ajax({
-        type: "POST",
-        url: "plugins/Palazzetti/core/ajax/Palazzetti.ajax.php",
-        data: {
-            async: true,
-            action: "getHiddenParam",
-            id: _id
-        },
-        dataType: 'json',
-        error: function (request, status, error) {
-            handleAjaxError(request, status, error,$('#div_alert'));
-        },
-        success: function (data) {
-            $('.paramAction[data-action=refresh]').removeClass('btn-warning').addClass('btn-success').removeClass('disabled');
-            $('.paramAction[data-action=refresh]').html('<i class="fas fa-sync"></i> {{Rafraîchir les paramètres}}');
-            if (data.state == 'error' || !data.result.HPAR || data.result.HPAR.length == 0) {
-			    $.fn.showAlert({message: 'Code: ' + data.code + ' - Result: ' + data.result, level: 'danger'});
-                return;
-            }
-            for (var i = 0; i < data.result.HPAR.length; ++i) {
-                $('#table_param tbody tr[data-param_id="' + i + '"]').find('.paramAttr[data-l1key="value"]').val(data.result.HPAR[i]);
-                $('#table_param tbody tr[data-param_id="' + i + '"]').find('.paramAttr[data-l1key="value"]').data('value',data.result.HPAR[i]);
-
-            }
-        }
-    });
-}
-
-$('.paramAction[data-action=refresh]').off('click').on('click', function () {
-    getHiddenParamValue(idHParamPala);
-});
-
-$("#table_param").delegate('.paramAction[data-action=update]', 'click', function() {
-    var el = $(this)
-    el.removeClass('btn-success').addClass('btn-warning').addClass('disabled');
-    el.html('<i class="fas fa-sync fa-spin"></i>');
-    var id = el.closest('tr').find('.paramAttr[data-l1key=id]').value();
-    var val = el.closest('tr').find('.paramAttr[data-l1key=value]').value();
-    var oldVal = el.closest('tr').find('.paramAttr[data-l1key=value]').data('value');
-    $.hideLoading();
-    $.ajax({
-        type: "POST",
-        url: "plugins/Palazzetti/core/ajax/Palazzetti.ajax.php",
-        data: {
-            async: false,
-            action: "getHiddenParam",
-            id: idHParamPala,
-            hidden_param_id: id
-        },
-        dataType: 'json',
-        error: function (request, status, error) {
-            handleAjaxError(request, status, error,$('#div_alert'));
-        },
-        success: function (data) {
-            if (data.state == 'error') {
-                $.hideLoading();
-			    $.fn.showAlert({message: 'Code: ' + data.code + ' - Result: ' + data.result, level: 'danger'});
-                return;
-            }
-            if (data.result.INFO.RSP != 'OK') {
-                $.hideLoading();
-			    $.fn.showAlert({message: 'Result: ' + data.result.INFO.RSP, level: 'danger'});
-                return;
-            }
-            if (data.result.DATA['HPAR'+id] && val != data.result.DATA['HPAR'+id]) {
-                el.closest('tr').find('.paramAttr[data-l1key=value]').css({'font-weight': 'bold','font-style': 'oblique'});
-                el.closest('tr').find('.paramAttr[data-l1key=value]').value(data.result.DATA['HPAR'+id])
-                el.closest('tr').find('.paramAttr[data-l1key=value]').data('value',data.result.DATA['HPAR'+id]);
-            }
-        }
-    });
-    el.removeClass('btn-warning').addClass('btn-success').removeClass('disabled');
-    el.html('<i class="fas fa-sync"></i>');
-});
-
-$("#table_param").delegate('.paramAction[data-action=modify]', 'click', function() {
-    var id = $(this).closest('tr').find('.paramAttr[data-l1key=id]').value();
-    var description = $(this).closest('tr').find('.paramAttr[data-l1key=description]').value();
-    var val = $(this).closest('tr').find('.paramAttr[data-l1key=value]').value();
-    var oldVal = $(this).closest('tr').find('.paramAttr[data-l1key=value]').data('value');
-    if (val != '') {
-        var text = '{{Êtes-vous sûr de vouloir modifier le paramètre}} <strong>' + id + '</strong> : <i>' + description + '</i> ?<br/>';
-        text += '{{De}} : <strong style="color:red;font-size:2em;">' + oldVal + '</strong> {{à}} <strong style="color:green;font-size:2em;">' + val + '</strong>';
-        bootbox.confirm(text, function(result) {
-            if (result) {
-                $.ajax({
-                    type: "POST",
-                    url: "plugins/Palazzetti/core/ajax/Palazzetti.ajax.php",
-                    data: {
-                        async: true,
-                        action: "setHiddenParam",
-                        id: idHParamPala,
-                        hidden_param_id: id,
-                        hidden_param_value: val
-                    },
-                    dataType: 'json',
-                    error: function (request, status, error) {
-                        handleAjaxError(request, status, error,$('#div_alert'));
-                    },
-                    success: function (data) {
-                        $.hideLoading();
-                        if (data.state == 'error') {
-                            $.fn.showAlert({message: 'Code: ' + data.code + ' - Result: ' + data.result, level: 'danger'});
-                            return;
-                        }
-                        if (data.result.INFO.RSP != 'OK') {
-                            $.fn.showAlert({message: 'Result: ' + data.result.INFO.RSP, level: 'danger'});
-                            return;
-                        }
-                        if (data.result.DATA) {
-                            if (data.result.DATA['HPAR'+id]) {
-                                if (data.result.DATA['HPAR'+id] == val) {
-                                    $.fn.showAlert({message: '{{Valeur}} ' + val + ' {{envoyée avec succès dans le paramètre}} ' + id, level: 'success'});
-                                    return;
-                                }
-                            }
-                        }
-                        $.fn.showAlert({message: 'Result: ' + data.result, level: 'danger'});
-                    }
-                });
-            }
-        })
-    } else {
-        $.fn.showAlert({
-            message: '{{Veuillez entrer une valeur}}',
-            level: 'danger'
-        })
-    }
-});
-
-$('.paramAction[data-action=saveComments]').off('click').on('click', function () {
-    $('.paramAction[data-action=saveComments]').removeClass('btn-success').addClass('btn-warning').addClass('disabled');
-    $('.paramAction[data-action=saveComments]').html('<i class="fas fa-save fa-spin"></i> {{Sauvegarde en cours}}');
-    if (!isset(eqLogic.configuration)) {
-        eqLogic.configuration = {};
-    }
-    eqLogic.configuration.commentaire_caches = [];
-    var eqLogicComment = $('#paramtab').getValues('.eqLogicAttr')[0];
-    eqLogic.configuration.commentaire_caches.push(eqLogicComment.configuration.commentaire_caches);
-    jeedom.eqLogic.save({
-        type: 'Palazzetti',
-        eqLogics: [eqLogic],
-        error: function(error) {
-            $('.paramAction[data-action=saveComments]').removeClass('btn-warning').addClass('btn-success').removeClass('disabled');
-            $('.paramAction[data-action=saveComments]').html('<i class="fas fa-save"></i> {{Sauvegarder les commentaires}}');
-            $.fn.showAlert({
-                message: error.message,
-                level: 'danger'
-            })
-        },
-        success: function(_data) {
-            $('.paramAction[data-action=saveComments]').removeClass('btn-warning').addClass('btn-success').removeClass('disabled');
-            $('.paramAction[data-action=saveComments]').html('<i class="fas fa-save"></i> {{Sauvegarder les commentaires}}');
-            $.fn.showAlert({
-                message: '{{Commentaires sauvegardés avec succès}}',
-                level: 'success'
-            })
-        }
-    })
-    return eqLogic;
-});
-
 function addHiddenParamToTable(_param) {
     var tr = '<tr class="param" data-param_id="' + init(_param.id) + '">'
     tr += '<td>'
@@ -331,6 +152,120 @@ function addHiddenParamToTable(_param) {
     tr += '</td>'
     tr += '</tr>';
 
-    $('#table_param tbody').append(tr);
-    $('#table_param tbody tr:last').setValues(_param, '.paramAttr');
+	    const body = document.querySelector('#table_param tbody');
+	    body.insertAdjacentHTML('beforeend', tr);
+	    body.lastElementChild.setJeeValues(_param, '.paramAttr');
 }
+
+Object.keys(palaHiddenParam).forEach(function(id) { addHiddenParamToTable({id: id, description: palaHiddenParam[id]}); });
+
+const hiddenParameterTable = document.getElementById('table_param');
+const hiddenRefreshButton = document.querySelector('.paramAction[data-action="refresh"]');
+const hiddenSaveButton = document.querySelector('.paramAction[data-action="saveComments"]');
+
+function setHiddenButtonState(button, busy, busyLabel, idleLabel) {
+    if (!button) return;
+    button.classList.toggle('btn-warning', busy);
+    button.classList.toggle('btn-success', !busy);
+    button.classList.toggle('disabled', busy);
+    button.innerHTML = '<i class="fas fa-' + (button === hiddenSaveButton ? 'save' : 'sync') + (busy ? ' fa-spin' : '') + '"></i> ' + (busy ? busyLabel : idleLabel);
+}
+
+function getHiddenParamValue(id, paramId) {
+    if (paramId === undefined) setHiddenButtonState(hiddenRefreshButton, true, '{{Rafraîchissement en cours}}', '{{Rafraîchir les paramètres}}');
+    domUtils.ajax({
+        type: 'POST', url: 'plugins/Palazzetti/core/ajax/Palazzetti.ajax.php', dataType: 'json',
+        data: {action: 'getHiddenParam', id: id, hidden_param_id: paramId},
+        error: function(request, status, error) {
+            if (paramId === undefined) setHiddenButtonState(hiddenRefreshButton, false, '', '{{Rafraîchir les paramètres}}');
+            handleAjaxError(request, status, error);
+        },
+        success: function(data) {
+            if (paramId === undefined) setHiddenButtonState(hiddenRefreshButton, false, '', '{{Rafraîchir les paramètres}}');
+            if (data.state !== 'ok' || !data.result || (!data.result.HPAR && !data.result.DATA)) {
+                jeedomUtils.showAlert({message: 'Code: ' + (data.code || '') + ' - Result: ' + JSON.stringify(data.result), level: 'danger'});
+                return;
+            }
+            if (Array.isArray(data.result.HPAR)) {
+                data.result.HPAR.forEach(function(value, index) {
+                    const input = hiddenParameterTable.querySelector('tr[data-param_id="' + index + '"] .paramAttr[data-l1key="value"]');
+                    if (input) { input.value = value; input.dataset.value = value; }
+                });
+                return;
+            }
+            const key = 'HPAR' + paramId;
+            const input = hiddenParameterTable.querySelector('tr[data-param_id="' + paramId + '"] .paramAttr[data-l1key="value"]');
+            if (input && Object.prototype.hasOwnProperty.call(data.result.DATA || {}, key)) {
+                input.value = data.result.DATA[key];
+                input.dataset.value = data.result.DATA[key];
+                input.style.fontWeight = 'bold';
+                input.style.fontStyle = 'oblique';
+            }
+        }
+    });
+}
+
+hiddenRefreshButton?.addEventListener('click', function() { getHiddenParamValue(idHParamPala); });
+hiddenParameterTable?.addEventListener('click', function(event) {
+    const button = event.target.closest('.paramAction[data-action]');
+    if (!button) return;
+    const row = button.closest('tr');
+    const id = row.querySelector('.paramAttr[data-l1key="id"]').value;
+    const input = row.querySelector('.paramAttr[data-l1key="value"]');
+    if (button.dataset.action === 'update') {
+        getHiddenParamValue(idHParamPala, id);
+        return;
+    }
+    if (button.dataset.action !== 'modify') return;
+    if (input.value === '') {
+        jeedomUtils.showAlert({message: '{{Veuillez entrer une valeur}}', level: 'danger'});
+        return;
+    }
+    const description = row.querySelector('.paramAttr[data-l1key="description"]').textContent;
+    const oldValue = input.dataset.value || '';
+    jeeDialog.confirm('{{Êtes-vous sûr de vouloir modifier le paramètre}} ' + id + ' : ' + description + ' ? {{De}} ' + oldValue + ' {{à}} ' + input.value, function(confirmed) {
+        if (!confirmed) return;
+        domUtils.ajax({
+            type: 'POST', url: 'plugins/Palazzetti/core/ajax/Palazzetti.ajax.php', dataType: 'json',
+            data: {action: 'setHiddenParam', id: idHParamPala, hidden_param_id: id, hidden_param_value: input.value},
+            error: function(request, status, error) { handleAjaxError(request, status, error); },
+            success: function(data) {
+                if (data.state === 'ok' && data.result?.INFO?.RSP === 'OK') {
+                    input.dataset.value = input.value;
+                    jeedomUtils.showAlert({message: '{{Valeur}} ' + input.value + ' {{envoyée avec succès dans le paramètre}} ' + id, level: 'success'});
+                } else {
+                    jeedomUtils.showAlert({message: 'Result: ' + JSON.stringify(data.result), level: 'danger'});
+                }
+            }
+        });
+    });
+});
+
+if (eqLogic.configuration.commentaire_caches && Array.isArray(eqLogic.configuration.commentaire_caches)) {
+    const comments = eqLogic.configuration.commentaire_caches[0] || {};
+    Object.keys(comments).forEach(function(id) {
+        const input = hiddenParameterTable.querySelector('.eqLogicAttr[data-l2key="commentaire_caches"][data-l3key="' + id + '"]');
+        if (input) input.value = comments[id];
+    });
+}
+
+hiddenSaveButton?.addEventListener('click', function() {
+    setHiddenButtonState(hiddenSaveButton, true, '{{Sauvegarde en cours}}', '{{Sauvegarder les commentaires}}');
+    eqLogic.configuration = eqLogic.configuration || {};
+    const values = document.getElementById('paramtab').getJeeValues('.eqLogicAttr')[0];
+    eqLogic.configuration.commentaire_caches = [values.configuration.commentaire_caches || {}];
+    jeedom.eqLogic.save({
+        type: 'Palazzetti', eqLogics: [eqLogic],
+        error: function(error) {
+            setHiddenButtonState(hiddenSaveButton, false, '', '{{Sauvegarder les commentaires}}');
+            jeedomUtils.showAlert({message: error.message, level: 'danger'});
+        },
+        success: function() {
+            setHiddenButtonState(hiddenSaveButton, false, '', '{{Sauvegarder les commentaires}}');
+            jeedomUtils.showAlert({message: '{{Commentaires sauvegardés avec succès}}', level: 'success'});
+        }
+    });
+});
+
+jeeFrontEnd.modifyWithoutSave = false;
+getHiddenParamValue(idHParamPala);

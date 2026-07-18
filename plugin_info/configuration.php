@@ -17,14 +17,31 @@
 
 require_once dirname(__FILE__) . '/../../../core/php/core.inc.php';
 include_file('core', 'authentification', 'php');
-if (!isConnect()) {
+if (!isConnect('admin')) {
     include_file('desktop', '404', 'php');
     die();
 }
+$plugin = plugin::byId('Palazzetti');
+$update = $plugin->getUpdate();
 
 ?>
-<form class="form-horizontal">
+<form class="form-horizontal" id="configuration_plugin_palazzetti">
     <fieldset>
+		<legend><i class="fas fa-info-circle"></i> {{Général}}</legend>
+		<div class="form-group">
+			<div class="col-lg-4">
+				<?php if (is_object($update)) { ?>
+					<div><label>{{Branche}} :</label> <span class="label label-info"><?php echo htmlspecialchars($update->getConfiguration('version', 'stable')); ?></span></div>
+					<div><label>{{Source}} :</label> <?php echo htmlspecialchars($update->getSource()); ?></div>
+					<div><label>{{Version}} :</label> <?php echo htmlspecialchars($update->getLocalVersion()); ?></div>
+				<?php } ?>
+			</div>
+			<div class="col-lg-6">
+				<a class="btn btn-success btn-sm" target="_blank" rel="noopener noreferrer" href="<?php echo htmlspecialchars($plugin->getDocumentation()); ?>"><i class="fas fa-book"></i> {{Documentation}}</a>
+				<a class="btn btn-default btn-sm" target="_blank" rel="noopener noreferrer" href="<?php echo htmlspecialchars($plugin->getChangelog()); ?>"><i class="fas fa-list"></i> {{Changelog}}</a>
+			</div>
+		</div>
+		<legend><i class="fas fa-clock"></i> {{Rafraîchissement}}</legend>
 		<div class="form-group">
 			<label class="col-lg-4 control-label">{{Intervalle de rafraîchissement des informations (cron)}}<sup>
 				<i class="fa fa-question-circle tooltips" title="{{Sélectionnez l'intervalle de récupération des informations}}.</br>{{Par défaut : 15 minutes.}}"></i>

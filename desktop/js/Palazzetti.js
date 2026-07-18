@@ -14,32 +14,32 @@
  * along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
  */
 
-$("#table_cmd").sortable({
-    axis: "y",
-    cursor: "move",
-    items: ".cmd",
-    placeholder: "ui-state-highlight",
-    tolerance: "intersect",
-    forcePlaceholderSize: true
-});
+	const palazzettiCommandBody = document.querySelector('#table_cmd tbody');
+	if (palazzettiCommandBody && typeof Sortable !== 'undefined') {
+	    new Sortable(palazzettiCommandBody, {draggable: '.cmd', animation: 150});
+	}
 
 function printEqLogic(_eqLogic) {
-    $('#buttonParam').hide();
-    if (_eqLogic.configuration.isWirelessPalaControl && _eqLogic.configuration.isWirelessPalaControl === true) {
-        $('#buttonParam').show();
-        $('#showWPalaControl').show();
-    }
-}
+	    const parameterButton = document.getElementById('buttonParam');
+	    const palaControl = document.getElementById('showWPalaControl');
+	    if (parameterButton) parameterButton.style.display = 'none';
+	    if (_eqLogic.configuration.isWirelessPalaControl && _eqLogic.configuration.isWirelessPalaControl === true) {
+	        if (parameterButton) parameterButton.style.display = '';
+	        if (palaControl) palaControl.style.display = '';
+	    }
+	}
 
-$('body').delegate('.cmdAction[data-action=parametres]', 'click', function () {
-  $('#md_modal2').dialog({title: "{{Paramètres du poêle}}"});
-  $('#md_modal2').load('index.php?v=d&plugin=Palazzetti&modal=parametres&id=' + $('.eqLogicAttr[data-l1key=id]').value()).dialog('open');
-});
-
-$('body').delegate('.cmdAction[data-action=hiddenParametres]', 'click', function () {
-  $('#md_modal2').dialog({title: "{{Paramètres cachés du poêle}}"});
-  $('#md_modal2').load('index.php?v=d&plugin=Palazzetti&modal=hidden.parametres&id=' + $('.eqLogicAttr[data-l1key=id]').value()).dialog('open');
-});
+	document.body.addEventListener('click', function(event) {
+	  const button = event.target.closest('.cmdAction[data-action="parametres"], .cmdAction[data-action="hiddenParametres"]');
+	  if (!button) return;
+	  const hidden = button.dataset.action === 'hiddenParametres';
+	  const equipmentId = document.querySelector('.eqLogicAttr[data-l1key="id"]').jeeValue();
+	  jeeDialog.dialog({
+	    id: 'md_modal2',
+	    title: hidden ? '{{Paramètres cachés du poêle}}' : '{{Paramètres du poêle}}',
+	    contentUrl: 'index.php?v=d&plugin=Palazzetti&modal=' + (hidden ? 'hidden.parametres' : 'parametres') + '&id=' + encodeURIComponent(equipmentId)
+	  });
+	});
 
 function addCmdToTable(_cmd) {
     if (!isset(_cmd)) {
@@ -101,24 +101,25 @@ function addCmdToTable(_cmd) {
     tr += '</div>';
     tr += '</td>';
     tr += '</tr>';
-    $('#table_cmd tbody').append(tr);
-    var tr = $('#table_cmd tbody tr:last');
-    buildPalaSelectCmd({
-        id: $('.eqLogicAttr[data-l1key=id]').value(),
+	    if (!palazzettiCommandBody) return;
+	    palazzettiCommandBody.insertAdjacentHTML('beforeend', tr);
+	    const newRow = palazzettiCommandBody.lastElementChild;
+	    buildPalaSelectCmd({
+	        id: document.querySelector('.eqLogicAttr[data-l1key="id"]').jeeValue(),
         filter: {
             type: 'info'
         },
         error: function (error) {
-            $.fn.showAlert({
+	            jeedomUtils.showAlert({
                 message: error.message,
                 level: 'danger'
             });
         },
         success: function (result) {
-            tr.find('.cmdAttr[data-l1key=value]').append(result);
-            tr.find('.cmdAttr[data-l1key=configuration][data-l2key=updateLogicalId]').append(result);
-            tr.setValues(_cmd, '.cmdAttr');
-            jeedom.cmd.changeType(tr, init(_cmd.subType));
+	            newRow.querySelector('.cmdAttr[data-l1key="value"]')?.insertAdjacentHTML('beforeend', result);
+	            newRow.querySelector('.cmdAttr[data-l1key="configuration"][data-l2key="updateLogicalId"]')?.insertAdjacentHTML('beforeend', result);
+	            newRow.setJeeValues(_cmd, '.cmdAttr');
+	            jeedom.cmd.changeType(newRow, init(_cmd.subType));
         }
     });
 }
@@ -129,15 +130,19 @@ buildPalaSelectCmd = function(_params) {
   }
   jeedom.eqLogic.getCmd({
     id: _params.id,
-    async: false,
-    success: function(cmds) {
+	    success: function(cmds) {
       var result = ''
       for (var i in cmds) {
         if ((init(_params.filter.type, 'all') == 'all' || cmds[i].type == _params.filter.type) &&
           (init(_params.filter.subType, 'all') == 'all' || cmds[i].subType == _params.filter.subType) &&
           (init(_params.filter.isHistorized, 'all') == 'all' || cmds[i].isHistorized == _params.filter.isHistorized)
         ) {
-          result += '<option value="' + cmds[i].logicalId + '" data-type="' + cmds[i].type + '"  data-subType="' + cmds[i].subType + '" >' + cmds[i].name + '</option>'
+	          const option = document.createElement('option');
+	          option.value = cmds[i].logicalId;
+	          option.dataset.type = cmds[i].type;
+	          option.dataset.subtype = cmds[i].subType;
+	          option.textContent = cmds[i].name;
+	          result += option.outerHTML;
         }
       }
       if ('function' == typeof (_params.success)) {
