@@ -251,7 +251,6 @@
         "à": "to"
     },
     "plugins\/Palazzetti\/desktop\/js\/parametres.js": {
-        "Commentaires récupérés": "Recovered comments",
         "Commentaires sauvegardés avec succès": "Comments successfully saved",
         "De": "From",
         "Durée phase d\\'allumage (Fuel Ignition)": "Duration of fuel ignition phase",
@@ -304,6 +303,7 @@
         "Valeur": "Value"
     },
     "plugins\/Palazzetti\/desktop\/modal\/planning.php": {
+        "Commande de planning manquante : ": "Missing schedule command: ",
         "Commande non trouvée": "Command not found",
         "Consigne tranche": "Slice setpoint",
         "Début tranche": "Start slice",
@@ -370,9 +370,15 @@
         "État": "Status"
     },
     "plugins\/Palazzetti\/plugin_info\/configuration.php": {
+        "Branche": "Branch",
+        "Changelog": "Changelog",
+        "Documentation": "Documentation",
+        "Général": "Main",
         "Intervalle de rafraîchissement des informations (cron)": "Information refresh interval (cron)",
         "Jamais": "Never",
         "Par défaut : 15 minutes.": "Default: 15 minutes.",
+        "Rafraîchissement": "Refresh",
+        "Source": "Source",
         "Sélectionnez l'intervalle de récupération des informations": "Select information retrieval interval",
         "Toutes les 10 minutes": "Every 10 minutes",
         "Toutes les 15 minutes": "Every 15 minutes",
@@ -381,6 +387,7 @@
         "Toutes les 30 minutes": "Every 30 minutes",
         "Toutes les 45 minutes": "Every 45 minutes",
         "Toutes les 5 minutes": "Every 5 minutes",
-        "Toutes les minutes": "Every minute"
+        "Toutes les minutes": "Every minute",
+        "Version": "Version"
     }
 }

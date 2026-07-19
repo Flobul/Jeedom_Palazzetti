@@ -251,7 +251,6 @@
         "à": "a"
     },
     "plugins\/Palazzetti\/desktop\/js\/parametres.js": {
-        "Commentaires récupérés": "Commenti recuperati",
         "Commentaires sauvegardés avec succès": "Commenti salvati con successo",
         "De": "De",
         "Durée phase d\\'allumage (Fuel Ignition)": "Durata della fase di accensione del combustibile",
@@ -304,6 +303,7 @@
         "Valeur": "Valore"
     },
     "plugins\/Palazzetti\/desktop\/modal\/planning.php": {
+        "Commande de planning manquante : ": "Comando di pianificazione mancante: ",
         "Commande non trouvée": "Commande non trouvée",
         "Consigne tranche": "Setpoint a fette",
         "Début tranche": "Inizio fetta",
@@ -370,9 +370,15 @@
         "État": "Stato"
     },
     "plugins\/Palazzetti\/plugin_info\/configuration.php": {
+        "Branche": "Ramo",
+        "Changelog": "Registro delle modifiche",
+        "Documentation": "Documentazione",
+        "Général": "Principale",
         "Intervalle de rafraîchissement des informations (cron)": "Intervallo di aggiornamento delle informazioni (cron)",
         "Jamais": "Jamais",
         "Par défaut : 15 minutes.": "Predefinito: 15 minuti.",
+        "Rafraîchissement": "Rinfresco",
+        "Source": "Sorgente",
         "Sélectionnez l'intervalle de récupération des informations": "Selezionare l'intervallo di recupero delle informazioni",
         "Toutes les 10 minutes": "Ogni 10 minuti",
         "Toutes les 15 minutes": "Ogni 15 minuti",
@@ -381,6 +387,7 @@
         "Toutes les 30 minutes": "Ogni 30 minuti",
         "Toutes les 45 minutes": "Ogni 45 minuti",
         "Toutes les 5 minutes": "Ogni 5 minuti",
-        "Toutes les minutes": "Ogni minuto"
+        "Toutes les minutes": "Ogni minuto",
+        "Version": "Versione"
     }
 }

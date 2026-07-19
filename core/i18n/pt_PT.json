@@ -251,7 +251,6 @@
         "à": "às"
     },
     "plugins\/Palazzetti\/desktop\/js\/parametres.js": {
-        "Commentaires récupérés": "Comentários recuperados",
         "Commentaires sauvegardés avec succès": "Comentários guardados com sucesso",
         "De": "De",
         "Durée phase d\\'allumage (Fuel Ignition)": "Duração da fase de ignição do combustível",
@@ -304,6 +303,7 @@
         "Valeur": "Valor"
     },
     "plugins\/Palazzetti\/desktop\/modal\/planning.php": {
+        "Commande de planning manquante : ": "Falta o comando de agendamento: ",
         "Commande non trouvée": "Comando não encontrado",
         "Consigne tranche": "Ponto de regulação da fatia",
         "Début tranche": "Iniciar fatia",
@@ -370,9 +370,15 @@
         "État": "Estado"
     },
     "plugins\/Palazzetti\/plugin_info\/configuration.php": {
+        "Branche": "Caminho",
+        "Changelog": "Registo de alterações",
+        "Documentation": "Documentação",
+        "Général": "Geral",
         "Intervalle de rafraîchissement des informations (cron)": "Intervalo de atualização de informações (cron)",
         "Jamais": "Nunca",
         "Par défaut : 15 minutes.": "Predefinição: 15 minutos.",
+        "Rafraîchissement": "Atualização",
+        "Source": "Fonte",
         "Sélectionnez l'intervalle de récupération des informations": "Selecionar o intervalo de recuperação de informação",
         "Toutes les 10 minutes": "A cada 10 minutos",
         "Toutes les 15 minutes": "A cada 15 minutos",
@@ -381,6 +387,7 @@
         "Toutes les 30 minutes": "A cada 30 minutos",
         "Toutes les 45 minutes": "A cada 45 minutos",
         "Toutes les 5 minutes": "A cada 5 minutos",
-        "Toutes les minutes": "Cada minuto"
+        "Toutes les minutes": "Cada minuto",
+        "Version": "Versão"
     }
 }
