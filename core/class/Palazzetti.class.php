@@ -144,37 +144,53 @@ class Palazzetti extends eqLogic
     // methode requete
     public function makeRequest($cmd, $_timeout = 5)
     {
-        $url = 'http://' . $this->getConfiguration('addressip') . '/cgi-bin/sendmsg.lua?cmd=' . $cmd;
-        log::add(__CLASS__, 'debug', __FUNCTION__ . ' - ' . 'get URL ' . $url);
-
-        try {
-            $request_http = new com_http($url);
-            $return = $request_http->exec($_timeout, 2);
-        } catch (Exception $e) {
-            if ($e->getCode() == 404) {
-                log::add(__CLASS__, 'debug', __FUNCTION__.' - '. $e->getCode() . __(' erreur de connexion : ', __FILE__) . $e->getMessage());
-                //throw $e;
-            }
-            log::add(__CLASS__, 'debug', __FUNCTION__.' - '. $e->getCode() . __(' problème de connexion : ', __FILE__) . $e->getMessage());
+        $address = trim((string) $this->getConfiguration('addressip'));
+        if (filter_var($address, FILTER_VALIDATE_IP) === false && preg_match('/^[A-Za-z0-9.-]+$/', $address) !== 1) {
+            log::add(__CLASS__, 'error', __FUNCTION__ . __(' - adresse invalide : ', __FILE__) . $address);
             return false;
         }
 
-        $return = json_decode($return);
-        if ($return->INFO->RSP) {
-            if ($return->INFO->RSP == 'OK') {
-                log::add(__CLASS__, 'debug', __FUNCTION__ . __(' - resultat : ', __FILE__) . json_encode($return));
-                return $return;
-            } elseif($return->INFO->RSP == 'TIMEOUT') {
-                log::add(__CLASS__, 'debug', __FUNCTION__ . ' - timeout : ' . json_encode($return));
-                return $return;
+        $baseUrl = 'http://' . $address . '/cgi-bin/sendmsg.lua?cmd=';
+        $commandVariants = array($cmd, rawurlencode($cmd));
+        $lastError = '';
+
+        foreach (array_unique($commandVariants) as $commandVariant) {
+            $url = $baseUrl . $commandVariant;
+            log::add(__CLASS__, 'debug', __FUNCTION__ . ' - get URL ' . $url);
+            try {
+                $requestHttp = new com_http($url);
+                $rawResponse = $requestHttp->exec($_timeout, 2);
+            } catch (Exception $e) {
+                $lastError = $e->getMessage();
+                log::add(__CLASS__, 'debug', __FUNCTION__ . ' - ' . $e->getCode() . __(' problème de connexion : ', __FILE__) . $lastError);
+                continue;
             }
-        } elseif ($return->PARM || $return->HPAR) {
-            log::add(__CLASS__, 'debug', __FUNCTION__ . __(' - resultat PARM || HPAR : ', __FILE__) . json_encode($return));
-            return $return;
-        } else {
-            log::add(__CLASS__, 'debug', __FUNCTION__ . __(' - erreur : ', __FILE__) . $cmd . __(' - valeur : ', __FILE__) . json_encode($return));
-            return false;
+
+            if (!is_string($rawResponse) || trim($rawResponse) === '') {
+                $lastError = __('réponse vide', __FILE__);
+                continue;
+            }
+
+            $response = json_decode($rawResponse);
+            if (!is_object($response)) {
+                $lastError = __('JSON invalide', __FILE__);
+                continue;
+            }
+
+            if (isset($response->INFO) && is_object($response->INFO) && isset($response->INFO->RSP)) {
+                log::add(__CLASS__, 'debug', __FUNCTION__ . __(' - résultat : ', __FILE__) . json_encode($response));
+                return $response;
+            }
+            if (property_exists($response, 'PARM') || property_exists($response, 'HPAR') || property_exists($response, 'DATA')) {
+                log::add(__CLASS__, 'debug', __FUNCTION__ . __(' - résultat données : ', __FILE__) . json_encode($response));
+                return $response;
+            }
+
+            $lastError = __('réponse non reconnue', __FILE__);
         }
+
+        log::add(__CLASS__, 'error', __FUNCTION__ . __(' - aucune réponse exploitable pour ', __FILE__) . $cmd . ($lastError !== '' ? ' (' . $lastError . ')' : ''));
+        return false;
     }
 
     // interpretation valeur ventilateur

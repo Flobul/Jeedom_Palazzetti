@@ -23,7 +23,7 @@ function printEqLogic(_eqLogic) {
 	    const parameterButton = document.getElementById('buttonParam');
 	    const palaControl = document.getElementById('showWPalaControl');
 	    if (parameterButton) parameterButton.style.display = 'none';
-	    if (_eqLogic.configuration.isWirelessPalaControl && _eqLogic.configuration.isWirelessPalaControl === true) {
+	    if ([true, 1, '1', 'true'].includes(_eqLogic.configuration.isWirelessPalaControl)) {
 	        if (parameterButton) parameterButton.style.display = '';
 	        if (palaControl) palaControl.style.display = '';
 	    }
@@ -35,7 +35,7 @@ function printEqLogic(_eqLogic) {
 	  const hidden = button.dataset.action === 'hiddenParametres';
 	  const equipmentId = document.querySelector('.eqLogicAttr[data-l1key="id"]').jeeValue();
 	  jeeDialog.dialog({
-	    id: 'md_modal2',
+	    id: hidden ? 'md_palazzettiHiddenParameters' : 'md_palazzettiParameters',
 	    title: hidden ? '{{Paramètres cachés du poêle}}' : '{{Paramètres du poêle}}',
 	    contentUrl: 'index.php?v=d&plugin=Palazzetti&modal=' + (hidden ? 'hidden.parametres' : 'parametres') + '&id=' + encodeURIComponent(equipmentId)
 	  });

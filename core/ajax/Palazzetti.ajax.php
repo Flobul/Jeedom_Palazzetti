@@ -37,10 +37,13 @@ try {
             } else {
                 $result = $eqLogic->makeRequest('GET+PARM+' . init('param_id'),3);
             }
-        } else {
-            $result = $eqLogic->makeRequest('BKP+PARM+JSON',10);
-        }
-        ajax::success($result);
+		} else {
+			$result = $eqLogic->makeRequest('BKP+PARM+JSON',10);
+		}
+		if ($result === false) {
+			throw new Exception(__('Le poêle n\'a renvoyé aucune réponse exploitable pour les paramètres.', __FILE__));
+		}
+		ajax::success($result);
     }
 
 
@@ -68,10 +71,13 @@ try {
             } else {
                 $result = $eqLogic->makeRequest('GET+HPAR+' . init('hidden_param_id'),3);
             }
-        } else {
-            $result = $eqLogic->makeRequest('BKP+HPAR+JSON',10);
-        }
-        ajax::success($result);
+		} else {
+			$result = $eqLogic->makeRequest('BKP+HPAR+JSON',10);
+		}
+		if ($result === false) {
+			throw new Exception(__('Le poêle n\'a renvoyé aucune réponse exploitable pour les paramètres cachés.', __FILE__));
+		}
+		ajax::success($result);
     }
 
 	if (init('action') == 'setHiddenParam') {

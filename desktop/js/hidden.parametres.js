@@ -14,6 +14,8 @@
  * along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
  */
 
+(function() {
+
 var palaHiddenParam = {
     0: 'WaterPIDScanSet',
     1: 'LowerGassesTemperatureOffset',
@@ -269,3 +271,4 @@ hiddenSaveButton?.addEventListener('click', function() {
 
 jeeFrontEnd.modifyWithoutSave = false;
 getHiddenParamValue(idHParamPala);
+})();

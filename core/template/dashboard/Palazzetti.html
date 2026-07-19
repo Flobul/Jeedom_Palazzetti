@@ -754,11 +754,15 @@
 			valueDate: '#pqt_valueDate#'
 		}]);
 
-		jeedom.cmd.addUpdateFunction('#network_id#', function(_options) {
-			var network = '#network_id#';
-			try {
-				network = JSON.parse(_options.display_value);
-			} catch (e) {}
+			jeedom.cmd.addUpdateFunction('#network_id#', function(_options) {
+				var network = {};
+				try {
+					network = JSON.parse(_options.display_value);
+				} catch (e) {
+					network = {};
+				}
+				if (!network || typeof network !== 'object') network = {};
+				if (!Array.isArray(network.DNS)) network.DNS = network.DNS ? [network.DNS] : [];
 			$('.cmd[data-cmd_id=#network_id#][data-network="plzbridge"]').html(network.plzbridge);
 			$('.cmd[data-cmd_id=#network_id#][data-network="sendmsg"]').html(network.sendmsg);
 			$('.cmd[data-cmd_id=#network_id#][data-network="SYSTEM"]').html(network.SYSTEM);
@@ -766,7 +770,7 @@
 			$('.cmd[data-cmd_id=#network_id#][data-network="MOD"]').html(network.MOD);
 			$('.cmd[data-cmd_id=#network_id#][data-network="CORE"]').html(network.CORE);
 			$('.cmd[data-cmd_id=#network_id#][data-network="FWDATE"]').html(network.FWDATE);
-			$('.cmd[data-cmd_id=#network_id#][data-network="DNS"]').html(network.DNS[0]);
+				$('.cmd[data-cmd_id=#network_id#][data-network="DNS"]').html(network.DNS[0] || '');
 			$('.cmd[data-cmd_id=#network_id#][data-network="EADR"]').html(network.EADR);
 			$('.cmd[data-cmd_id=#network_id#][data-network="EBCST"]').html(network.EBCST);
 			$('.cmd[data-cmd_id=#network_id#][data-network="EMSK"]').html(network.EMSK);
@@ -802,29 +806,18 @@
 			display_value: '#network#'
 		}]);
 
-		/* paramètres du poêle */
-		$('.eqLogic[data-eqLogic_id=#id#] .parameters').on('click', function() {
-			$('#md_modal').dialog({
-				title: "{{Paramètres du poêle}}"
-			});
-            $('#md_modal').load('index.php?v=d&plugin=Palazzetti&modal=parametres&id=#id#').dialog('open');
-		});
-
-		/* planning */
-		$('.eqLogic[data-eqLogic_id=#id#] .calendar').on('click', function() {
-			$('#md_modal').dialog({
-				title: "{{Planning horaires}}"
-			});
-			$('#md_modal').load('index.php?v=d&plugin=Palazzetti&modal=planning&id=#id#').dialog('open');
-		});
-
-		/* paramètres cachés du poêle */
-		$('.eqLogic[data-eqLogic_id=#id#] .hidden_parameters').on('click', function() {
-			$('#md_modal').dialog({
-				title: "{{Paramètres cachés du poêle}}"
-			});
-            $('#md_modal').load('index.php?v=d&plugin=Palazzetti&modal=hidden.parametres&id=#id#').dialog('open');
-		});
+			(function() {
+				var widget = document.querySelector('.eqLogic[data-eqLogic_uid="#uid#"]');
+				widget?.querySelector('.parameters')?.addEventListener('click', function() {
+					jeeDialog.dialog({id: 'md_palazzettiWidgetParameters#id#', title: '{{Paramètres du poêle}}', contentUrl: 'index.php?v=d&plugin=Palazzetti&modal=parametres&id=#id#'});
+				});
+				widget?.querySelector('.calendar')?.addEventListener('click', function() {
+					jeeDialog.dialog({id: 'md_palazzettiWidgetPlanning#id#', title: '{{Planning horaires}}', contentUrl: 'index.php?v=d&plugin=Palazzetti&modal=planning&id=#id#'});
+				});
+				widget?.querySelector('.hidden_parameters')?.addEventListener('click', function() {
+					jeeDialog.dialog({id: 'md_palazzettiWidgetHiddenParameters#id#', title: '{{Paramètres cachés du poêle}}', contentUrl: 'index.php?v=d&plugin=Palazzetti&modal=hidden.parametres&id=#id#'});
+				});
+			})();
 
 
 		/* refresh */

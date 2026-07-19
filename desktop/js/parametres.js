@@ -14,6 +14,8 @@
  * along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
  */
 
+(function() {
+
 var palaParamComment = {
     0: 'Ignition Timeout (in minutes): <br/>Maximum wait time for successful firing in the Ignition phase.',
     1: 'Test Fire Timeout(in minutes): Maximum wait time for flame detection with igniter off in the Test<br/>Fire sequence.',
@@ -447,3 +449,4 @@ saveCommentsButton?.addEventListener('click', function() {
 
 jeeFrontEnd.modifyWithoutSave = false;
 getParamValue(eqPalaId);
+})();
