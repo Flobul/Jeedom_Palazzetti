@@ -21,7 +21,8 @@ require_once dirname(__FILE__) . '/../../../../core/php/core.inc.php';
 
 class Palazzetti extends eqLogic
 {
-    public static $_pluginVersion = '1.21';
+    public static $_pluginVersion = '1.22';
+    private const REQUEST_ERROR_LOG_INTERVAL = 3600;
 
     public static function pull()
     {
@@ -146,7 +147,7 @@ class Palazzetti extends eqLogic
     {
         $address = trim((string) $this->getConfiguration('addressip'));
         if (filter_var($address, FILTER_VALIDATE_IP) === false && preg_match('/^[A-Za-z0-9.-]+$/', $address) !== 1) {
-            log::add(__CLASS__, 'error', __FUNCTION__ . __(' - adresse invalide : ', __FILE__) . $address);
+            $this->reportRequestFailure($cmd, __('adresse invalide : ', __FILE__) . $address);
             return false;
         }
 
@@ -189,8 +190,50 @@ class Palazzetti extends eqLogic
             $lastError = __('réponse non reconnue', __FILE__);
         }
 
-        log::add(__CLASS__, 'error', __FUNCTION__ . __(' - aucune réponse exploitable pour ', __FILE__) . $cmd . ($lastError !== '' ? ' (' . $lastError . ')' : ''));
+        $this->reportRequestFailure($cmd, $lastError);
         return false;
+    }
+
+    private function getRequestErrorCacheKey()
+    {
+        return __CLASS__ . '::requestError::' . $this->getId();
+    }
+
+    private function reportRequestFailure($cmd, $error)
+    {
+        $now = time();
+        $error = trim((string) $error);
+        $signature = sha1($error);
+        $state = cache::byKey($this->getRequestErrorCacheKey())->getValue(array());
+        if (!is_array($state)) {
+            $state = array();
+        }
+
+        $lastLog = isset($state['lastLog']) ? intval($state['lastLog']) : 0;
+        $lastSignature = isset($state['signature']) ? (string) $state['signature'] : '';
+        if ($lastSignature !== $signature || ($now - $lastLog) >= self::REQUEST_ERROR_LOG_INTERVAL) {
+            $message = 'makeRequest' . __(' - aucune réponse exploitable pour ', __FILE__) . $cmd;
+            if ($error !== '') {
+                $message .= ' (' . $error . ')';
+            }
+            log::add(__CLASS__, 'error', $message);
+            $lastLog = $now;
+        }
+
+        cache::set($this->getRequestErrorCacheKey(), array(
+            'offline' => 1,
+            'lastLog' => $lastLog,
+            'signature' => $signature
+        ), 0);
+    }
+
+    private function clearRequestFailure()
+    {
+        $state = cache::byKey($this->getRequestErrorCacheKey())->getValue(array());
+        if (is_array($state) && !empty($state['offline'])) {
+            log::add(__CLASS__, 'info', __('Connexion rétablie avec ', __FILE__) . $this->getConfiguration('addressip'));
+        }
+        cache::set($this->getRequestErrorCacheKey(), array(), 0);
     }
 
     // interpretation valeur ventilateur
@@ -702,9 +745,12 @@ class Palazzetti extends eqLogic
 
         // recuperation de l'heure
         $DATA = $this->makeRequest('GET+TIME');
-        if ($DATA) {
-            $this->checkAndUpdateCmd('ITime', json_encode($DATA->DATA));
+        if (!$DATA) {
+            log::add(__CLASS__, 'debug', __FUNCTION__ . __(' - cycle interrompu, équipement injoignable', __FILE__));
+            return false;
         }
+        $this->clearRequestFailure();
+        $this->checkAndUpdateCmd('ITime', json_encode($DATA->DATA));
 
         // recuperation de toutes les informations réseau
         $DATA = $this->makeRequest('GET+STDT');
@@ -790,6 +836,7 @@ class Palazzetti extends eqLogic
             $this->checkAndUpdateCmd('ISnap', json_encode($DATA));
         }
         log::add(__CLASS__, 'debug', __('Fin', __FILE__) . ' : ' . __FUNCTION__);
+        return true;
     }
 
     public static function convertTimeToDec($_time) {
