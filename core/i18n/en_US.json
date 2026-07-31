@@ -2,21 +2,25 @@
     "plugins\/Palazzetti\/core\/ajax\/Palazzetti.ajax.php": {
         "401 - Accès non autorisé": "401 - Unauthorized access",
         "Aucune méthode correspondante à : ": "No method corresponding to :",
-        "Equipement inconnu : ": "Unknown equipment :"
+        "Equipement inconnu : ": "Unknown equipment :",
+        "Le poêle n\\'a renvoyé aucune réponse exploitable pour les paramètres cachés.": "The stove did not return any usable responses for the hidden parameters.",
+        "Le poêle n\\'a renvoyé aucune réponse exploitable pour les paramètres.": "The stove did not return any usable response for the parameters."
     },
     "plugins\/Palazzetti\/core\/class\/Palazzetti.class.php": {
+        " - aucune réponse exploitable pour ": " - no useful results for ",
         " - commande ": " - command",
+        " - cycle interrompu, équipement injoignable": " - cycle interrupted, device unreachable",
         " - erreur ": " - error",
-        " - erreur : ": " - error :",
         " - resultat : ": " - result :",
-        " - resultat PARM || HPAR : ": " - result PARM || HPAR :",
-        " - valeur : ": " - value :",
+        " - résultat : ": " - result: ",
+        " - résultat données : ": " - data results: ",
         " erreur de connexion : ": " connection error :",
         " problème de connexion : ": " connection problem :",
         " resultat ": " result",
         "Allumage": "Ignition",
         "Arrêté": "Stopped",
         "Chargement granulés": "Granule loading",
+        "Connexion rétablie avec ": "Connection restored with ",
         "Contrôle combustion": "Combustion control",
         "Création commande ": "Create command",
         "Diffusion": "Broadcast",
@@ -35,6 +39,7 @@
         "Extinction": "Switching off",
         "Fichier introuvable : ": "File not found :",
         "Fin": "End",
+        "JSON invalide": "Invalid JSON",
         "JSON invalide : ": "JSON invalid :",
         "Jeudi": "Thursday",
         "Jour #": "Day #",
@@ -53,7 +58,10 @@
         "Tableau incorrect : ": "Incorrect table :",
         "Vendredi": "Friday",
         "Vérification": "Check",
-        "fin": "end"
+        "adresse invalide : ": "Invalid address: ",
+        "fin": "end",
+        "réponse non reconnue": "Unrecognized response",
+        "réponse vide": "empty response"
     },
     "plugins\/Palazzetti\/core\/template\/dashboard\/Palazzetti.html": {
         "Adresse IP": "IP address",

@@ -2,21 +2,25 @@
     "plugins\/Palazzetti\/core\/ajax\/Palazzetti.ajax.php": {
         "401 - Accès non autorisé": "401 - Acesso não autorizado",
         "Aucune méthode correspondante à : ": "Nenhum método correspondente a :",
-        "Equipement inconnu : ": "Equipamento desconhecido :"
+        "Equipement inconnu : ": "Equipamento desconhecido :",
+        "Le poêle n\\'a renvoyé aucune réponse exploitable pour les paramètres cachés.": "O fogão não devolveu nenhuma resposta útil para os parâmetros ocultos.",
+        "Le poêle n\\'a renvoyé aucune réponse exploitable pour les paramètres.": "O fogão não devolveu nenhuma resposta útil para os parâmetros."
     },
     "plugins\/Palazzetti\/core\/class\/Palazzetti.class.php": {
+        " - aucune réponse exploitable pour ": " - nenhuma resposta útil para ",
         " - commande ": " - controlo",
+        " - cycle interrompu, équipement injoignable": " - ciclo interrompido, equipamento inacessível",
         " - erreur ": " - erro",
-        " - erreur : ": " - erro :",
         " - resultat : ": " - resultado :",
-        " - resultat PARM || HPAR : ": " - resultado PARM || HPAR :",
-        " - valeur : ": " - valor :",
+        " - résultat : ": " - resultado: ",
+        " - résultat données : ": " - resultados dos dados: ",
         " erreur de connexion : ": " erro de ligação :",
         " problème de connexion : ": " problema de ligação :",
         " resultat ": " resultado",
         "Allumage": "Iluminação",
         "Arrêté": "Parado",
         "Chargement granulés": "Carregamento de grânulos",
+        "Connexion rétablie avec ": "Ligação restabelecida com ",
         "Contrôle combustion": "Controlo da combustão",
         "Création commande ": "Criação de encomendas",
         "Diffusion": "Difusão",
@@ -35,6 +39,7 @@
         "Extinction": "Extinção",
         "Fichier introuvable : ": "Ficheiro não encontrado :",
         "Fin": "Fim",
+        "JSON invalide": "JSON inválido",
         "JSON invalide : ": "JSON inválido :",
         "Jeudi": "Quinta",
         "Jour #": "Dia #",
@@ -53,7 +58,10 @@
         "Tableau incorrect : ": "Tabela incorrecta :",
         "Vendredi": "Sexta",
         "Vérification": "Verificação",
-        "fin": "final"
+        "adresse invalide : ": "endereço inválido: ",
+        "fin": "final",
+        "réponse non reconnue": "resposta não reconhecida",
+        "réponse vide": "resposta vazia"
     },
     "plugins\/Palazzetti\/core\/template\/dashboard\/Palazzetti.html": {
         "Adresse IP": "Endereço IP",

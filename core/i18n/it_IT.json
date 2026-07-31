@@ -2,21 +2,25 @@
     "plugins\/Palazzetti\/core\/ajax\/Palazzetti.ajax.php": {
         "401 - Accès non autorisé": "401 - Accesso non autorizzato",
         "Aucune méthode correspondante à : ": "Nessun metodo corrispondente a :",
-        "Equipement inconnu : ": "Attrezzatura sconosciuta :"
+        "Equipement inconnu : ": "Attrezzatura sconosciuta :",
+        "Le poêle n\\'a renvoyé aucune réponse exploitable pour les paramètres cachés.": "La stufa non ha restituito alcuna risposta utilizzabile per i parametri nascosti.",
+        "Le poêle n\\'a renvoyé aucune réponse exploitable pour les paramètres.": "La stufa non ha restituito alcuna risposta utilizzabile per i parametri."
     },
     "plugins\/Palazzetti\/core\/class\/Palazzetti.class.php": {
+        " - aucune réponse exploitable pour ": " - nessuna risposta utile per ",
         " - commande ": " - controllo",
+        " - cycle interrompu, équipement injoignable": " - ciclo interrotto, dispositivo non raggiungibile",
         " - erreur ": " - errore",
-        " - erreur : ": " - errore :",
         " - resultat : ": " - risultato :",
-        " - resultat PARM || HPAR : ": " - risultato PARM || HPAR :",
-        " - valeur : ": " - valore :",
+        " - résultat : ": " - risultato: ",
+        " - résultat données : ": " - Risultati dei dati: ",
         " erreur de connexion : ": " errore di connessione :",
         " problème de connexion : ": " problema di connessione :",
         " resultat ": " risultato",
         "Allumage": "Illuminazione",
         "Arrêté": "Smettere",
         "Chargement granulés": "Caricamento dei granuli",
+        "Connexion rétablie avec ": "Connessione ripristinata con ",
         "Contrôle combustion": "Controllo della combustione",
         "Création commande ": "Creazione di ordini",
         "Diffusion": "Trasmissione",
@@ -35,6 +39,7 @@
         "Extinction": "Extinction",
         "Fichier introuvable : ": "File non trovato :",
         "Fin": "Fine",
+        "JSON invalide": "JSON non valido",
         "JSON invalide : ": "JSON non valido :",
         "Jeudi": "Jeudi",
         "Jour #": "Giorno #",
@@ -53,7 +58,10 @@
         "Tableau incorrect : ": "Tabella non corretta :",
         "Vendredi": "Vendredi",
         "Vérification": "Verifica",
-        "fin": "fine"
+        "adresse invalide : ": "indirizzo non valido: ",
+        "fin": "fine",
+        "réponse non reconnue": "risposta non riconosciuta",
+        "réponse vide": "risposta vuota"
     },
     "plugins\/Palazzetti\/core\/template\/dashboard\/Palazzetti.html": {
         "Adresse IP": "Indirizzo IP",
