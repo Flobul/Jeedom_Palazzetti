@@ -174,16 +174,20 @@ function setHiddenButtonState(button, busy, busyLabel, idleLabel) {
 }
 
 function getHiddenParamValue(id, paramId) {
-    if (paramId === undefined) setHiddenButtonState(hiddenRefreshButton, true, '{{Rafraîchissement en cours}}', '{{Rafraîchir les paramètres}}');
+    const isFullRefresh = paramId === undefined;
+    const requestData = {action: 'getHiddenParam', id: id};
+    if (!isFullRefresh) requestData.hidden_param_id = paramId;
+
+    if (isFullRefresh) setHiddenButtonState(hiddenRefreshButton, true, '{{Rafraîchissement en cours}}', '{{Rafraîchir les paramètres}}');
     domUtils.ajax({
         type: 'POST', url: 'plugins/Palazzetti/core/ajax/Palazzetti.ajax.php', dataType: 'json',
-        data: {action: 'getHiddenParam', id: id, hidden_param_id: paramId},
+        data: requestData,
         error: function(request, status, error) {
-            if (paramId === undefined) setHiddenButtonState(hiddenRefreshButton, false, '', '{{Rafraîchir les paramètres}}');
+            if (isFullRefresh) setHiddenButtonState(hiddenRefreshButton, false, '', '{{Rafraîchir les paramètres}}');
             handleAjaxError(request, status, error);
         },
         success: function(data) {
-            if (paramId === undefined) setHiddenButtonState(hiddenRefreshButton, false, '', '{{Rafraîchir les paramètres}}');
+            if (isFullRefresh) setHiddenButtonState(hiddenRefreshButton, false, '', '{{Rafraîchir les paramètres}}');
             if (data.state !== 'ok' || !data.result || (!data.result.HPAR && !data.result.DATA)) {
                 jeedomUtils.showAlert({message: 'Code: ' + (data.code || '') + ' - Result: ' + JSON.stringify(data.result), level: 'danger'});
                 return;

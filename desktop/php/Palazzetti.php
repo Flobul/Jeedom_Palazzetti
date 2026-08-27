@@ -18,10 +18,20 @@ $eqLogics = eqLogic::byType($plugin->getId());
 						<br>
 						<span>{{Ajouter}}</span>
 					</div>
+					<div class="cursor logoPrimary" id="bt_discoverPalazzetti">
+						<i class="fas fa-broadcast-tower"></i>
+						<br>
+						<span>{{Découvrir}}</span>
+					</div>
 					<div class="cursor eqLogicAction logoSecondary" data-action="gotoPluginConf">
 						<i class="fas fa-wrench"></i>
 						<br>
 						<span>{{Configuration}}</span>
+					</div>
+					<div class="cursor logoSecondary" id="bt_healthPalazzetti">
+						<i class="fas fa-medkit"></i>
+						<br>
+						<span>{{Santé}}</span>
 					</div>
 				</div>
 			</div>

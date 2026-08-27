@@ -19,6 +19,75 @@
 	    new Sortable(palazzettiCommandBody, {draggable: '.cmd', animation: 150});
 	}
 
+	const palazzettiHealthButton = document.getElementById('bt_healthPalazzetti');
+	palazzettiHealthButton?.addEventListener('click', function() {
+	    jeeDialog.dialog({
+	        id: 'md_palazzettiHealth',
+	        title: '{{Santé Palazzetti}}',
+	        contentUrl: 'index.php?v=d&plugin=Palazzetti&modal=health'
+	    });
+	});
+	document.body.addEventListener('click', function(event) {
+	    if (!event.target.closest('#bt_refreshPalazzettiHealth')) return;
+	    jeeDialog.dialog({
+	        id: 'md_palazzettiHealth',
+	        title: '{{Santé Palazzetti}}',
+	        contentUrl: 'index.php?v=d&plugin=Palazzetti&modal=health'
+	    });
+	});
+
+	const palazzettiDiscoveryButton = document.getElementById('bt_discoverPalazzetti');
+	palazzettiDiscoveryButton?.addEventListener('click', function() {
+	    if (palazzettiDiscoveryButton.dataset.busy === '1') return;
+	    palazzettiDiscoveryButton.dataset.busy = '1';
+	    palazzettiDiscoveryButton.classList.add('disabled');
+	    palazzettiDiscoveryButton.innerHTML = '<i class="fas fa-broadcast-tower fa-spin"></i><br><span>{{Découverte en cours}}</span>';
+	    jeedomUtils.showAlert({message: '{{Recherche des passerelles Palazzetti sur le réseau local…}}', level: 'info'});
+
+	    domUtils.ajax({
+	        type: 'POST',
+	        url: 'plugins/Palazzetti/core/ajax/Palazzetti.ajax.php',
+	        dataType: 'json',
+	        timeout: 60000,
+	        data: {action: 'discover'},
+	        error: function(request, status, error) {
+	            palazzettiDiscoveryButton.dataset.busy = '0';
+	            palazzettiDiscoveryButton.classList.remove('disabled');
+	            palazzettiDiscoveryButton.innerHTML = '<i class="fas fa-broadcast-tower"></i><br><span>{{Découvrir}}</span>';
+	            handleAjaxError(request, status, error);
+	        },
+	        success: function(data) {
+	            palazzettiDiscoveryButton.dataset.busy = '0';
+	            palazzettiDiscoveryButton.classList.remove('disabled');
+	            palazzettiDiscoveryButton.innerHTML = '<i class="fas fa-broadcast-tower"></i><br><span>{{Découvrir}}</span>';
+	            if (data.state !== 'ok') {
+	                jeedomUtils.showAlert({message: data.result || '{{La découverte a échoué.}}', level: 'danger'});
+	                return;
+	            }
+
+	            const result = data.result || {};
+	            if (!result.found) {
+	                jeedomUtils.showAlert({
+	                    message: '{{Aucune passerelle trouvée. Vérifiez que Jeedom et la passerelle sont sur le même réseau local et que les broadcasts UDP sont autorisés.}}',
+	                    level: 'warning'
+	                });
+	                return;
+	            }
+
+	            jeedomUtils.showAlert({
+	                message: result.found + ' {{passerelle(s) trouvée(s)}} : '
+	                    + result.created + ' {{créée(s)}}, '
+	                    + result.updated + ' {{mise(s) à jour}}, '
+	                    + result.unchanged + ' {{déjà à jour}}.',
+	                level: 'success'
+	            });
+	            if (result.created || result.updated) {
+	                window.setTimeout(function() { window.location.reload(); }, 1500);
+	            }
+	        }
+	    });
+	});
+
 function printEqLogic(_eqLogic) {
 	    const parameterButton = document.getElementById('buttonParam');
 	    const palaControl = document.getElementById('showWPalaControl');

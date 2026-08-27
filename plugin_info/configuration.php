@@ -60,5 +60,32 @@ $update = $plugin->getUpdate();
 				</select>
 			</div>
 		</div>
+		<legend><i class="fas fa-network-wired"></i> {{Découverte réseau}}</legend>
+		<div class="form-group">
+			<label class="col-lg-4 control-label">{{Intervalle de découverte automatique}}</label>
+			<div class="col-lg-4">
+				<select class="configKey form-control" data-l1key="auto_discovery_interval">
+					<option value="">{{Jamais}}</option>
+					<option value="*/5 * * * *">{{Toutes les 5 minutes}}</option>
+					<option value="*/10 * * * *">{{Toutes les 10 minutes}}</option>
+					<option value="*/15 * * * *">{{Toutes les 15 minutes}}</option>
+					<option value="*/30 * * * *">{{Toutes les 30 minutes}}</option>
+					<option value="0 * * * *">{{Toutes les heures}}</option>
+					<option value="0 */2 * * *">{{Toutes les 2 heures}}</option>
+					<option value="0 */6 * * *">{{Toutes les 6 heures}}</option>
+					<option value="0 3 * * *">{{Tous les jours à 3 h}}</option>
+				</select>
+				<small class="help-block">{{La découverte crée les nouvelles passerelles et actualise l'adresse IP et l'adresse MAC des équipements déjà connus.}}</small>
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-lg-4 control-label">{{Sous-réseaux additionnels (CIDR)}}<sup>
+				<i class="fa fa-question-circle tooltips" title="{{Ajoutez les réseaux qui ne sont pas directement visibles depuis l'interface réseau de Jeedom.}}"></i>
+			</sup></label>
+			<div class="col-lg-4">
+				<textarea class="configKey form-control" data-l1key="discovery_networks" rows="3" placeholder="192.168.1.0/24&#10;192.168.2.0/24"></textarea>
+				<small class="help-block">{{Plages IPv4 privées en notation CIDR, une plage par ligne ou séparées par une virgule ou un point-virgule. Les préfixes /16 à /32 sont acceptés.}}</small>
+			</div>
+		</div>
 	</fieldset>
 </form>

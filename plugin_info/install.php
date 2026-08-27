@@ -31,6 +31,11 @@ function Palazzetti_install() {
         $cron->setTimeout(10);
         $cron->save();
     }
+
+    if (config::byKey('auto_discovery_interval', 'Palazzetti', null) === null) {
+        config::save('auto_discovery_interval', '*/30 * * * *', 'Palazzetti');
+    }
+    Palazzetti::configureAutoDiscoveryCron();
 }
 
 function Palazzetti_update() {
@@ -47,6 +52,11 @@ function Palazzetti_update() {
     $cron->setTimeout(15);
     $cron->save();
     $cron->stop();
+
+    if (config::byKey('auto_discovery_interval', 'Palazzetti', null) === null) {
+        config::save('auto_discovery_interval', '*/30 * * * *', 'Palazzetti');
+    }
+    Palazzetti::configureAutoDiscoveryCron();
 }
 
 function Palazzetti_remove() {
@@ -54,6 +64,12 @@ function Palazzetti_remove() {
     $cron = cron::byClassAndFunction('Palazzetti', 'pull');
     if (is_object($cron)) {
         $cron->remove();
+    }
+
+    $cronDiscover = cron::byClassAndFunction('Palazzetti', 'cronAutoDiscover');
+    if (is_object($cronDiscover)) {
+        $cronDiscover->stop();
+        $cronDiscover->remove();
     }
 }
 ?>

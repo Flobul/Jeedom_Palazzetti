@@ -26,6 +26,10 @@ try {
 
     ajax::init();
 
+	if (init('action') == 'discover') {
+		ajax::success(Palazzetti::discover());
+	}
+
 	if (init('action') == 'getParam') {
 		$eqLogic = Palazzetti::byId(init('id'));
 		if (!is_object($eqLogic)) {

@@ -337,18 +337,22 @@ function setParameterButtonState(button, busy, busyLabel, idleLabel) {
 }
 
 function getParamValue(id, paramId) {
-    if (paramId === undefined) setParameterButtonState(refreshButton, true, '{{Rafraîchissement en cours}}', '{{Rafraîchir les paramètres}}');
+    const isFullRefresh = paramId === undefined;
+    const requestData = {action: 'getParam', id: id};
+    if (!isFullRefresh) requestData.param_id = paramId;
+
+    if (isFullRefresh) setParameterButtonState(refreshButton, true, '{{Rafraîchissement en cours}}', '{{Rafraîchir les paramètres}}');
     domUtils.ajax({
         type: 'POST',
         url: 'plugins/Palazzetti/core/ajax/Palazzetti.ajax.php',
-        data: {action: 'getParam', id: id, param_id: paramId},
+        data: requestData,
         dataType: 'json',
         error: function(request, status, error) {
-            if (paramId === undefined) setParameterButtonState(refreshButton, false, '', '{{Rafraîchir les paramètres}}');
+            if (isFullRefresh) setParameterButtonState(refreshButton, false, '', '{{Rafraîchir les paramètres}}');
             handleAjaxError(request, status, error);
         },
         success: function(data) {
-            if (paramId === undefined) setParameterButtonState(refreshButton, false, '', '{{Rafraîchir les paramètres}}');
+            if (isFullRefresh) setParameterButtonState(refreshButton, false, '', '{{Rafraîchir les paramètres}}');
             if (data.state !== 'ok' || !data.result || (!data.result.PARM && !data.result.DATA)) {
                 jeedomUtils.showAlert({message: 'Code: ' + (data.code || '') + ' - Result: ' + JSON.stringify(data.result), level: 'danger'});
                 return;
