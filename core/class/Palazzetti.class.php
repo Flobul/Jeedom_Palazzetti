@@ -21,8 +21,12 @@ require_once dirname(__FILE__) . '/../../../../core/php/core.inc.php';
 
 class Palazzetti extends eqLogic
 {
-    public static $_pluginVersion = '1.22';
+    public static $_pluginVersion = '1.23';
     private const REQUEST_ERROR_LOG_INTERVAL = 3600;
+    private const DISCOVERY_PORT = 54549;
+    private const DISCOVERY_TIMEOUT = 3;
+    private const DISCOVERY_MESSAGE = 'bridge?';
+    private const DISCOVERY_MAX_UNICAST_HOSTS = 1024;
 
     public static function pull()
     {
@@ -52,6 +56,561 @@ class Palazzetti extends eqLogic
             }
         }
         log::add(__CLASS__, 'debug', __FUNCTION__ . ' : ' . __('fin', __FILE__));
+    }
+
+    /**
+     * Crée, met à jour ou désactive la tâche de découverte automatique.
+     */
+    public static function configureAutoDiscoveryCron()
+    {
+        $schedule = trim((string) config::byKey('auto_discovery_interval', __CLASS__, ''));
+        $cron = cron::byClassAndFunction(__CLASS__, 'cronAutoDiscover');
+
+        if ($schedule === '') {
+            if (is_object($cron)) {
+                $cron->setEnable(0);
+                $cron->save();
+                $cron->stop();
+            }
+            return;
+        }
+
+        if (!is_object($cron)) {
+            $cron = new cron();
+        }
+        $cron->setClass(__CLASS__);
+        $cron->setFunction('cronAutoDiscover');
+        $cron->setEnable(1);
+        $cron->setDeamon(0);
+        $cron->setSchedule($schedule);
+        $cron->setTimeout(60);
+        $cron->save();
+    }
+
+    /**
+     * Lance la découverte depuis la tâche Jeedom dédiée.
+     */
+    public static function cronAutoDiscover()
+    {
+        if (trim((string) config::byKey('auto_discovery_interval', __CLASS__, '')) === '') {
+            return;
+        }
+
+        try {
+            self::discover();
+        } catch (Exception $e) {
+            log::add(__CLASS__, 'error', __FUNCTION__ . __(' - échec de la découverte automatique : ', __FILE__) . $e->getMessage());
+        }
+    }
+
+    /**
+     * Retourne les contrôles affichés dans les pages de santé Jeedom.
+     */
+    public static function health()
+    {
+        $return = array();
+        $cron = cron::byClassAndFunction(__CLASS__, 'pull');
+        $cronEnabled = is_object($cron) && (int) $cron->getEnable(0) === 1;
+        $return[] = array(
+            'test' => __('Tâche de rafraîchissement', __FILE__),
+            'result' => $cronEnabled ? __('OK', __FILE__) : __('NOK', __FILE__),
+            'advice' => $cronEnabled ? '' : __('Vérifiez la tâche Palazzetti::pull dans le moteur des tâches.', __FILE__),
+            'state' => $cronEnabled
+        );
+
+        $socketAvailable = function_exists('socket_create') && function_exists('socket_sendto');
+        $return[] = array(
+            'test' => __('Découverte UDP', __FILE__),
+            'result' => $socketAvailable ? __('Disponible', __FILE__) : __('Indisponible', __FILE__),
+            'advice' => $socketAvailable ? '' : __('Installez ou activez l\'extension PHP sockets pour utiliser la découverte.', __FILE__),
+            'state' => $socketAvailable
+        );
+
+        $eqLogics = eqLogic::byType(__CLASS__);
+        $enabled = 0;
+        $offline = 0;
+        $invalidAddresses = 0;
+        foreach ($eqLogics as $eqLogic) {
+            if (!$eqLogic->getIsEnable()) {
+                continue;
+            }
+            $enabled++;
+            if (filter_var($eqLogic->getConfiguration('addressip'), FILTER_VALIDATE_IP) === false
+                && preg_match('/^[A-Za-z0-9.-]+$/', (string) $eqLogic->getConfiguration('addressip')) !== 1) {
+                $invalidAddresses++;
+            }
+            if ($eqLogic->getCommunicationHealth()['offline']) {
+                $offline++;
+            }
+        }
+
+        $equipmentState = $invalidAddresses === 0 && $offline === 0;
+        $return[] = array(
+            'test' => __('Équipements', __FILE__),
+            'result' => sprintf(__('%d configuré(s), %d actif(s), %d hors ligne', __FILE__), count($eqLogics), $enabled, $offline),
+            'advice' => $invalidAddresses > 0
+                ? sprintf(__('%d adresse(s) invalide(s) sont configurées.', __FILE__), $invalidAddresses)
+                : ($offline > 0 ? __('Consultez les équipements en erreur ci-dessous.', __FILE__) : ''),
+            'state' => $equipmentState
+        );
+
+        return $return;
+    }
+
+    /**
+     * Recherche les passerelles Palazzetti par broadcast UDP et les enregistre.
+     */
+    public static function discover()
+    {
+        if (!function_exists('socket_create')) {
+            throw new Exception(__('L\'extension PHP sockets est nécessaire pour la découverte UDP.', __FILE__));
+        }
+
+        $socket = @socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
+        if ($socket === false) {
+            throw new Exception(__('Impossible de créer le socket de découverte UDP.', __FILE__));
+        }
+
+        try {
+            if (!@socket_set_option($socket, SOL_SOCKET, SO_BROADCAST, 1)
+                || !@socket_bind($socket, '0.0.0.0', 0)) {
+                throw new Exception(__('Impossible d\'initialiser le socket de découverte UDP : ', __FILE__)
+                    . socket_strerror(socket_last_error($socket)));
+            }
+
+            $targets = self::getDiscoveryTargetAddresses();
+            $sentTargets = 0;
+            foreach ($targets as $targetAddress) {
+                $length = strlen(self::DISCOVERY_MESSAGE);
+                if (@socket_sendto($socket, self::DISCOVERY_MESSAGE, $length, 0, $targetAddress, self::DISCOVERY_PORT) === $length) {
+                    $sentTargets++;
+                }
+            }
+            if ($sentTargets === 0) {
+                throw new Exception(__('Aucune requête de découverte UDP n\'a pu être envoyée.', __FILE__));
+            }
+            log::add(__CLASS__, 'debug', __FUNCTION__ . ' - ' . sprintf(
+                __('%d cible(s) UDP contactée(s) sur %d', __FILE__),
+                $sentTargets,
+                count($targets)
+            ));
+
+            $devices = array();
+            $deadline = microtime(true) + self::DISCOVERY_TIMEOUT;
+            while (microtime(true) < $deadline) {
+                $remaining = max(0, $deadline - microtime(true));
+                $seconds = (int) floor($remaining);
+                $microseconds = (int) (($remaining - $seconds) * 1000000);
+                $read = array($socket);
+                $write = null;
+                $except = null;
+                $selected = @socket_select($read, $write, $except, $seconds, $microseconds);
+                if ($selected === false || $selected === 0) {
+                    break;
+                }
+
+                $payload = '';
+                $sourceAddress = '';
+                $sourcePort = 0;
+                $received = @socket_recvfrom($socket, $payload, 65535, 0, $sourceAddress, $sourcePort);
+                if ($received === false || $received === 0) {
+                    continue;
+                }
+                $device = self::parseDiscoveryResponse($payload, $sourceAddress);
+                if ($device === null) {
+                    continue;
+                }
+                $identity = $device['mac'] !== '' ? $device['mac'] : $device['ip'];
+                $devices[$identity] = $device;
+            }
+        } finally {
+            socket_close($socket);
+        }
+
+        foreach ($devices as $identity => $device) {
+            $devices[$identity] = self::detectDiscoveredGatewayType($device);
+        }
+        $result = self::saveDiscoveredDevices(array_values($devices));
+        log::add(__CLASS__, 'info', __FUNCTION__ . ' - ' . sprintf(
+            __('%d passerelle(s) trouvée(s), %d créée(s), %d mise(s) à jour', __FILE__),
+            $result['found'],
+            $result['created'],
+            $result['updated']
+        ));
+        return $result;
+    }
+
+    /**
+     * Construit la liste des adresses de broadcast IPv4 locales.
+     */
+    private static function getDiscoveryBroadcastAddresses()
+    {
+        $addresses = array('255.255.255.255');
+        if (!function_exists('net_get_interfaces')) {
+            return $addresses;
+        }
+
+        $interfaces = @net_get_interfaces();
+        if (!is_array($interfaces)) {
+            return $addresses;
+        }
+        foreach ($interfaces as $interface) {
+            if (!isset($interface['unicast']) || !is_array($interface['unicast'])) {
+                continue;
+            }
+            foreach ($interface['unicast'] as $unicast) {
+                if (!isset($unicast['family'], $unicast['address'], $unicast['netmask'])
+                    || (int) $unicast['family'] !== AF_INET
+                    || filter_var($unicast['address'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) === false
+                    || filter_var($unicast['netmask'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) === false
+                    || strpos($unicast['address'], '127.') === 0) {
+                    continue;
+                }
+                $address = ip2long($unicast['address']);
+                $netmask = ip2long($unicast['netmask']);
+                if ($address === false || $netmask === false) {
+                    continue;
+                }
+                $broadcast = long2ip(($address & $netmask) | ((~$netmask) & 0xffffffff));
+                if ($broadcast !== false) {
+                    $addresses[] = $broadcast;
+                }
+            }
+        }
+        return array_values(array_unique($addresses));
+    }
+
+    /**
+     * Ajoute aux broadcasts locaux les sous-réseaux CIDR configurés.
+     *
+     * Le broadcast dirigé suffit sur les réseaux qui l'autorisent. Pour les
+     * environnements Docker/VLAN où il est souvent filtré, les petites plages
+     * sont également parcourues en unicast UDP.
+     */
+    private static function getDiscoveryTargetAddresses()
+    {
+        $targets = array_fill_keys(self::getDiscoveryBroadcastAddresses(), true);
+        $rawNetworks = (string) config::byKey('discovery_networks', __CLASS__, '');
+        $networks = array_filter(array_map('trim', preg_split('/[\r\n,;]+/', $rawNetworks)));
+
+        foreach ($networks as $cidr) {
+            $range = self::parseDiscoveryCidr($cidr);
+            if ($range === null) {
+                log::add(__CLASS__, 'warning', __FUNCTION__ . ' - ' . sprintf(
+                    __('Sous-réseau CIDR privé invalide ignoré : %s', __FILE__),
+                    $cidr
+                ));
+                continue;
+            }
+
+            $targets[long2ip($range['broadcast'])] = true;
+            if ($range['hostCount'] > self::DISCOVERY_MAX_UNICAST_HOSTS) {
+                log::add(__CLASS__, 'warning', __FUNCTION__ . ' - ' . sprintf(
+                    __('Scan unicast ignoré pour %s : %d hôtes dépassent la limite de %d. Le broadcast du sous-réseau reste utilisé.', __FILE__),
+                    $cidr,
+                    $range['hostCount'],
+                    self::DISCOVERY_MAX_UNICAST_HOSTS
+                ));
+                continue;
+            }
+
+            for ($address = $range['firstHost']; $address <= $range['lastHost']; $address++) {
+                $targets[long2ip($address)] = true;
+            }
+        }
+
+        return array_keys($targets);
+    }
+
+    /**
+     * Valide un CIDR IPv4 privé et retourne ses bornes sous forme d'entiers.
+     */
+    private static function parseDiscoveryCidr($cidr)
+    {
+        if (preg_match('/^([^\/]+)\/(\d{1,2})$/', trim((string) $cidr), $matches) !== 1) {
+            return null;
+        }
+
+        $address = $matches[1];
+        $prefix = (int) $matches[2];
+        if ($prefix < 16 || $prefix > 32
+            || filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) === false
+            || !self::isPrivateDiscoveryAddress($address)) {
+            return null;
+        }
+
+        $addressLong = ip2long($address);
+        if ($addressLong === false) {
+            return null;
+        }
+        if ($addressLong < 0) {
+            $addressLong += 4294967296;
+        }
+
+        $hostBits = 32 - $prefix;
+        $hostMask = $hostBits === 0 ? 0 : (2 ** $hostBits) - 1;
+        $network = $addressLong & (0xffffffff ^ $hostMask);
+        $broadcast = $network | $hostMask;
+        $firstHost = $prefix >= 31 ? $network : $network + 1;
+        $lastHost = $prefix >= 31 ? $broadcast : $broadcast - 1;
+
+        return array(
+            'network' => $network,
+            'broadcast' => $broadcast,
+            'firstHost' => $firstHost,
+            'lastHost' => $lastHost,
+            'hostCount' => max(0, $lastHost - $firstHost + 1)
+        );
+    }
+
+    private static function isPrivateDiscoveryAddress($address)
+    {
+        $long = ip2long($address);
+        if ($long === false) {
+            return false;
+        }
+        if ($long < 0) {
+            $long += 4294967296;
+        }
+
+        return ($long >= ip2long('10.0.0.0') && $long <= ip2long('10.255.255.255'))
+            || ($long >= ip2long('172.16.0.0') && $long <= ip2long('172.31.255.255'))
+            || ($long >= ip2long('192.168.0.0') && $long <= ip2long('192.168.255.255'));
+    }
+
+    /**
+     * Valide et normalise une réponse UDP GET STDT.
+     */
+    private static function parseDiscoveryResponse($payload, $sourceAddress)
+    {
+        if (filter_var($sourceAddress, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) === false) {
+            return null;
+        }
+        $response = json_decode(trim((string) $payload), true);
+        if (!is_array($response) || !isset($response['DATA']) || !is_array($response['DATA'])) {
+            return null;
+        }
+        if (isset($response['INFO']['RSP']) && strtoupper((string) $response['INFO']['RSP']) !== 'OK') {
+            return null;
+        }
+
+        $data = $response['DATA'];
+        if (!isset($data['LABEL']) && !isset($data['MAC']) && !isset($data['WMAC']) && !isset($data['SN'])) {
+            return null;
+        }
+        $name = isset($data['LABEL']) ? trim(strip_tags((string) $data['LABEL'])) : '';
+        $cleanName = preg_replace('/[\x00-\x1F\x7F]/', '', $name);
+        $name = is_string($cleanName) ? $cleanName : '';
+        if ($name === '') {
+            $name = 'Palazzetti ' . $sourceAddress;
+        }
+        if (function_exists('mb_substr')) {
+            $name = mb_substr($name, 0, 80);
+        } else {
+            $name = substr($name, 0, 80);
+        }
+
+        $mac = self::normalizeMac(isset($data['WMAC']) ? $data['WMAC'] : (isset($data['MAC']) ? $data['MAC'] : ''));
+        $versions = array();
+        foreach (array('SYSTEM', 'plzbridge', 'sendmsg') as $versionKey) {
+            if (isset($data[$versionKey]) && is_scalar($data[$versionKey]) && trim((string) $data[$versionKey]) !== '') {
+                $versions[] = $versionKey . ': ' . trim((string) $data[$versionKey]);
+            }
+        }
+
+        return array(
+            'ip' => $sourceAddress,
+            'name' => $name,
+            'mac' => $mac,
+            'serial' => isset($data['SN']) && is_scalar($data['SN']) ? trim((string) $data['SN']) : '',
+            'model' => isset($data['MOD']) && is_scalar($data['MOD']) ? trim((string) $data['MOD']) : '',
+            'versions' => implode(' | ', $versions),
+            'gatewayType' => __('Connection Box / WPalaControl', __FILE__),
+            'isWirelessPalaControl' => false,
+            'stoveSerial' => isset($data['SN']) && is_scalar($data['SN']) ? trim((string) $data['SN']) : '',
+            'stoveModel' => isset($data['MOD']) && is_scalar($data['MOD']) ? trim((string) $data['MOD']) : ''
+        );
+    }
+
+    /**
+     * Identifie WPalaControl grâce à ses points d'état HTTP propres.
+     */
+    private static function detectDiscoveredGatewayType($device)
+    {
+        $endpoints = array(
+            '/gs0' => array('serial' => 'sn', 'model' => 'model', 'version' => 'version'),
+            '/ffffffff' => array('serial' => 'sn', 'model' => 'm', 'version' => 'v')
+        );
+        foreach ($endpoints as $endpoint => $fields) {
+            try {
+                $request = new com_http('http://' . $device['ip'] . $endpoint);
+                $rawResponse = $request->exec(2, 1);
+            } catch (Exception $e) {
+                continue;
+            }
+            $response = json_decode((string) $rawResponse, true);
+            if (!is_array($response)) {
+                continue;
+            }
+
+            $model = isset($response[$fields['model']]) && is_scalar($response[$fields['model']])
+                ? trim((string) $response[$fields['model']])
+                : '';
+            $isWPalaControl = $endpoint === '/ffffffff'
+                || stripos($model, 'palacontrol') !== false
+                || (isset($response['manufacturer']) && stripos((string) $response['manufacturer'], 'domochip') !== false);
+            if (!$isWPalaControl) {
+                continue;
+            }
+
+            $device['gatewayType'] = 'WPalaControl';
+            $device['isWirelessPalaControl'] = true;
+            if (isset($response[$fields['serial']]) && is_scalar($response[$fields['serial']])) {
+                $device['serial'] = trim((string) $response[$fields['serial']]);
+            }
+            if ($model !== '') {
+                $device['model'] = $model;
+            }
+            if (isset($response[$fields['version']]) && is_scalar($response[$fields['version']])) {
+                $device['versions'] = trim((string) $response[$fields['version']]);
+            }
+            return $device;
+        }
+
+        return $device;
+    }
+
+    private static function normalizeMac($mac)
+    {
+        $normalized = preg_replace('/[^0-9A-F]/i', '', (string) $mac);
+        $compact = is_string($normalized) ? strtoupper($normalized) : '';
+        return strlen($compact) === 12 ? implode(':', str_split($compact, 2)) : '';
+    }
+
+    /**
+     * Crée les nouveaux équipements et actualise ceux déjà connus.
+     */
+    private static function saveDiscoveredDevices($devices)
+    {
+        $byIp = array();
+        $byMac = array();
+        $bySerial = array();
+        foreach (eqLogic::byType(__CLASS__) as $eqLogic) {
+            $ip = trim((string) $eqLogic->getConfiguration('addressip'));
+            $mac = self::normalizeMac($eqLogic->getConfiguration('discoveryMac'));
+            $serial = trim((string) $eqLogic->getConfiguration('serialNumber'));
+            if ($ip !== '') {
+                $byIp[$ip] = $eqLogic;
+            }
+            if ($mac !== '') {
+                $byMac[$mac] = $eqLogic;
+            }
+            if ($serial !== '') {
+                $bySerial[$serial] = $eqLogic;
+            }
+        }
+
+        $result = array('found' => count($devices), 'created' => 0, 'updated' => 0, 'unchanged' => 0, 'devices' => array());
+        foreach ($devices as $device) {
+            $eqLogic = null;
+            if ($device['mac'] !== '' && isset($byMac[$device['mac']])) {
+                $eqLogic = $byMac[$device['mac']];
+            } elseif ($device['serial'] !== '' && isset($bySerial[$device['serial']])) {
+                $eqLogic = $bySerial[$device['serial']];
+            } elseif (isset($byIp[$device['ip']])) {
+                $eqLogic = $byIp[$device['ip']];
+            }
+
+            $isNew = !is_object($eqLogic);
+            if ($isNew) {
+                $eqLogic = new self();
+                $eqLogic->setEqType_name(__CLASS__);
+                $identity = $device['mac'] !== '' ? $device['mac'] : $device['ip'];
+                $eqLogic->setLogicalId('discovered_' . substr(sha1($identity), 0, 24));
+                $eqLogic->setName($device['name']);
+                $eqLogic->setIsEnable(1);
+                $eqLogic->setIsVisible(1);
+            }
+
+            $changed = $isNew;
+            $configuration = array(
+                'addressip' => $device['ip'],
+                'discoveryMac' => $device['mac'],
+                'stoveSerialNumber' => $device['stoveSerial'],
+                'stoveModel' => $device['stoveModel'],
+                'discoveredByUdp' => 1
+            );
+            $knownAsWPalaControl = in_array(
+                $eqLogic->getConfiguration('isWirelessPalaControl'),
+                array(true, 1, '1', 'true'),
+                true
+            );
+            if ($device['isWirelessPalaControl'] || !$knownAsWPalaControl) {
+                $configuration['serialNumber'] = $device['serial'];
+                $configuration['model'] = $device['model'];
+                $configuration['versions'] = $device['versions'];
+                $configuration['gatewayType'] = $device['gatewayType'];
+            }
+            if ($device['isWirelessPalaControl']) {
+                $configuration['isWirelessPalaControl'] = 1;
+            }
+            foreach ($configuration as $key => $value) {
+                if ($value === '' && !$isNew) {
+                    continue;
+                }
+                if ((string) $eqLogic->getConfiguration($key, '') !== (string) $value) {
+                    $eqLogic->setConfiguration($key, $value);
+                    $changed = true;
+                }
+            }
+
+            if ($changed) {
+                $eqLogic->save();
+                if ($isNew) {
+                    $result['created']++;
+                } else {
+                    $result['updated']++;
+                }
+            } else {
+                $result['unchanged']++;
+            }
+
+            $eqLogic->clearRequestFailure();
+            $eqLogic->setStatus('lastCommunication', date('Y-m-d H:i:s'));
+
+            $byIp[$device['ip']] = $eqLogic;
+            if ($device['mac'] !== '') {
+                $byMac[$device['mac']] = $eqLogic;
+            }
+            if ($device['serial'] !== '') {
+                $bySerial[$device['serial']] = $eqLogic;
+            }
+            $result['devices'][] = array(
+                'id' => (int) $eqLogic->getId(),
+                'name' => $eqLogic->getName(),
+                'ip' => $device['ip'],
+                'created' => $isNew
+            );
+        }
+        return $result;
+    }
+
+    /**
+     * Expose l'état de la dernière communication pour la page Santé.
+     */
+    public function getCommunicationHealth()
+    {
+        $state = cache::byKey($this->getRequestErrorCacheKey())->getValue(array());
+        if (!is_array($state)) {
+            $state = array();
+        }
+        return array(
+            'offline' => !empty($state['offline']),
+            'error' => isset($state['error']) ? (string) $state['error'] : '',
+            'lastFailure' => isset($state['lastFailure']) ? (int) $state['lastFailure'] : 0,
+            'failureCount' => isset($state['failureCount']) ? (int) $state['failureCount'] : 0,
+            'lastRediscovery' => isset($state['lastRediscovery']) ? (int) $state['lastRediscovery'] : 0
+        );
     }
 
     public function preUpdate()
@@ -180,10 +739,14 @@ class Palazzetti extends eqLogic
 
             if (isset($response->INFO) && is_object($response->INFO) && isset($response->INFO->RSP)) {
                 log::add(__CLASS__, 'debug', __FUNCTION__ . __(' - résultat : ', __FILE__) . json_encode($response));
+                $this->clearRequestFailure();
+                $this->setStatus('lastCommunication', date('Y-m-d H:i:s'));
                 return $response;
             }
             if (property_exists($response, 'PARM') || property_exists($response, 'HPAR') || property_exists($response, 'DATA')) {
                 log::add(__CLASS__, 'debug', __FUNCTION__ . __(' - résultat données : ', __FILE__) . json_encode($response));
+                $this->clearRequestFailure();
+                $this->setStatus('lastCommunication', date('Y-m-d H:i:s'));
                 return $response;
             }
 
@@ -211,6 +774,7 @@ class Palazzetti extends eqLogic
 
         $lastLog = isset($state['lastLog']) ? intval($state['lastLog']) : 0;
         $lastSignature = isset($state['signature']) ? (string) $state['signature'] : '';
+        $failureCount = isset($state['failureCount']) ? intval($state['failureCount']) + 1 : 1;
         if ($lastSignature !== $signature || ($now - $lastLog) >= self::REQUEST_ERROR_LOG_INTERVAL) {
             $message = 'makeRequest' . __(' - aucune réponse exploitable pour ', __FILE__) . $cmd;
             if ($error !== '') {
@@ -223,7 +787,11 @@ class Palazzetti extends eqLogic
         cache::set($this->getRequestErrorCacheKey(), array(
             'offline' => 1,
             'lastLog' => $lastLog,
-            'signature' => $signature
+            'signature' => $signature,
+            'error' => $error,
+            'lastFailure' => $now,
+            'failureCount' => $failureCount,
+            'lastRediscovery' => isset($state['lastRediscovery']) ? intval($state['lastRediscovery']) : 0
         ), 0);
     }
 
@@ -749,7 +1317,6 @@ class Palazzetti extends eqLogic
             log::add(__CLASS__, 'debug', __FUNCTION__ . __(' - cycle interrompu, équipement injoignable', __FILE__));
             return false;
         }
-        $this->clearRequestFailure();
         $this->checkAndUpdateCmd('ITime', json_encode($DATA->DATA));
 
         // recuperation de toutes les informations réseau
