@@ -30,7 +30,7 @@ if (!class_exists('eqLogic', false)) {
  */
 class Palazzetti extends eqLogic
 {
-    public static $_pluginVersion = '2.0.0';
+    public static $_pluginVersion = '2.0.1';
     private const REQUEST_ERROR_LOG_INTERVAL = 3600;
     private const REDISCOVERY_FAILURE_THRESHOLD = 3;
     private const REDISCOVERY_COOLDOWN = 3600;
@@ -859,11 +859,12 @@ class Palazzetti extends eqLogic
      * uniquement les équipements reconnus, afin de ne jamais les dupliquer.
      *
      * @param string|bool $mode Stratégie preview, overwrite, replace ou automatic.
+     * @param string $targetIdentity Identité de l'appareil ciblé lors d'une action manuelle.
      * @return array<string, mixed> Résultat détaillé de la découverte.
      * @throws InvalidArgumentException Si le mode est inconnu.
      * @throws Exception Si la découverte réseau échoue.
      */
-    public static function discover($mode = 'preview')
+    public static function discover($mode = 'preview', $targetIdentity = '')
     {
         if ($mode === true) {
             $mode = 'overwrite';
@@ -873,6 +874,7 @@ class Palazzetti extends eqLogic
         if (!in_array($mode, array('preview', 'overwrite', 'replace', 'automatic'), true)) {
             throw new InvalidArgumentException(__('Mode de découverte invalide.', __FILE__));
         }
+        $targetIdentity = self::normalizeDiscoveryTargetIdentity($targetIdentity);
         if (!function_exists('socket_create')) {
             throw new Exception(__('L\'extension PHP sockets est nécessaire pour la découverte UDP.', __FILE__));
         }
@@ -949,6 +951,14 @@ class Palazzetti extends eqLogic
                 $devices[$identity] = self::detectDiscoveredGatewayType($device);
             }
             $deviceList = array_values($devices);
+            if ($targetIdentity !== '') {
+                $deviceList = array_values(array_filter($deviceList, function ($device) use ($targetIdentity) {
+                    return self::getDiscoveryDeviceIdentity($device) === $targetIdentity;
+                }));
+                if (count($deviceList) !== 1) {
+                    throw new Exception(__('L\'appareil sélectionné n\'a pas répondu à la nouvelle découverte.', __FILE__));
+                }
+            }
             $result = $mode === 'preview'
                 ? self::previewDiscoveredDevices($deviceList)
                 : self::saveDiscoveredDevices($deviceList, $mode);
@@ -977,6 +987,48 @@ class Palazzetti extends eqLogic
             }
             cache::set($lockKey, 0, 0);
         }
+    }
+
+    /**
+     * Construit l'identité stable utilisée pour cibler une passerelle découverte.
+     *
+     * @param array<string, mixed> $device Appareil découvert.
+     * @return string Identité fondée sur la MAC ou, à défaut, sur l'adresse IP.
+     */
+    private static function getDiscoveryDeviceIdentity($device)
+    {
+        $mac = isset($device['mac']) ? self::normalizeMac($device['mac']) : '';
+        if ($mac !== '') {
+            return 'mac:' . $mac;
+        }
+        return 'ip:' . (isset($device['ip']) ? (string) $device['ip'] : '');
+    }
+
+    /**
+     * Valide l'identité d'un appareil sélectionné dans la découverte manuelle.
+     *
+     * @param mixed $identity Identité transmise par l'interface.
+     * @return string Identité normalisée ou chaîne vide.
+     * @throws InvalidArgumentException Si l'identité est invalide.
+     */
+    private static function normalizeDiscoveryTargetIdentity($identity)
+    {
+        $identity = trim((string) $identity);
+        if ($identity === '') {
+            return '';
+        }
+        if (stripos($identity, 'mac:') === 0) {
+            $mac = self::normalizeMac(substr($identity, 4));
+            if ($mac !== '') {
+                return 'mac:' . $mac;
+            }
+        } elseif (stripos($identity, 'ip:') === 0) {
+            $ip = substr($identity, 3);
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false) {
+                return 'ip:' . $ip;
+            }
+        }
+        throw new InvalidArgumentException(__('Identité de passerelle invalide.', __FILE__));
     }
 
     /**
@@ -1331,7 +1383,8 @@ class Palazzetti extends eqLogic
                     true
                 );
                 $result['replaced']++;
-                $details = self::formatDiscoveredDevice($device, $existing, 'replaced');
+                $details = self::formatDiscoveredDevice($device, $eqLogic, 'replaced');
+                $details['previousId'] = (int) $existing->getId();
                 $details['resultId'] = (int) $eqLogic->getId();
                 $result['devices'][] = $details;
                 continue;
@@ -1340,7 +1393,7 @@ class Palazzetti extends eqLogic
             if (!is_object($existing)) {
                 $eqLogic = self::createDiscoveredEquipment($device, $device['name'], 0, 0);
                 $result['created']++;
-                $details = self::formatDiscoveredDevice($device, null, 'created');
+                $details = self::formatDiscoveredDevice($device, $eqLogic, 'created');
                 $details['resultId'] = (int) $eqLogic->getId();
                 $result['devices'][] = $details;
                 continue;
@@ -1426,6 +1479,7 @@ class Palazzetti extends eqLogic
     {
         return array(
             'id' => is_object($eqLogic) ? (int) $eqLogic->getId() : 0,
+            'identity' => self::getDiscoveryDeviceIdentity($device),
             'name' => $device['name'],
             'ip' => $device['ip'],
             'mac' => $device['mac'],

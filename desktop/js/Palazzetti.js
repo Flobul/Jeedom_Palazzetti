@@ -61,6 +61,42 @@
 	    element.textContent = value == null ? '' : String(value);
 	    return element.innerHTML;
 	}
+	let palazzettiDiscoveryResult = null;
+	let palazzettiDiscoveryHasChanges = false;
+
+	function palazzettiDiscoveryState(device) {
+	    const states = {
+	        create: ['label-info', '{{Nouvel équipement}}'],
+	        update: ['label-warning', '{{Adresse à actualiser}}'],
+	        unchanged: ['label-default', '{{Déjà enregistré}}'],
+	        created: ['label-success', '{{Équipement créé}}'],
+	        updated: ['label-success', '{{Équipement actualisé}}'],
+	        replaced: ['label-success', '{{Équipement remplacé}}']
+	    };
+	    const state = states[device.action];
+	    return state ? '<span class="label ' + state[0] + '">' + state[1] + '</span>' : '';
+	}
+
+	function palazzettiDiscoveryActions(device) {
+	    const identity = palazzettiEscapeHtml(device.identity || '');
+	    if (!identity) {
+	        return '<span class="text-danger">{{Identité indisponible}}</span>';
+	    }
+	    const state = palazzettiDiscoveryState(device);
+	    if (Number(device.id) <= 0) {
+	        return state + '<button type="button" class="btn btn-success btn-xs btn-block palazzetti-discovery-action" '
+	            + 'data-discovery-mode="overwrite" data-discovery-identity="' + identity + '">'
+	            + '<i class="fas fa-plus-circle"></i> {{Créer cet équipement}}</button>';
+	    }
+	    return state + '<button type="button" class="btn btn-success btn-xs btn-block palazzetti-discovery-action" '
+	        + 'data-discovery-mode="overwrite" data-discovery-identity="' + identity + '" '
+	        + 'title="{{Conserver l’équipement Jeedom et actualiser les informations découvertes}}">'
+	        + '<i class="fas fa-sync"></i> {{Mettre à jour cet équipement}}</button>'
+	        + '<button type="button" class="btn btn-warning btn-xs btn-block palazzetti-discovery-action" '
+	        + 'data-discovery-mode="replace" data-discovery-identity="' + identity + '" '
+	        + 'title="{{Désactiver l’ancien équipement et créer son remplaçant}}">'
+	        + '<i class="fas fa-exchange-alt"></i> {{Créer un nouvel équipement et désactiver l’ancien}}</button>';
+	}
 
 	function palazzettiDiscoveryDetails(result) {
 	    const devices = Array.isArray(result.devices) ? result.devices : [];
@@ -82,63 +118,77 @@
 	            + '<td>' + palazzettiEscapeHtml(device.model || '—') + '</td>'
 	            + '<td>' + (device.isApplianceConnected ? '{{Connecté}}' : '{{Non connecté}}') + '</td>'
 	            + '<td>' + existing + '</td>'
+	            + '<td class="text-center" style="min-width:230px">' + palazzettiDiscoveryActions(device) + '</td>'
 	            + '</tr>';
 	    }).join('');
 
 	    return '<p>' + result.found + ' {{passerelle(s) trouvée(s)}}. '
-	        + '{{Choisissez comment appliquer la découverte. Les appareils et équipements concernés sont détaillés ci-dessous.}}'
+	        + '{{Traitez chaque appareil séparément. La fenêtre reste ouverte afin de pouvoir en ajouter plusieurs.}}'
 	        + '</p><div class="table-responsive"><table class="table table-condensed table-bordered table-striped">'
 	        + '<thead><tr><th>{{Appareil découvert}}</th><th>{{Passerelle}}</th><th>{{Adresse IP}}</th>'
-	        + '<th>{{MAC}}</th><th>{{Numéro de série}}</th><th>{{Modèle}}</th><th>{{Poêle}}</th><th>{{Équipement existant}}</th></tr></thead>'
+	        + '<th>{{MAC}}</th><th>{{Numéro de série}}</th><th>{{Modèle}}</th><th>{{Poêle}}</th><th>{{Équipement existant}}</th><th>{{Actions}}</th></tr></thead>'
 	        + '<tbody>' + rows + '</tbody></table></div>'
-	        + '<div class="alert alert-info"><strong>{{Écraser l’équipement existant}}</strong> : '
+	        + '<div class="alert alert-info"><strong>{{Mettre à jour cet équipement}}</strong> : '
 	        + '{{conserve son nom, son objet, sa visibilité, ses commandes et son historique, puis actualise son adresse et les informations détectées.}}<br>'
 	        + '<strong>{{Créer un nouvel équipement et désactiver l’ancien}}</strong> : '
-	        + '{{conserve l’ancien équipement désactivé et crée son remplaçant avec le même état et le même objet. Les appareils sans correspondance sont créés désactivés.}}'
+	        + '{{conserve l’ancien équipement désactivé et crée son remplaçant avec le même état et le même objet. Les appareils sans correspondance sont créés désactivés.}}<br>'
+	        + '<small>{{Fermez cette fenêtre lorsque vous avez terminé ; la page sera alors actualisée si nécessaire.}}</small>'
 	        + '</div>';
 	}
 
 	function showPalazzettiDiscoveryDialog(result) {
-	    const devices = Array.isArray(result.devices) ? result.devices : [];
-	    const hasExistingEquipment = devices.some(function(device) { return Number(device.id) > 0; });
-	    const buttons = {
-	        cancel: {
-	            label: '{{Annuler}}',
-	            className: 'btn-default',
-	            callback: {click: function() { jeeDialog.get('#md_palazzettiDiscovery').close(); }}
-	        }
-	    };
-	    if (hasExistingEquipment) {
-	        buttons.replace = {
-	            label: '{{Créer un nouvel équipement et désactiver l’ancien}}',
-	            className: 'btn-warning',
-	            callback: {click: function() {
-	                jeeDialog.get('#md_palazzettiDiscovery').close();
-	                discoverPalazzetti('replace');
-	            }}
-	        };
-	    }
-	    buttons.overwrite = {
-	        label: hasExistingEquipment ? '{{Écraser l’équipement existant}}' : '{{Créer les nouveaux équipements}}',
-	        className: 'btn-success',
-	        callback: {click: function() {
-	            jeeDialog.get('#md_palazzettiDiscovery').close();
-	            discoverPalazzetti('overwrite');
-	        }}
-	    };
-
+	    palazzettiDiscoveryResult = result;
+	    palazzettiDiscoveryHasChanges = false;
 	    jeeDialog.dialog({
 	        id: 'md_palazzettiDiscovery',
 	        title: '{{Découverte Palazzetti}}',
 	        message: palazzettiDiscoveryDetails(result),
 	        size: 'large',
-	        buttons: buttons
+	        setFooter: false,
+	        buttons: {},
+	        beforeClose: function() {
+	            if (palazzettiDiscoveryHasChanges) {
+	                window.setTimeout(function() { window.location.reload(); }, 100);
+	            }
+	        }
 	    });
 	}
 
-	function discoverPalazzetti(mode) {
+	function refreshPalazzettiDiscoveryDialog() {
+	    const content = jeeDialog.get('#md_palazzettiDiscovery', 'content');
+	    if (content && palazzettiDiscoveryResult) {
+	        content.innerHTML = palazzettiDiscoveryDetails(palazzettiDiscoveryResult);
+	    }
+	}
+
+	function setPalazzettiDiscoveryActionBusy(sourceButton, busy) {
+	    document.querySelectorAll('#md_palazzettiDiscovery .palazzetti-discovery-action').forEach(function(button) {
+	        button.disabled = busy;
+	    });
+	    if (!sourceButton) return;
+	    if (busy) {
+	        sourceButton.dataset.originalContent = sourceButton.innerHTML;
+	        sourceButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> {{Traitement…}}';
+	    } else if (sourceButton.dataset.originalContent) {
+	        sourceButton.innerHTML = sourceButton.dataset.originalContent;
+	        delete sourceButton.dataset.originalContent;
+	    }
+	}
+
+	function mergePalazzettiDiscoveryDevice(device) {
+	    if (!palazzettiDiscoveryResult || !Array.isArray(palazzettiDiscoveryResult.devices) || !device) return;
+	    const index = palazzettiDiscoveryResult.devices.findIndex(function(current) {
+	        return current.identity === device.identity;
+	    });
+	    if (index >= 0) {
+	        palazzettiDiscoveryResult.devices[index] = device;
+	    }
+	}
+
+	function discoverPalazzetti(mode, targetIdentity, sourceButton) {
 	    mode = mode || 'preview';
 	    setPalazzettiDiscoveryBusy(true);
+	    setPalazzettiDiscoveryActionBusy(sourceButton, true);
 	    if (mode === 'preview') {
 	        jeedomUtils.showAlert({message: '{{Recherche des passerelles Palazzetti sur le réseau local…}}', level: 'info'});
 	    }
@@ -148,20 +198,23 @@
 	        url: 'plugins/Palazzetti/core/ajax/Palazzetti.ajax.php',
 	        dataType: 'json',
 	        timeout: 60000,
-	        data: {action: 'discover', mode: mode},
+	        data: {action: 'discover', mode: mode, target_identity: targetIdentity || ''},
 	        error: function(request, status, error) {
 	            setPalazzettiDiscoveryBusy(false);
+	            setPalazzettiDiscoveryActionBusy(sourceButton, false);
 	            handleAjaxError(request, status, error);
 	        },
 	        success: function(data) {
 	            setPalazzettiDiscoveryBusy(false);
 	            if (data.state !== 'ok') {
+	                setPalazzettiDiscoveryActionBusy(sourceButton, false);
 	                jeedomUtils.showAlert({message: palazzettiEscapeHtml(data.result || '{{La découverte a échoué.}}'), level: 'danger'});
 	                return;
 	            }
 
 	            const result = data.result || {};
 	            if (!result.found) {
+	                setPalazzettiDiscoveryActionBusy(sourceButton, false);
 	                jeedomUtils.showAlert({
 	                    message: '{{Aucune passerelle trouvée. Vérifiez que Jeedom et la passerelle sont sur le même réseau local et que les broadcasts UDP sont autorisés.}}',
 	                    level: 'warning'
@@ -174,20 +227,35 @@
 	                return;
 	            }
 
+	            const changed = Number(result.created) + Number(result.updated) + Number(result.replaced || 0) > 0;
+	            palazzettiDiscoveryHasChanges = palazzettiDiscoveryHasChanges || changed;
+	            if (Array.isArray(result.devices) && result.devices[0]) {
+	                mergePalazzettiDiscoveryDevice(result.devices[0]);
+	                refreshPalazzettiDiscoveryDialog();
+	            } else {
+	                setPalazzettiDiscoveryActionBusy(sourceButton, false);
+	            }
 	            jeedomUtils.showAlert({
-	                message: result.found + ' {{passerelle(s) traitée(s)}} : '
+	                message: '{{Appareil traité}} : '
 	                    + result.created + ' {{créée(s)}}, '
 	                    + result.updated + ' {{mise(s) à jour}}, '
 	                    + (result.replaced || 0) + ' {{remplacée(s)}} et '
 	                    + result.unchanged + ' {{déjà à jour}}.',
 	                level: 'success'
 	            });
-	            if (result.created || result.updated || result.replaced) {
-	                window.setTimeout(function() { window.location.reload(); }, 1500);
-	            }
 	        }
 	    });
 	}
+
+	document.body.addEventListener('click', function(event) {
+	    const actionButton = event.target.closest('#md_palazzettiDiscovery .palazzetti-discovery-action');
+	    if (!actionButton || actionButton.disabled) return;
+	    discoverPalazzetti(
+	        actionButton.dataset.discoveryMode,
+	        actionButton.dataset.discoveryIdentity,
+	        actionButton
+	    );
+	});
 
 	palazzettiDiscoveryButton?.addEventListener('click', function() {
 	    if (palazzettiDiscoveryButton.dataset.busy === '1') return;

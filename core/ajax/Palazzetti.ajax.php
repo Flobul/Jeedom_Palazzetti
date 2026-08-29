@@ -79,7 +79,11 @@ try {
         if (!in_array($mode, array('preview', 'overwrite', 'replace'), true)) {
             throw new Exception(__('Mode de découverte invalide.', __FILE__), 9999);
         }
-        ajax::success(Palazzetti::discover($mode));
+        $targetIdentity = trim((string) init('target_identity'));
+        if ($mode !== 'preview' && $targetIdentity === '') {
+            throw new Exception(__('Aucun appareil découvert n\'a été sélectionné.', __FILE__), 9999);
+        }
+        ajax::success(Palazzetti::discover($mode, $targetIdentity));
     }
 
     if ($action === 'getHeatingHistory') {

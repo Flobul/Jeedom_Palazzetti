@@ -1,5 +1,11 @@
 # Historique des versions
 
+## 2.0.1
+
+- Découverte manuelle traitée appareil par appareil grâce à des actions placées directement dans chaque ligne du tableau.
+- La fenêtre reste ouverte pour créer ou actualiser plusieurs équipements successivement, puis recharge la page à sa fermeture si nécessaire.
+- Suppression des actions globales ambiguës et ciblage sécurisé de chaque passerelle par son adresse MAC ou, à défaut, son adresse IP.
+
 ## 2.0.0
 
 ### Nouveautés
@@ -7,7 +13,7 @@
 - Ajout d'un historique de chauffe sur 1 à 31 jours : chronogramme des cycles, températures, consigne, puissance, ventilation et comparaison quotidienne de la durée et des pellets consommés.
 - Accès direct à l'historique du bon équipement depuis les widgets dashboard et mobile.
 - Ajout d'une infobulle sur les cartes d'équipement avec les principales informations du poêle et de sa connexion.
-- Refonte de la découverte manuelle avec aperçu des appareils et choix entre mise à jour, remplacement de l'équipement ou annulation.
+- Refonte de la découverte manuelle avec aperçu et actions par appareil, sans fermer la fenêtre entre deux créations.
 - La découverte automatique actualise uniquement les équipements connus afin d'éviter la création de doublons.
 
 ### Fiabilité et sécurité
