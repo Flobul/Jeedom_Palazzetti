@@ -1,5 +1,8 @@
 <?php
-	$eqLogic = eqLogic::byId($_GET['id']);
+	if (!isConnect('admin')) {
+		throw new Exception('401 Unauthorized');
+	}
+	$eqLogic = eqLogic::byId((int) init('id'));
     if (!is_object($eqLogic)) {
         throw new Exception(__('Objet non trouvé', __FILE__));
     }
@@ -71,8 +74,8 @@
 
 	 	for($i = 1; $i < 7; $i++) {
 	 		echo '<tr data-numero="'.$i.'"><td>Tranche '.$i.'</td>';
-	 		echo '<td><input class="form-control input-sm" data-type="start" value="'.$PH->{'P'.$i}->{'START'}.'" /></td>';
-	 		echo '<td><input class="form-control input-sm" data-type="end" value="'.$PH->{'P'.$i}->{'STOP'}.'" /></td>';
+	 		echo '<td><input class="form-control input-sm in_timepicker" data-type="start" value="'.$PH->{'P'.$i}->{'START'}.'" /></td>';
+	 		echo '<td><input class="form-control input-sm in_timepicker" data-type="end" value="'.$PH->{'P'.$i}->{'STOP'}.'" /></td>';
 	 		echo '<td><input type="text" data-type="temperature" value="'.$PH->{'P'.$i}->{'CHRSETP'}.'" />°C</td>';
 	 		echo '</tr>';
 	 	}
@@ -83,52 +86,57 @@
 </div>
 <?php
 	// recuperation des commandes
-	$PHToggleID		= $eqLogic->getCmd('action','WPH')->getId();
-	$PHDayID 		= $eqLogic->getCmd('action','WPHtoDay')->getId();
-	$PHTrancheID 	= $eqLogic->getCmd('action','WPHtranche')->getId();
-	$PHRefresh		= $eqLogic->getCmd('action','RPH')->getId();
+		$planningCommands = array();
+		foreach (array('WPH', 'WPHtoDay', 'WPHtranche', 'RPH') as $logicalId) {
+			$planningCommands[$logicalId] = $eqLogic->getCmd('action', $logicalId);
+			if (!is_object($planningCommands[$logicalId])) {
+				throw new Exception(__('Commande de planning manquante : ', __FILE__) . $logicalId);
+			}
+		}
+		$PHToggleID = $planningCommands['WPH']->getId();
+		$PHDayID = $planningCommands['WPHtoDay']->getId();
+		$PHTrancheID = $planningCommands['WPHtranche']->getId();
+		$PHRefresh = $planningCommands['RPH']->getId();
 ?>
 <script>
-		// nettoyage multiples ouvertures
-		$("#Palazzetti_PH").find("*").off();
- 		$("#table_Palazzetti_tranche input[data-type='start'], #table_Palazzetti_tranche input[data-type='end']").datetimepicker({
- 			timepicker:true,
- 			datepicker:false,
- 			format:'H:i',
- 			step:05,
- 			theme:'dark'
- 		});
- 		// activation / desactivation
- 		$('#Palazzetti_ph_onoff').on('click',function() {
-			if($(this).text() == 'ACTIF') {
-				jeedom.cmd.execute({id: <?php echo $PHToggleID; ?>, value: 0});
-				$(this).removeClass('btn-success').addClass('btn-info');
-				$(this).text('INACTIF');
-			} else if($(this).text() == 'INACTIF') {
-				jeedom.cmd.execute({id: <?php echo $PHToggleID; ?>, value: 1});
-				$(this).removeClass('btn-info').addClass('btn-success');
-				$(this).text('ACTIF');
-			}
- 			setTimeout(jeedom.cmd.execute({id: <?php echo $PHRefresh; ?>}), 1500);
- 		});
- 		// enregistrement des tranches
-		$('#table_Palazzetti_ph select').on('change',function() {
-			var J = $(this).data("jour");
-			var T = $(this).data("programme");
-			var P = $(this).find('option:selected').val();
-			jeedom.cmd.execute({id: <?php echo $PHDayID; ?>, value :{jour: J, tranche: T, programme: P}});
-			setTimeout(jeedom.cmd.execute({id: <?php echo $PHRefresh; ?>}), 1500);
-		});	
- 			
+	        jeedomUtils.dateTimePickerInit(5);
+	 		// activation / desactivation
+	 		document.getElementById('Palazzetti_ph_onoff')?.addEventListener('click', function() {
+				if (this.textContent.trim() === 'ACTIF') {
+					jeedom.cmd.execute({id: <?php echo $PHToggleID; ?>, value: 0});
+					this.classList.remove('btn-success');
+					this.classList.add('btn-info');
+					this.textContent = 'INACTIF';
+				} else if (this.textContent.trim() === 'INACTIF') {
+					jeedom.cmd.execute({id: <?php echo $PHToggleID; ?>, value: 1});
+					this.classList.remove('btn-info');
+					this.classList.add('btn-success');
+					this.textContent = 'ACTIF';
+				}
+	 			setTimeout(function() { jeedom.cmd.execute({id: <?php echo $PHRefresh; ?>}); }, 1500);
+	 		});
+	 		// enregistrement des tranches
+			document.querySelectorAll('#table_Palazzetti_ph select').forEach(function(select) {
+			  select.addEventListener('change', function() {
+				var J = select.dataset.jour;
+				var T = select.dataset.programme;
+				var P = select.value;
+				jeedom.cmd.execute({id: <?php echo $PHDayID; ?>, value :{jour: J, tranche: T, programme: P}});
+				setTimeout(function() { jeedom.cmd.execute({id: <?php echo $PHRefresh; ?>}); }, 1500);
+			  });
+			});
+
 
  		// enregistement du planning
- 		$('#table_Palazzetti_tranche input').on('change',function() {
- 			var tr = $(this).parent().parent();
- 			var numero 		= tr.data("numero");
- 			var temperature = tr.find("td input[data-type='temperature']").val(); 
- 			var start = tr.find("td input[data-type='start']").val().split(':');
- 			var end = tr.find("td input[data-type='end']").val().split(':');
-			jeedom.cmd.execute({id: <?php echo $PHTrancheID; ?>, value :{numero: numero, temperature: temperature, h1: parseInt(start[0]), m1: parseInt(start[1]), h2: parseInt(end[0]), m2: parseInt(end[1])}});
-			setTimeout(jeedom.cmd.execute({id: <?php echo $PHRefresh; ?>}), 1500);
- 		});
+	 		document.querySelectorAll('#table_Palazzetti_tranche input').forEach(function(input) {
+	 		  input.addEventListener('change', function() {
+	 			var tr = input.closest('tr');
+	 			var numero = tr.dataset.numero;
+	 			var temperature = tr.querySelector("input[data-type='temperature']").value;
+	 			var start = tr.querySelector("input[data-type='start']").value.split(':');
+	 			var end = tr.querySelector("input[data-type='end']").value.split(':');
+				jeedom.cmd.execute({id: <?php echo $PHTrancheID; ?>, value :{numero: numero, temperature: temperature, h1: parseInt(start[0]), m1: parseInt(start[1]), h2: parseInt(end[0]), m2: parseInt(end[1])}});
+				setTimeout(function() { jeedom.cmd.execute({id: <?php echo $PHRefresh; ?>}); }, 1500);
+	 		  });
+	 		});
 </script>

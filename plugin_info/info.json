@@ -1,37 +1,43 @@
 {
-	"id" : "Palazzetti",
-	"name" : "Palazzetti",
-	"description" : {
-      "fr_FR":"Le plugin Palazzetti permet de piloter les poêles à pellets de la marque Palazzetti au moyen de la passerelle Connection Box, mais aussi les modules PalaControl créés par DomoChip qui simulent une Connection Box. Les fonctionnalités proposées par le plugin sont identiques à celles de l'application mobile officielle Palazzetti App. Un widget simple de pilotage est mis à disposition sur le dashboard, il permet: * d'allumer / éteindre le poêle * de modifier la consigne * de motifier la force de la ventilation * de modifier l'intensité du foyer * de gérer les programmes horaires selon la philosophie du poêle * de visualiser toutes les informations du poêle et de la Connection Box",
-      "en_US":"The Palazzetti plugin allows you to control Palazzetti pellet stoves by means of the Connection Box gateway, but also the PalaControl modules created by DomoChip that simulate a Connection Box. The functionalities offered by the plugin are identical to those of the official Palazzetti App mobile application. A simple control widget is available on the dashboard, it allows: * turn on/off the stove * change the setpoint * motivate the strength of the ventilation * change the intensity of the fireplace * manage the time programs according to the philosophy of the stove * view all the information of the stove and the Connection Box"
-    },
-    "installation":"Sélectionnez un intervalle de rafraîchissement des informations.<br>Ajoutez un équipement, entrez son adresse IP, activez-le et sauvegardez.",
-	"licence" : "AGPL",
-	"author" : "Thibaut.Trarbach (modifié par Flobul)",
-	"require" : "4.0",
-	"category" : "wellness",
-    "hasDependency" : false,
-	"hasOwnDeamon" : false,
-	"changelog" : "https://domotechdiscord.github.io/Docs/Palazzetti/fr_FR/changelog",
-	"documentation" : "https://domotechdiscord.github.io/Docs/Palazzetti/fr_FR/",
-    "link":{
-        "forum":"https://community.jeedom.com/tag/plugin-palazzetti"
-    },
-    "language":[
-        "fr_FR",
-        "en_US",
-        "es_ES",
-        "pt_PT",
-        "de_DE"
-    ],
-    "compatibility":[
-        "miniplus",
-        "smart",
-        "rpi",
-        "docker",
-        "diy",
-        "mobile",
-        "v4",
-        "atlas"
-    ]
+	"id": "Palazzetti",
+	"name": "Palazzetti",
+	"pluginVersion": "1.23",
+	"description": {
+		"fr_FR": "Le plugin Palazzetti permet de piloter les poêles à pellets de la marque Palazzetti au moyen de la passerelle Connection Box, mais aussi les modules PalaControl créés par DomoChip qui simulent une Connection Box. Les fonctionnalités proposées par le plugin sont identiques à celles de l'application mobile officielle Palazzetti App. Un widget simple de pilotage est mis à disposition sur le dashboard, il permet: * d'allumer / éteindre le poêle * de modifier la consigne * de motifier la force de la ventilation * de modifier l'intensité du foyer * de gérer les programmes horaires selon la philosophie du poêle * de visualiser toutes les informations du poêle et de la Connection Box",
+		"en_US": "The Palazzetti plugin allows you to control Palazzetti pellet stoves by means of the Connection Box gateway, but also the PalaControl modules created by DomoChip that simulate a Connection Box. The functionalities offered by the plugin are identical to those of the official Palazzetti App mobile application. A simple control widget is available on the dashboard, it allows: * turn on/off the stove * change the setpoint * motivate the strength of the ventilation * change the intensity of the fireplace * manage the time programs according to the philosophy of the stove * view all the information of the stove and the Connection Box",
+		"de_DE": "Das Palazzetti-Plugin ermöglicht die Steuerung von Pelletöfen der Marke Palazzetti über das Gateway Connection Box, aber auch über die von DomoChip erstellten PalaControl-Module, die eine Connection Box simulieren. Die vom Plugin angebotenen Funktionen sind identisch mit denen der offiziellen mobilen Palazzetti App. Ein einfaches Steuerungswidget wird auf dem Dashboard zur Verfügung gestellt, es ermöglicht: * den Ofen ein- und ausschalten * den Sollwert ändern * die Stärke der Lüftung einstellen * die Intensität des Kamins ändern * die Zeitprogramme entsprechend der Philosophie des Ofens verwalten * alle Informationen des Ofens und der Connection Box anzeigen",
+		"es_ES": "El plugin Palazzetti permite controlar las estufas de pellets Palazzetti mediante la pasarela Connection Box, así como los módulos PalaControl creados por DomoChip que simulan una Connection Box. Las funciones que ofrece el plugin son idénticas a las de la aplicación móvil oficial Palazzetti App. Un sencillo widget de control está disponible en el salpicadero, permitiéndole: * encender y apagar la estufa * cambiar la consigna * ajustar la velocidad del ventilador * cambiar la intensidad del fuego * gestionar los horarios según la filosofía de la estufa * ver toda la información sobre la estufa y la Connection Box",
+		"it_IT": "Il plugin Palazzetti consente di controllare le stufe a pellet Palazzetti utilizzando il gateway Connection Box e i moduli PalaControl creati da DomoChip che simulano una Connection Box. Le funzioni offerte dal plugin sono identiche a quelle dell'applicazione mobile ufficiale Palazzetti App. Sul cruscotto è disponibile un semplice widget di controllo che consente di: * accendere e spegnere il riscaldatore * modificare il setpoint * impostare la velocità della ventola * modificare l'intensità del fuoco * gestire gli orari secondo la filosofia del riscaldatore * visualizzare tutte le informazioni sul riscaldatore e sulla Connection Box",
+		"pt_PT": "O plugin Palazzetti permite-lhe controlar as salamandras a pellets Palazzetti utilizando o gateway Connection Box, bem como os módulos PalaControl criados pela DomoChip que simulam uma Connection Box. As funções oferecidas pelo plugin são idênticas às da aplicação móvel oficial Palazzetti App. Um simples widget de controlo está disponível no painel de instrumentos, permitindo-lhe * ligar e desligar o aquecedor * alterar o ponto de regulação * definir a velocidade da ventoinha * alterar a intensidade do fogo * gerir os horários de acordo com a filosofia do aquecedor * visualizar todas as informações sobre o aquecedor e a Connection Box"
+	},
+	"installation": "Sélectionnez un intervalle de rafraîchissement des informations.<br>Ajoutez un équipement, entrez son adresse IP, activez-le et sauvegardez.",
+	"licence": "AGPL",
+	"author": "Thibaut.Trarbach (modifié par Flobul)",
+	"require": "4.4",
+	"category": "wellness",
+	"hasDependency": false,
+	"hasOwnDeamon": false,
+	"changelog": "https://flobul-domotique.fr/liste-des-versions-du-plugin-palazzetti-pour-jeedom/",
+	"documentation": "https://flobul-domotique.fr/presentation-et-configuration-du-plugin-palazzetti-pour-jeedom/",
+	"link": {
+		"forum": "https://community.jeedom.com/tag/plugin-palazzetti"
+	},
+	"language": [
+		"de_DE",
+		"en_US",
+		"es_ES",
+		"fr_FR",
+		"it_IT",
+		"pt_PT"
+	],
+	"compatibility": [
+		"miniplus",
+		"smart",
+		"rpi",
+		"docker",
+		"diy",
+		"mobile",
+		"v4",
+		"atlas"
+	]
 }

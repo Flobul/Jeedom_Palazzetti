@@ -26,6 +26,10 @@ try {
 
     ajax::init();
 
+	if (init('action') == 'discover') {
+		ajax::success(Palazzetti::discover());
+	}
+
 	if (init('action') == 'getParam') {
 		$eqLogic = Palazzetti::byId(init('id'));
 		if (!is_object($eqLogic)) {
@@ -37,10 +41,13 @@ try {
             } else {
                 $result = $eqLogic->makeRequest('GET+PARM+' . init('param_id'),3);
             }
-        } else {
-            $result = $eqLogic->makeRequest('BKP+PARM+JSON',10);
-        }
-        ajax::success($result);
+		} else {
+			$result = $eqLogic->makeRequest('BKP+PARM+JSON',10);
+		}
+		if ($result === false) {
+			throw new Exception(__('Le poêle n\'a renvoyé aucune réponse exploitable pour les paramètres.', __FILE__));
+		}
+		ajax::success($result);
     }
 
 
@@ -49,9 +56,9 @@ try {
 		if (!is_object($eqLogic)) {
 			throw new Exception(__('Equipement inconnu : ', __FILE__) . init('id'), 9999);
 		}
-        if (init('hidden_param_id') != '') {
-            if (init('hidden_param_value') != '') {
-                $result = $eqLogic->makeRequest('SET+PARM+' . init('hidden_param_id') . '+' . init('hidden_param_value'),3);
+        if (init('param_id') != '') {
+            if (init('param_value') != '') {
+                $result = $eqLogic->makeRequest('SET+PARM+' . init('param_id') . '+' . init('param_value'),3);
             }
         }
         ajax::success($result);
@@ -68,10 +75,13 @@ try {
             } else {
                 $result = $eqLogic->makeRequest('GET+HPAR+' . init('hidden_param_id'),3);
             }
-        } else {
-            $result = $eqLogic->makeRequest('BKP+HPAR+JSON',10);
-        }
-        ajax::success($result);
+		} else {
+			$result = $eqLogic->makeRequest('BKP+HPAR+JSON',10);
+		}
+		if ($result === false) {
+			throw new Exception(__('Le poêle n\'a renvoyé aucune réponse exploitable pour les paramètres cachés.', __FILE__));
+		}
+		ajax::success($result);
     }
 
 	if (init('action') == 'setHiddenParam') {
@@ -90,5 +100,5 @@ try {
     throw new Exception(__('Aucune méthode correspondante à : ', __FILE__) . init('action'));
     /*     * *********Catch exeption*************** */
 } catch (Exception $e) {
-    ajax::error(displayExeption($e), $e->getCode());
+    ajax::error(displayException($e), $e->getCode());
 }
