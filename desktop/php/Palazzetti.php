@@ -1,10 +1,34 @@
 <?php
+
+/* This file is part of Jeedom.
+ *
+ * Jeedom is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Jeedom is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 if (!isConnect('admin')) {
 	throw new Exception('{{401 - Accès non autorisé}}');
 }
 $plugin = plugin::byId('Palazzetti');
 sendVarToJS('eqType', $plugin->getId());
 $eqLogics = eqLogic::byType($plugin->getId());
+$palazzettiEscape = function ($value) {
+	return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+};
+$palazzettiCommandValue = function ($eqLogic, $logicalId) {
+	$cmd = $eqLogic->getCmd('info', $logicalId);
+	return is_object($cmd) ? $cmd->execCmd() : null;
+};
 ?>
 
 <div class="row row-overflow">
@@ -33,6 +57,11 @@ $eqLogics = eqLogic::byType($plugin->getId());
 						<br>
 						<span>{{Santé}}</span>
 					</div>
+					<div class="cursor logoSecondary" id="bt_heatingHistoryPalazzetti">
+						<i class="fas fa-chart-area"></i>
+						<br>
+						<span>{{Historique de chauffe}}</span>
+					</div>
 				</div>
 			</div>
 			<?php
@@ -56,7 +85,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
 			}
 			?>
 		</div>
-		<legend><i class="fas fa-table"></i> {{Mes templates}}</legend>
+		<legend><i class="fas fa-table"></i> {{Mes poêles connectés}}</legend>
 		<?php
 		if (count($eqLogics) == 0) {
 			echo '<br><div class="text-center" style="font-size:1.2em;font-weight:bold;">{{Aucun équipement Template trouvé, cliquer sur "Ajouter" pour commencer}}</div>';
@@ -73,10 +102,42 @@ $eqLogics = eqLogic::byType($plugin->getId());
 			echo '<div class="eqLogicThumbnailContainer">';
 			foreach ($eqLogics as $eqLogic) {
 				$opacity = ($eqLogic->getIsEnable()) ? '' : 'disableCard';
-				echo '<div class="eqLogicDisplayCard cursor ' . $opacity . '" data-eqLogic_id="' . $eqLogic->getId() . '">';
-				echo '<img src="' . $eqLogic->getImage() . '"/>';
+				$communication = $eqLogic->getCommunicationHealth();
+				$lastCommunication = trim((string) $eqLogic->getStatus('lastCommunication'));
+				if (!$eqLogic->getIsEnable()) {
+					$connectionState = __('Désactivé', __FILE__);
+				} elseif ($communication['offline']) {
+					$connectionState = __('Passerelle hors ligne', __FILE__);
+				} elseif ($communication['stoveOffline']) {
+					$connectionState = __('Poêle indisponible', __FILE__);
+				} elseif ($lastCommunication !== '') {
+					$connectionState = __('En ligne', __FILE__);
+				} else {
+					$connectionState = __('Non testé', __FILE__);
+				}
+				$statusValue = $palazzettiCommandValue($eqLogic, 'IStatus');
+				$statusLabel = $statusValue === null || $statusValue === ''
+					? '—'
+					: Palazzetti::getStoveState((int) $statusValue);
+				$temperature = $palazzettiCommandValue($eqLogic, 'ITemp');
+				$setpoint = $palazzettiCommandValue($eqLogic, 'IConsigne');
+				$power = $palazzettiCommandValue($eqLogic, 'IPower');
+				$fan = $palazzettiCommandValue($eqLogic, 'IFan');
+				$cardTitle = implode('<br/>', array(
+					__('Connexion', __FILE__) . ' : ' . $connectionState,
+					__('État', __FILE__) . ' : ' . $statusLabel,
+					__('Température', __FILE__) . ' : ' . ($temperature === null || $temperature === '' ? '—' : $temperature . ' °C'),
+					__('Consigne', __FILE__) . ' : ' . ($setpoint === null || $setpoint === '' ? '—' : $setpoint . ' °C'),
+					__('Puissance', __FILE__) . ' : ' . ($power === null || $power === '' ? '—' : $power),
+					__('Ventilation', __FILE__) . ' : ' . ($fan === null || $fan === '' ? '—' : $eqLogic->getFanState($fan)),
+					__('Dernière communication', __FILE__) . ' : ' . ($lastCommunication !== '' ? $lastCommunication : __('Aucune', __FILE__))
+				));
+
+				echo '<div class="eqLogicDisplayCard cursor ' . $opacity . '" data-eqLogic_id="' . (int) $eqLogic->getId()
+					. '" title="' . $palazzettiEscape($cardTitle) . '">';
+				echo '<img src="' . htmlspecialchars((string) $eqLogic->getImage(), ENT_QUOTES, 'UTF-8') . '"/>';
 				echo '<br>';
-				echo '<span class="name">' . $eqLogic->getHumanName(true, true) . '</span>';
+				echo '<span class="name">' . $eqLogic->getSafeHumanNameHtml() . '</span>';
 				echo '<span class="hiddenAsCard displayTableRight hidden">';
 				echo ($eqLogic->getIsVisible() == 1) ? '<i class="fas fa-eye" title="{{Equipement visible}}"></i>' : '<i class="fas fa-eye-slash" title="{{Equipement non visible}}"></i>';
 				echo '</span>';
@@ -123,7 +184,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
 										<?php
 										$options = '';
 										foreach ((jeeObject::buildTree(null, false)) as $object) {
-											$options .= '<option value="' . $object->getId() . '">' . str_repeat('&nbsp;&nbsp;', $object->getConfiguration('parentNumber')) . $object->getName() . '</option>';
+											$options .= '<option value="' . (int) $object->getId() . '">' . str_repeat('&nbsp;&nbsp;', (int) $object->getConfiguration('parentNumber')) . htmlspecialchars((string) $object->getName(), ENT_QUOTES, 'UTF-8') . '</option>';
 										}
 										echo $options;
 										?>
@@ -136,7 +197,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
 									<?php
 									foreach (jeedom::getConfiguration('eqLogic:category') as $key => $value) {
 										echo '<label class="checkbox-inline">';
-										echo '<input type="checkbox" class="eqLogicAttr" data-l1key="category" data-l2key="' . $key . '" >' . $value['name'];
+										echo '<input type="checkbox" class="eqLogicAttr" data-l1key="category" data-l2key="' . htmlspecialchars((string) $key, ENT_QUOTES, 'UTF-8') . '" >' . htmlspecialchars((string) $value['name'], ENT_QUOTES, 'UTF-8');
 										echo '</label>';
 									}
 									?>
@@ -180,7 +241,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
 						<div class="col-lg-6" id="showWPalaControl" style="display:none;">
 							<legend><i class="fas fa-info"></i> {{Informations}}</legend>
 							<div class="form-group">
-								<label class="col-sm-4 control-label">{{WirelessPalaControl}}</label>
+								<label class="col-sm-4 control-label">WirelessPalaControl</label>
 								<div class="col-sm-6">
 									<span class="eqLogicAttr" data-l1key="configuration" data-l2key="isWirelessPalaControl"></span>
 								</div>

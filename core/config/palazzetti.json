@@ -94,13 +94,14 @@
         "name": "Etat du po\u00eale",
         "configuration": {
             "actionCmd": "",
-            "updateLogicalId": ""
+            "updateLogicalId": "",
+            "historizeMode": "none"
         },
         "logicalId": "IStatus",
         "type": "info",
-        "subType": "string",
+        "subType": "numeric",
         "unite": "",
-        "isHistorized": 0,
+        "isHistorized": 1,
         "isVisible": 1
     },
     {
@@ -534,7 +535,8 @@
             "nparams": 0,
             "parameters": "",
             "minValue": 0,
-            "maxValue": ""
+            "maxValue": "",
+            "historizeMode": "none"
         },
         "logicalId": "IHeuresChauffe",
         "type": "info",
@@ -544,7 +546,7 @@
         "isVisible": 1
     },
     {
-        "name": "Lecture heures de surchauffe",
+        "name": "Lecture du nombre de surchauffes",
         "configuration": {
             "actionCmd": "EXT+ADRD+207A+1",
             "updateLogicalId": "IHeuresSurChauffe",
@@ -557,7 +559,7 @@
         "isVisible": 0
     },
     {
-        "name": "Nombre d'heures de surchauffe",
+        "name": "Nombre de surchauffes",
         "configuration": {
             "actionCmd": "",
             "updateLogicalId": "",
@@ -569,7 +571,7 @@
         "logicalId": "IHeuresSurChauffe",
         "type": "info",
         "subType": "numeric",
-        "unite": "h",
+        "unite": "",
         "isHistorized": 1,
         "isVisible": 1
     },
@@ -671,7 +673,8 @@
             "nparams": 0,
             "parameters": "",
             "minValue": 0,
-            "maxValue": ""
+            "maxValue": "",
+            "historizeMode": "none"
         },
         "logicalId": "IQuantite",
         "type": "info",

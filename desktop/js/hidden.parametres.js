@@ -145,12 +145,14 @@ function addHiddenParamToTable(_param) {
     tr += '</td>'
 
     tr += '<td>'
-    tr += '    <input class="paramAttr form-control input-sm roundedLeft" data-l1key="value" title="{{Valeur}}" placeholder="{{Valeur}}" style="width:100px">'
+    tr += '    <input type="number" min="0" max="255" step="1" inputmode="numeric" class="paramAttr form-control input-sm roundedLeft" data-l1key="value" title="{{Écriture autorisée de 0 à 255}}" placeholder="{{Valeur}}" style="width:100px">'
     tr += '</td>'
 
     tr += '<td>'
     tr += '    <a class="btn btn-success btn-xs paramAction" data-action="update" title="{{Rafraîchir le paramètre}}"><i class="fas fa-sync"></i> </a>';
-    tr += '    <a class="btn btn-warning btn-xs paramAction" data-action="modify" title="{{Modifier le paramètre}}"><i class="fas fa-rss"></i> {{Modifier}}</a>';
+    if (typeof palazzettiParameterWritesEnabled !== 'undefined' && palazzettiParameterWritesEnabled) {
+        tr += '    <a class="btn btn-warning btn-xs paramAction" data-action="modify" title="{{Modifier le paramètre}}"><i class="fas fa-rss"></i> {{Modifier}}</a>';
+    }
     tr += '</td>'
     tr += '</tr>';
 
@@ -189,7 +191,7 @@ function getHiddenParamValue(id, paramId) {
         success: function(data) {
             if (isFullRefresh) setHiddenButtonState(hiddenRefreshButton, false, '', '{{Rafraîchir les paramètres}}');
             if (data.state !== 'ok' || !data.result || (!data.result.HPAR && !data.result.DATA)) {
-                jeedomUtils.showAlert({message: 'Code: ' + (data.code || '') + ' - Result: ' + JSON.stringify(data.result), level: 'danger'});
+                jeedomUtils.showAlert({message: '{{Réponse de la passerelle invalide ou incomplète.}}', level: 'danger'});
                 return;
             }
             if (Array.isArray(data.result.HPAR)) {
@@ -240,7 +242,7 @@ hiddenParameterTable?.addEventListener('click', function(event) {
                     input.dataset.value = input.value;
                     jeedomUtils.showAlert({message: '{{Valeur}} ' + input.value + ' {{envoyée avec succès dans le paramètre}} ' + id, level: 'success'});
                 } else {
-                    jeedomUtils.showAlert({message: 'Result: ' + JSON.stringify(data.result), level: 'danger'});
+                    jeedomUtils.showAlert({message: '{{La modification du paramètre a échoué.}}', level: 'danger'});
                 }
             }
         });
@@ -264,7 +266,7 @@ hiddenSaveButton?.addEventListener('click', function() {
         type: 'Palazzetti', eqLogics: [eqLogic],
         error: function(error) {
             setHiddenButtonState(hiddenSaveButton, false, '', '{{Sauvegarder les commentaires}}');
-            jeedomUtils.showAlert({message: error.message, level: 'danger'});
+            jeedomUtils.showAlert({message: '{{Impossible de sauvegarder les commentaires.}}', level: 'danger'});
         },
         success: function() {
             setHiddenButtonState(hiddenSaveButton, false, '', '{{Sauvegarder les commentaires}}');

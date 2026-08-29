@@ -121,25 +121,25 @@ var palaParamComment = {
     104: 'Water pump maximum speed (when modulation water pump is used)'
 };
 var palaParamUnit = {
-    0: 'minutes',
-    1: 'minutes',
-    2: '*100msec',
-    3: '*100msec',
-    4: '*100msec',
-    5: '*100msec',
-    6: '*100msec',
-    7: '*100msec',
-    8: '*100msec',
-    9: '*100msec',
-    10: '*100msec',
-    11: '*100msec',
-    12: '*100msec',
-    13: '*100msec',
-    14: '*100msec',
-    15: '*100msec',
-    16: '*100msec',
-    17: '*100msec',
-    18: '*100msec',
+    0: '{{minutes}}',
+    1: '{{minutes}}',
+    2: '*100{{ms}}',
+    3: '*100{{ms}}',
+    4: '*100{{ms}}',
+    5: '*100{{ms}}',
+    6: '*100{{ms}}',
+    7: '*100{{ms}}',
+    8: '*100{{ms}}',
+    9: '*100{{ms}}',
+    10: '*100{{ms}}',
+    11: '*100{{ms}}',
+    12: '*100{{ms}}',
+    13: '*100{{ms}}',
+    14: '*100{{ms}}',
+    15: '*100{{ms}}',
+    16: '*100{{ms}}',
+    17: '*100{{ms}}',
+    18: '*100{{ms}}',
     50: '°C',
     51: '°C',
     52: '°C',
@@ -150,48 +150,48 @@ var palaParamUnit = {
     57: '°C',
     58: '°C',
     59: '°C',
-    60: 'minutes',
-    65: 'secondes',
-    66: 'minutes',
+    60: '{{minutes}}',
+    65: '{{secondes}}',
+    66: '{{minutes}}',
     67: '°C',
     68: '°C',
     69: '°C',
-    69: 'secondes',
+    69: '{{secondes}}',
     73: '%',
     74: '%',
     75: '%',
     77: '°C',
-    80: 'secondes',
-    83: 'secondes',
+    80: '{{secondes}}',
+    83: '{{secondes}}',
     84: '°C',
     85: '°C',
     86: '°C',
-    88: '*100msec',
-    89: 'secondes',
-    90: 'minutes',
+    88: '*100{{ms}}',
+    89: '{{secondes}}',
+    90: '{{minutes}}',
     91: '%',
-    94: 'jours',
+    94: '{{jours}}',
     95: '°C',
     96: '°C',
     97: '°C',
     98: 'cm',
     99: 'cm',
     100: 'cm',
-    101: 'secondes',
+    101: '{{secondes}}',
     102: 'cm'
 }
 var palaParam = {
     0: '{{Durée phase d\'allumage (Fuel Ignition)}}',
-    1: 'Durée phase FireCheck',
+    1: '{{Durée phase FireCheck}}',
     2: 'Fuel Type',
-    3: 'Pause du moteur d\'alimentation en phase HeatUp',
-    4: 'Durée travail de fonctionnement de l\'écluse en phase HeatUp',
-    5: 'Pause du moteur d\'alimentation en phase Fuel Ignition',
-    6: 'Durée travail de fonctionnement de l\'écluse en phase Fuel Ignition',
-    7: 'Pause de l\'écluse en phase Fuel Ignition',
-    8: 'Durée fonctionnement de l\'écluse en phase Fire Check',
+    3: '{{Pause du moteur d\'alimentation en phase HeatUp}}',
+    4: '{{Durée travail de fonctionnement de l\'écluse en phase HeatUp}}',
+    5: '{{Pause du moteur d\'alimentation en phase Fuel Ignition}}',
+    6: '{{Durée travail de fonctionnement de l\'écluse en phase Fuel Ignition}}',
+    7: '{{Pause de l\'écluse en phase Fuel Ignition}}',
+    8: '{{Durée fonctionnement de l\'écluse en phase Fire Check}}',
     9: 'Power 1 Feeder 1 OFF Time',
-    10: 'Durée fonctionnement de l\'écluse en puissance 1',
+    10: '{{Durée fonctionnement de l\'écluse en puissance 1}}',
     11: 'Power 2 Feeder 1 OFF Time',
     12: 'Power 2 Feeder 1 ON Time',
     13: 'Power 3 Feeder 1 OFF Time',
@@ -199,60 +199,60 @@ var palaParam = {
     15: 'Power 4 Feeder 1 OFF Time',
     16: 'Power 4 Feeder 1 ON Time',
     17: 'Power 5 Feeder 1 OFF Time',
-    18: 'Durée fonctionnement de l\'écluse en puissance 5',
-    19: 'Débit du ventilateur d\'extraction de fumées en StopFire',
-    20: 'Débit du ventilateur d\'extraction de fumées en TestFire',
-    21: 'Débit du ventilateur d\'extraction de fumées en HeatUp',
-    22: 'Débit du ventilateur d\'extraction de fumées en Fuel Ignition',
-    23: 'Débit du ventilateur d\'extraction de fumées en Fire Check',
-    24: 'Débit du ventilateur d\'extraction de fumées en puissance 1',
-    25: 'Débit du ventilateur d\'extraction de fumées en puissance 2',
-    26: 'Débit du ventilateur d\'extraction de fumées en puissance 3',
-    27: 'Débit du ventilateur d\'extraction de fumées en puissance 4',
-    28: 'Débit du ventilateur d\'extraction de fumées en puissance 5',
-    29: 'Valeur ventilateur en phase TestFire',
-    30: 'Valeur ventilateur en phase StopFire',
-    31: 'Valeur ventilateur en phase HeatUp',
-    32: 'Valeur ventilateur en phase Fuel Ignition',
-    33: 'Valeur ventilateur en phase FireCheck',
-    34: 'Valeur ventilateur en puissance 1',
-    35: 'Valeur ventilateur en puissance 2',
-    36: 'Valeur ventilateur en puissance 3',
-    37: 'Valeur ventilateur en puissance 4',
-    38: 'Valeur ventilateur en puissance 5',
-    39: 'Valeur ventilateur en Over Boost',
-    40: 'Vitesse de l\'extracteur des fumées en StopFire (x11,74)',
-    41: 'Vitesse de l\'extracteur des fumées en TestFire (x11,74)',
-    42: 'Vitesse de l\'extracteur des fumées en HeatUp (x11,74)',
-    43: 'Vitesse de l\'extracteur des fumées en Fuel Ignition (x11,74)',
-    44: 'Vitesse de l\'extracteur des fumées en Fire Check (x11,74)',
-    45: 'Vitesse de l\'extracteur des fumées en puissance 1 (x11,74)',
-    46: 'Vitesse de l\'extracteur des fumées en puissance 2 (x11,74)',
-    47: 'Vitesse de l\'extracteur des fumées en puissance 3 (x11,74)',
-    48: 'Vitesse de l\'extracteur des fumées en puissance 4 (x11,74)',
-    49: 'Vitesse de l\'extracteur des fumées en puissance 5 (x11,74)',
-    50: 'Delta T pour sortir du CoolFluid',
+    18: '{{Durée fonctionnement de l\'écluse en puissance 5}}',
+    19: '{{Débit du ventilateur d\'extraction de fumées en StopFire}}',
+    20: '{{Débit du ventilateur d\'extraction de fumées en TestFire}}',
+    21: '{{Débit du ventilateur d\'extraction de fumées en HeatUp}}',
+    22: '{{Débit du ventilateur d\'extraction de fumées en Fuel Ignition}}',
+    23: '{{Débit du ventilateur d\'extraction de fumées en Fire Check}}',
+    24: '{{Débit du ventilateur d\'extraction de fumées en puissance 1}}',
+    25: '{{Débit du ventilateur d\'extraction de fumées en puissance 2}}',
+    26: '{{Débit du ventilateur d\'extraction de fumées en puissance 3}}',
+    27: '{{Débit du ventilateur d\'extraction de fumées en puissance 4}}',
+    28: '{{Débit du ventilateur d\'extraction de fumées en puissance 5}}',
+    29: '{{Valeur ventilateur en phase TestFire}}',
+    30: '{{Valeur ventilateur en phase StopFire}}',
+    31: '{{Valeur ventilateur en phase HeatUp}}',
+    32: '{{Valeur ventilateur en phase Fuel Ignition}}',
+    33: '{{Valeur ventilateur en phase FireCheck}}',
+    34: '{{Valeur ventilateur en puissance 1}}',
+    35: '{{Valeur ventilateur en puissance 2}}',
+    36: '{{Valeur ventilateur en puissance 3}}',
+    37: '{{Valeur ventilateur en puissance 4}}',
+    38: '{{Valeur ventilateur en puissance 5}}',
+    39: '{{Valeur ventilateur en Over Boost}}',
+    40: '{{Vitesse de l\'extracteur des fumées en StopFire (x11,74)}}',
+    41: '{{Vitesse de l\'extracteur des fumées en TestFire (x11,74)}}',
+    42: '{{Vitesse de l\'extracteur des fumées en HeatUp (x11,74)}}',
+    43: '{{Vitesse de l\'extracteur des fumées en Fuel Ignition (x11,74)}}',
+    44: '{{Vitesse de l\'extracteur des fumées en Fire Check (x11,74)}}',
+    45: '{{Vitesse de l\'extracteur des fumées en puissance 1 (x11,74)}}',
+    46: '{{Vitesse de l\'extracteur des fumées en puissance 2 (x11,74)}}',
+    47: '{{Vitesse de l\'extracteur des fumées en puissance 3 (x11,74)}}',
+    48: '{{Vitesse de l\'extracteur des fumées en puissance 4 (x11,74)}}',
+    49: '{{Vitesse de l\'extracteur des fumées en puissance 5 (x11,74)}}',
+    50: '{{Delta T pour sortir du CoolFluid}}',
     51: 'Water storage set point temperature',
     52: 'Water Modulation Temp setup menu [6]',
     53: 'Delta T Cool Fluid',
-    54: 'Température des fumées pour la sortie de la phase FireCheck',
-    55: 'MAX température des fumées pour la modulation',
-    56: 'Température des fumées pour la sortie de la phase StopFire',
-    57: 'Température des fumées MAX',
-    58: 'Température pour l\'arrêt du ventilateur d\'air',
-    59: 'MIN température des fumées pendant la phase de travail',
-    60: 'Temps entre 2 cycles de nettoyage',
-    61: 'Temps total pour la cycle de nettoyage',
-    62: 'Débit du ventilateur des fumées en phase de nettoyage 1/%',
+    54: '{{Température des fumées pour la sortie de la phase FireCheck}}',
+    55: '{{MAX température des fumées pour la modulation}}',
+    56: '{{Température des fumées pour la sortie de la phase StopFire}}',
+    57: '{{Température des fumées MAX}}',
+    58: '{{Température pour l\'arrêt du ventilateur d\'air}}',
+    59: '{{MIN température des fumées pendant la phase de travail}}',
+    60: '{{Temps entre 2 cycles de nettoyage}}',
+    61: '{{Temps total pour la cycle de nettoyage}}',
+    62: '{{Débit du ventilateur des fumées en phase de nettoyage 1/%}}',
     /*63: '',*/
-    64: 'Valeur MIN de pression',
-    65: 'Retard valeur MIN de pression',
-    66: 'Type de pellet par défaut',
+    64: '{{Valeur MIN de pression}}',
+    65: '{{Retard valeur MIN de pression}}',
+    66: '{{Type de pellet par défaut}}',
     67: 'Average Temp water/bwater for anti-cond/work pump phase',
-    68: 'Température moyenne de l\'eau de la pompe en fonctionnement',
+    68: '{{Température moyenne de l\'eau de la pompe en fonctionnement}}',
     69: 'delta Temp water/bwater MAX for pump modulation',
-    70: 'Durée phase de HeatUp (*5)',
-    71: 'Durée test (gradient) (*5)',
+    70: '{{Durée phase de HeatUp (*5)}}',
+    71: '{{Durée test (gradient) (*5)}}',
     72: 'Delta T (gradient)',
     73: 'User Fuel Feeder 1 ON Time Factor',
     74: 'User Fuel Fan 1 Power Factor',
@@ -260,28 +260,28 @@ var palaParam = {
     76: 'Installation configuration',
     77: '2nd Room Temperature',
     78: 'Flame ON Level',
-    79: 'Variation (%) sur la pression souhaitée',
-    80: 'Période de vérification obtention pression souhaitée',
+    79: '{{Variation (%) sur la pression souhaitée}}',
+    80: '{{Période de vérification obtention pression souhaitée}}',
     81: 'Underpressure Setpoint',
-    82: 'Pression MIN au démarrage',
-    83: 'Délai avant la vérification du PAR82',
+    82: '{{Pression MIN au démarrage}}',
+    83: '{{Délai avant la vérification du PAR82}}',
     84: 'Water storage set point temperature',
-    85: 'Delta T MIN entre départ et retour d\'eau pour démarrage de la pompe',
+    85: '{{Delta T MIN entre départ et retour d\'eau pour démarrage de la pompe}}',
     86: 'Boiler to Accumulator Temperature Drop',
     87: 'Keep Fire Fan 1 Power',
     88: 'Keep Fire Feeder 1 ON Time',
     89: 'Keep Fire Fan 1 Duration',
     90: 'Keep Fire Period',
     91: 'Feeder 2 Delay / ON Time Factor',
-    92: 'Type de pellets',
-    93: 'Qualité de pellets',
-    94: 'Jours avant avis de faire la manutention',
+    92: '{{Type de pellets}}',
+    93: '{{Qualité de pellets}}',
+    94: '{{Jours avant avis de faire la manutention}}',
     95: 'Stove Cool Fluid Entry Temp. Diff.',
     96: 'Stove Cool Fluid Exit Temp. Diff.',
     97: 'T1-T2 for Min. Modulation Speed',
-    98: 'Leveltronic niveau PLEIN',
-    99: 'Leveltronic niveau BAS',
-    100: 'Leveltronic niveau VIDE',
+    98: '{{Leveltronic niveau PLEIN}}',
+    99: '{{Leveltronic niveau BAS}}',
+    100: '{{Leveltronic niveau VIDE}}',
     101: 'Blow out time',
     102: 'Frost protection temperature',
     103: 'Water Pump Minimum Speed',
@@ -303,7 +303,7 @@ function addParamToTable(_param) {
     tr += '</td>'
 
     tr += '<td>'
-    tr += '    <input class="paramAttr form-control input-sm" data-l1key="value" title="{{Valeur}}" placeholder="{{Valeur du paramètre}}">'
+    tr += '    <input type="number" min="0" max="255" step="1" inputmode="numeric" class="paramAttr form-control input-sm" data-l1key="value" title="{{Écriture autorisée de 0 à 255}}" placeholder="{{Valeur du paramètre}}">'
     tr += '</td>'
 
     tr += '<td>'
@@ -312,7 +312,9 @@ function addParamToTable(_param) {
 
     tr += '<td>'
     tr += '    <a class="btn btn-success btn-xs paramAction" data-action="update" title="{{Rafraîchir le paramètre}}"><i class="fas fa-sync"></i> </a>';
-    tr += '    <a class="btn btn-warning btn-xs paramAction" data-action="modify" title="{{Modifier le paramètre}}"><i class="fas fa-rss"></i> <span class="hideMe">{{Modifier}}</span></a>';
+    if (typeof palazzettiParameterWritesEnabled !== 'undefined' && palazzettiParameterWritesEnabled) {
+        tr += '    <a class="btn btn-warning btn-xs paramAction" data-action="modify" title="{{Modifier le paramètre}}"><i class="fas fa-rss"></i> <span class="hideMe">{{Modifier}}</span></a>';
+    }
     tr += '</td>'
     tr += '</tr>';
 
@@ -354,7 +356,7 @@ function getParamValue(id, paramId) {
         success: function(data) {
             if (isFullRefresh) setParameterButtonState(refreshButton, false, '', '{{Rafraîchir les paramètres}}');
             if (data.state !== 'ok' || !data.result || (!data.result.PARM && !data.result.DATA)) {
-                jeedomUtils.showAlert({message: 'Code: ' + (data.code || '') + ' - Result: ' + JSON.stringify(data.result), level: 'danger'});
+                jeedomUtils.showAlert({message: '{{Réponse de la passerelle invalide ou incomplète.}}', level: 'danger'});
                 return;
             }
             if (Array.isArray(data.result.PARM)) {
@@ -397,7 +399,8 @@ parameterTable?.addEventListener('click', function(event) {
     jeeDialog.confirm('{{Êtes-vous sûr de vouloir modifier le paramètre}} ' + id + ' : ' + description + ' ? {{De}} ' + oldValue + ' {{à}} ' + input.value, function(confirmed) {
         if (!confirmed) return;
         domUtils.ajax({
-            type: 'POST', url: 'plugins/Palazzetti/core/ajax/Palazzetti.ajax.php', dataType: 'json',
+            type: 'POST',
+            url: 'plugins/Palazzetti/core/ajax/Palazzetti.ajax.php', dataType: 'json',
             data: {action: 'setParam', id: eqPalaId, param_id: id, param_value: input.value},
             error: function(request, status, error) { handleAjaxError(request, status, error); },
             success: function(data) {
@@ -405,7 +408,7 @@ parameterTable?.addEventListener('click', function(event) {
                     input.dataset.value = input.value;
                     jeedomUtils.showAlert({message: '{{Valeur}} ' + input.value + ' {{envoyée avec succès dans le paramètre}} ' + id, level: 'success'});
                 } else {
-                    jeedomUtils.showAlert({message: 'Result: ' + JSON.stringify(data.result), level: 'danger'});
+                    jeedomUtils.showAlert({message: '{{La modification du paramètre a échoué.}}', level: 'danger'});
                 }
             }
         });
@@ -439,10 +442,11 @@ saveCommentsButton?.addEventListener('click', function() {
     const values = document.getElementById('paramtab').getJeeValues('.eqLogicAttr')[0];
     eqLogic.configuration.commentaire = [values.configuration.commentaire || {}];
     jeedom.eqLogic.save({
-        type: 'Palazzetti', eqLogics: [eqLogic],
+        type: 'Palazzetti',
+        eqLogics: [eqLogic],
         error: function(error) {
             setParameterButtonState(saveCommentsButton, false, '', '{{Sauvegarder les commentaires}}');
-            jeedomUtils.showAlert({message: error.message, level: 'danger'});
+            jeedomUtils.showAlert({message: '{{Impossible de sauvegarder les commentaires.}}', level: 'danger'});
         },
         success: function() {
             setParameterButtonState(saveCommentsButton, false, '', '{{Sauvegarder les commentaires}}');

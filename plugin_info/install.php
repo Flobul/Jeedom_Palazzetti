@@ -18,6 +18,11 @@
 
 require_once dirname(__FILE__) . '/../../../core/php/core.inc.php';
 
+/**
+ * Installe les tâches et valeurs de configuration du plugin.
+ *
+ * @return void
+ */
 function Palazzetti_install() {
 
     $cron = cron::byClassAndFunction('Palazzetti', 'pull');
@@ -28,16 +33,24 @@ function Palazzetti_install() {
         $cron->setEnable(1);
         $cron->setDeamon(0);
         $cron->setSchedule('* * * * *');
-        $cron->setTimeout(10);
+        $cron->setTimeout(180);
         $cron->save();
     }
 
-    if (config::byKey('auto_discovery_interval', 'Palazzetti', null) === null) {
-        config::save('auto_discovery_interval', '*/30 * * * *', 'Palazzetti');
+    config::save('auto_discovery_interval', '', 'Palazzetti');
+    config::save('auto_discovery_safe_migrated', 1, 'Palazzetti');
+    if (config::byKey('allow_parameter_writes', 'Palazzetti', null) === null) {
+        config::save('allow_parameter_writes', 0, 'Palazzetti');
     }
     Palazzetti::configureAutoDiscoveryCron();
+    Palazzetti::migrateEquipmentCommands();
 }
 
+/**
+ * Met à niveau les tâches, la configuration et les commandes du plugin.
+ *
+ * @return void
+ */
 function Palazzetti_update() {
 
     $cron = cron::byClassAndFunction('Palazzetti', 'pull');
@@ -49,16 +62,26 @@ function Palazzetti_update() {
     $cron->setEnable(1);
     $cron->setDeamon(0);
     $cron->setSchedule('* * * * *');
-    $cron->setTimeout(15);
+    $cron->setTimeout(180);
     $cron->save();
     $cron->stop();
 
-    if (config::byKey('auto_discovery_interval', 'Palazzetti', null) === null) {
-        config::save('auto_discovery_interval', '*/30 * * * *', 'Palazzetti');
+    if (config::byKey('auto_discovery_safe_migrated', 'Palazzetti', null) === null) {
+        config::save('auto_discovery_interval', '', 'Palazzetti');
+        config::save('auto_discovery_safe_migrated', 1, 'Palazzetti');
+    }
+    if (config::byKey('allow_parameter_writes', 'Palazzetti', null) === null) {
+        config::save('allow_parameter_writes', 0, 'Palazzetti');
     }
     Palazzetti::configureAutoDiscoveryCron();
+    Palazzetti::migrateEquipmentCommands();
 }
 
+/**
+ * Supprime les tâches planifiées appartenant au plugin.
+ *
+ * @return void
+ */
 function Palazzetti_remove() {
 
     $cron = cron::byClassAndFunction('Palazzetti', 'pull');

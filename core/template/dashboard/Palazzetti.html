@@ -1,5 +1,8 @@
 <div class="eqLogic eqLogic-widget text-center allowResize allowReorderCmd #custom_layout# #eqLogic_class# #class# #category#" data-eqType="#eqType#" data-eqLogic_id="#id#" data-eqLogic_uid="#uid#" data-version="#version#" data-translate-category="#translate_category#" data-category="#category#" data-tags="#tags#" style="width: #width#;height: #height#;#style#">
   <div class="widget-name">
+    <span class="heating-history pull-left cursor" role="button" title="{{Ouvrir l'historique de chauffe}}" aria-label="{{Ouvrir l'historique de chauffe}}">
+      <i class="fas fa-chart-area"></i>
+    </span>
     <span style="color:#background-color#" title="#alert_name#">
       <i class='#alert_icon#'></i>
     </span>
@@ -63,7 +66,7 @@
 			</thead>
 			<tbody>
 				<tr>
-					<td colspan="2" style="background-color:#CCC">Poële #name_display#</td>
+					<td colspan="2" style="background-color:#CCC">{{Poêle}} #name_display#</td>
 				</tr>
 				<tr style="display:#heure_display#">
 					<td>{{Heure du poêle}}</td>
@@ -114,16 +117,16 @@
 					<td><span class="cmd cursor history" data-cmd_id="#hc_id#"></span></td>
 				</tr>
 				<tr style="display:#hsc_display#">
-					<td>{{Nombre d'heures de surchauffe}}</td>
+					<td>{{Nombre de surchauffes}}</td>
 					<td><span class="cmd cursor history" data-cmd_id="#hsc_id#"></span></td>
 				</tr>
 				<tr style="display:#hde_display#">
 					<td>{{Nombre d'heures depuis entretien}}</td>
 					<td><span class="cmd cursor history" data-cmd_id="#hde_id#"></span></td>
 				</tr>
-				<tr style="display:#hae_display#">
+				<tr style="display:#haf_display#">
 					<td>{{Nombre d'allumages échoués}}</td>
-					<td><span class="cmd cursor history" data-cmd_id="#hae_id#"></span></td>
+					<td><span class="cmd cursor history" data-cmd_id="#haf_id#"></span></td>
 				</tr>
 				<tr style="display:#pqt_display#">
 					<td>{{Quantité de pellets consommé}}</td>
@@ -372,6 +375,19 @@
         .eqLogic[data-eqLogic_uid="#uid#"] .calendar:hover {
             opacity: .65;
         }
+
+		.eqLogic[data-eqLogic_uid="#uid#"] .heating-history {
+			margin: 2px 5px;
+		}
+
+		.eqLogic[data-eqLogic_uid="#uid#"] .heating-history > i {
+            color: orange !important;
+		}
+
+		.eqLogic[data-eqLogic_uid="#uid#"] .heating-history > i:hover {
+            opacity: .65;
+		}
+
 	</style>
 	<script>
 		if (typeof jeedom.cmd.addUpdateFunction !== 'function') {
@@ -403,143 +419,205 @@
 			252: '{{Erreur évacuation Fumées}}',
 			253: '{{Pas de pellets}}'
 		};
+		var widget#id# = document.querySelector('.eqLogic[data-eqLogic_uid="#uid#"]');
+		var byId#id# = function(id) {
+			return document.getElementById(id);
+		};
+		var setText#id# = function(element, value) {
+			if (element) element.textContent = value == null ? '' : value;
+		};
+		var setCommandText#id# = function(commandId, value) {
+			if (!widget#id#) return;
+			widget#id#.querySelectorAll('.cmd[data-cmd_id="' + commandId + '"]').forEach(function(element) {
+				setText#id#(element, value);
+			});
+		};
+		var setDisabled#id# = function(element, disabled) {
+			if (!element) return;
+			element.classList.toggle('disabled', disabled);
+			element.style.opacity = disabled ? '.25' : '1';
+		};
+		var triggerChange#id# = function(element) {
+			if (element) element.dispatchEvent(new Event('change', { bubbles: true }));
+		};
+		var setInformation#id# = function(commandId, value, unit, collectDate, valueDate) {
+			if (!widget#id#) return;
+			var element = widget#id#.querySelector('.cmd[data-cmd_id="' + commandId + '"]');
+			if (!element) return;
+			setText#id#(element, value + ' ' + unit);
+			element.title = '{{Date de collecte}} : ' + collectDate + '<br/>{{Date de valeur}} : ' + valueDate;
+		};
+		var addPalazzettiUpdateFunction#id# = function(commandId, callback) {
+			jeedom.cmd.addUpdateFunction(commandId, function(options) {
+				if (options && options.collectDate && widget#id#) {
+					setText#id#(widget#id#.querySelector('.lastCom#uid#'), options.collectDate);
+				}
+				callback(options || {});
+			});
+		};
 
 		// Afficher la page Actions et cacher la page Infos
-		$('#idInfos#id#').hide();
-		$('#idActions#id#').show();
+		var infoPage#id# = byId#id#('idInfos#id#');
+		var actionsPage#id# = byId#id#('idActions#id#');
+		if (infoPage#id#) infoPage#id#.style.display = 'none';
+		if (actionsPage#id#) actionsPage#id#.style.display = '';
 
 		// Permuter les pages
-		$('.classPage#id#').on('click', function() {
-			$('#idInfos#id#').toggle();
-			$('#idActions#id#').toggle();
+		document.querySelectorAll('.classPage#id#').forEach(function(element) {
+			element.addEventListener('click', function() {
+				var showInformation = infoPage#id# && window.getComputedStyle(infoPage#id#).display === 'none';
+				if (infoPage#id#) infoPage#id#.style.display = showInformation ? '' : 'none';
+				if (actionsPage#id#) actionsPage#id#.style.display = showInformation ? 'none' : '';
+			});
 		});
 
-		jeedom.cmd.addUpdateFunction('#heure_id#', function(_options) {
+		addPalazzettiUpdateFunction#id#('#heure_id#', function(_options) {
 			try {
 				var date = JSON.parse(_options.display_value);
-				$('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#heure_id#][data-time="heure"]').html(date.STOVE_DATETIME)
-				$('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#heure_id#][data-time="jour"]').html(dayNames#id#[(parseInt(date.STOVE_WDAY))])
+				setText#id#(document.querySelector('#idTablePalazzettiInfo#id# .cmd[data-cmd_id="#heure_id#"][data-time="heure"]'), date.STOVE_DATETIME);
+				setText#id#(document.querySelector('#idTablePalazzettiInfo#id# .cmd[data-cmd_id="#heure_id#"][data-time="jour"]'), dayNames#id#[parseInt(date.STOVE_WDAY)]);
 			} catch (e) {}
 		});
 		jeedom.cmd.refreshValue([{
 			cmd_id: '#heure_id#',
-			display_value: '#heure#'
+			display_value: #heure_js#
 		}]);
 
-		jeedom.cmd.addUpdateFunction('#status_id#', function(_options) {
+		addPalazzettiUpdateFunction#id#('#status_id#', function(_options) {
+			var onOffButton = byId#id#('idBtnOnOff#id#');
 			if (['0', 0].includes(_options.display_value)) {
-				$('#idBtnOnOff#id#').addClass('successColor#id#').removeClass('dangerColor#id#').text('{{Démarrer}}');
+				onOffButton?.classList.add('successColor#id#');
+				onOffButton?.classList.remove('dangerColor#id#');
+				setText#id#(onOffButton, '{{Démarrer}}');
 			} else {
-				$('#idBtnOnOff#id#').addClass('dangerColor#id#').removeClass('successColor#id#').text('{{Arrêter}}');
+				onOffButton?.classList.add('dangerColor#id#');
+				onOffButton?.classList.remove('successColor#id#');
+				setText#id#(onOffButton, '{{Arrêter}}');
 			}
-			$('.status#id#').html(statusCode#id#[_options.display_value]);
-			$('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#status_id#]').html(statusCode#id#[_options.display_value]);
+			document.querySelectorAll('.status#id#').forEach(function(element) {
+				setText#id#(element, statusCode#id#[_options.display_value]);
+			});
+			setCommandText#id#('#status_id#', statusCode#id#[_options.display_value]);
 		});
 		jeedom.cmd.refreshValue([{
 			cmd_id: '#status_id#',
-			display_value: '#status#'
+			display_value: #status_js#
 		}]);
 
-		$('#idBtnOnOff#id#').on('click', function() {
-			if ($('#idBtnOnOff#id#').text() == "{{Arrêter}}") {
+		var onOffButton#id# = byId#id#('idBtnOnOff#id#');
+		if (onOffButton#id#) onOffButton#id#.onclick = function() {
+			if (onOffButton#id#.textContent == "{{Arrêter}}") {
 				jeedom.cmd.execute({
 					id: '#off_id#'
 				});
-			} else if ($('#idBtnOnOff#id#').text() == "{{Démarrer}}") {
+			} else if (onOffButton#id#.textContent == "{{Démarrer}}") {
 				jeedom.cmd.execute({
 					id: '#on_id#'
 				});
 			}
-		});
+		};
 
-		jeedom.cmd.addUpdateFunction('#temperature_id#', function(_options) {
-			$('#idTempAmbiance#id#').html(_options.display_value + ' <sup>#temperature_unite#</sup>');
-			$('#idTempAmbiance#id#').attr('title', '{{Date de collecte}} : ' + _options.collectDate + '<br/>{{Date de valeur}} : ' + _options.valueDate);
-			$('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#temperature_id#]').html(_options.display_value + ' <sup>#temperature_unite#</sup>');
-			$('#idTempAmbiance#id#').attr('style', 'color: var(--logo-primary-color) !important');
+		addPalazzettiUpdateFunction#id#('#temperature_id#', function(_options) {
+			var element = byId#id#('idTempAmbiance#id#');
+			setText#id#(element, _options.display_value + ' ' + #temperature_unite_js#);
+			if (element) {
+				element.title = '{{Date de collecte}} : ' + _options.collectDate + '<br/>{{Date de valeur}} : ' + _options.valueDate;
+				element.style.setProperty('color', 'var(--logo-primary-color)', 'important');
+			}
+			setCommandText#id#('#temperature_id#', _options.display_value + ' ' + #temperature_unite_js#);
 			setTimeout(function() {
-				$('#idTempAmbiance#id#').attr('style', 'color: ""');
-				jeedomUtils.initTooltips()
-			}, 1000)
+				element?.style.removeProperty('color');
+				jeedomUtils.initTooltips();
+			}, 1000);
 		});
 		jeedom.cmd.refreshValue([{
 			cmd_id: '#temperature_id#',
-			display_value: '#temperature#',
-			valueDate: '#temperature_valueDate#',
-			collectDate: '#temperature_collectDate#'
+			display_value: #temperature_js#,
+			valueDate: #temperature_valueDate_js#,
+			collectDate: #temperature_collectDate_js#
 		}]);
 
-		jeedom.cmd.addUpdateFunction('#temperature2_id#', function(_options) {
-			$('#idTempGranules#id#').html(_options.display_value + ' <sup>#temperature2_unite#</sup>');
-			$('#idTempGranules#id#').attr('title', '{{Date de collecte}} : ' + _options.collectDate + '<br/>{{Date de valeur}} : ' + _options.valueDate);
-			$('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#temperature2_id#]').html(_options.display_value + ' <sup>#temperature2_unite#</sup>');
-			$('#idTempGranules#id#').attr('style', 'color: var(--logo-primary-color) !important');
+		addPalazzettiUpdateFunction#id#('#temperature2_id#', function(_options) {
+			var element = byId#id#('idTempGranules#id#');
+			setText#id#(element, _options.display_value + ' ' + #temperature2_unite_js#);
+			if (element) {
+				element.title = '{{Date de collecte}} : ' + _options.collectDate + '<br/>{{Date de valeur}} : ' + _options.valueDate;
+				element.style.setProperty('color', 'var(--logo-primary-color)', 'important');
+			}
+			setCommandText#id#('#temperature2_id#', _options.display_value + ' ' + #temperature2_unite_js#);
 			setTimeout(function() {
-				$('#idTempGranules#id#').attr('style', 'color: ""');
-				jeedomUtils.initTooltips()
-			}, 1000)
+				element?.style.removeProperty('color');
+				jeedomUtils.initTooltips();
+			}, 1000);
 		});
 		jeedom.cmd.refreshValue([{
 			cmd_id: '#temperature2_id#',
-			display_value: '#temperature2#',
-			valueDate: '#temperature2_valueDate#',
-			collectDate: '#temperature2_collectDate#'
+			display_value: #temperature2_js#,
+			valueDate: #temperature2_valueDate_js#,
+			collectDate: #temperature2_collectDate_js#
 		}]);
 
-		jeedom.cmd.addUpdateFunction('#temperature3_id#', function(_options) {
-			$('#idTempCombustion#id#').html(_options.display_value + ' <sup>#temperature3_unite#</sup>');
-			$('#idTempCombustion#id#').attr('title', '{{Date de collecte}} : ' + _options.collectDate + '<br/>{{Date de valeur}} : ' + _options.valueDate);
-			$('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#temperature3_id#]').html(_options.display_value + ' <sup>#temperature3_unite#</sup>');
-			$('#idTempCombustion#id#').attr('style', 'color: var(--logo-primary-color) !important');
+		addPalazzettiUpdateFunction#id#('#temperature3_id#', function(_options) {
+			var element = byId#id#('idTempCombustion#id#');
+			setText#id#(element, _options.display_value + ' ' + #temperature3_unite_js#);
+			if (element) {
+				element.title = '{{Date de collecte}} : ' + _options.collectDate + '<br/>{{Date de valeur}} : ' + _options.valueDate;
+				element.style.setProperty('color', 'var(--logo-primary-color)', 'important');
+			}
+			setCommandText#id#('#temperature3_id#', _options.display_value + ' ' + #temperature3_unite_js#);
 			setTimeout(function() {
-				$('#idTempCombustion#id#').attr('style', 'color: ""');
-				jeedomUtils.initTooltips()
-			}, 1000)
+				element?.style.removeProperty('color');
+				jeedomUtils.initTooltips();
+			}, 1000);
 		});
 		jeedom.cmd.refreshValue([{
 			cmd_id: '#temperature3_id#',
-			display_value: '#temperature3#',
-			valueDate: '#temperature3_valueDate#',
-			collectDate: '#temperature3_collectDate#'
+			display_value: #temperature3_js#,
+			valueDate: #temperature3_valueDate_js#,
+			collectDate: #temperature3_collectDate_js#
 		}]);
 
-		jeedom.cmd.addUpdateFunction('#consigne_id#', function(_options) {
-			$('#idTempConsigne#id#').html(_options.display_value + ' <sup>#consigne_unite#</sup>');
-			$('#idTempConsigne#id#').attr('title', '{{Date de collecte}} : ' + _options.collectDate + '<br/>{{Date de valeur}} : ' + _options.valueDate);
-			$('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#consigne_id#]').html(_options.display_value + ' <sup>#consigne_unite#</sup>');
+		addPalazzettiUpdateFunction#id#('#consigne_id#', function(_options) {
+			var element = byId#id#('idTempConsigne#id#');
+			setText#id#(element, _options.display_value + ' ' + #consigne_unite_js#);
+			if (element) element.title = '{{Date de collecte}} : ' + _options.collectDate + '<br/>{{Date de valeur}} : ' + _options.valueDate;
+			setCommandText#id#('#consigne_id#', _options.display_value + ' ' + #consigne_unite_js#);
 		});
 		jeedom.cmd.refreshValue([{
 			cmd_id: '#consigne_id#',
-			display_value: '#consigne#',
-			valueDate: '#consigne_valueDate#',
-			collectDate: '#consigne_collectDate#'
+			display_value: #consigne_js#,
+			valueDate: #consigne_valueDate_js#,
+			collectDate: #consigne_collectDate_js#
 		}]);
 
-		$('#idTempConsignePlus#id#').off().on('click', function() {
-			var max = ('#consigne_maxValue#' == '') ? Number.MAX_VALUE : parseFloat('#consigne_maxValue#')
-			var step = (isNaN(parseFloat('#consigne_step#'))) ? 1 : parseFloat('#consigne_step#')
-			if (parseFloat($('#idTempConsigne#id#').value()) <= max - step) {
+		var setpoint#id# = byId#id#('idTempConsigne#id#');
+		var setpointPlus#id# = byId#id#('idTempConsignePlus#id#');
+		if (setpointPlus#id#) setpointPlus#id#.onclick = function() {
+			var max = (#consigne_maxValue_js# === '') ? Number.MAX_VALUE : parseFloat(#consigne_maxValue_js#)
+			var step = isNaN(parseFloat(#consigne_step_js#)) ? 1 : parseFloat(#consigne_step_js#)
+			if (parseFloat(setpoint#id#.textContent) <= max - step) {
 				jeedom.cmd.refreshValue([{
 					cmd_id: '#consigne_id#',
-					display_value: parseFloat($('#idTempConsigne#id#').value()) + step
+					display_value: parseFloat(setpoint#id#.textContent) + step
 				}]);
-				$('#idTempConsigne#id#').trigger('change');
+				triggerChange#id#(setpoint#id#);
 			}
-		})
+		};
 
-		$('#idTempConsigneMoins#id#').off().on('click', function() {
-			var min = ('#consigne_minValue#' == '') ? Number.MIN_VALUE : parseFloat('#consigne_minValue#')
-			var step = (isNaN(parseFloat('#consigne_step#'))) ? 1 : parseFloat('#consigne_step#')
-			if (parseFloat($('#idTempConsigne#id#').value()) >= min + step) {
+		var setpointMinus#id# = byId#id#('idTempConsigneMoins#id#');
+		if (setpointMinus#id#) setpointMinus#id#.onclick = function() {
+			var min = (#consigne_minValue_js# === '') ? -Number.MAX_VALUE : parseFloat(#consigne_minValue_js#)
+			var step = isNaN(parseFloat(#consigne_step_js#)) ? 1 : parseFloat(#consigne_step_js#)
+			if (parseFloat(setpoint#id#.textContent) >= min + step) {
 				jeedom.cmd.refreshValue([{
 					cmd_id: '#consigne_id#',
-					display_value: parseFloat($('#idTempConsigne#id#').value()) - step
+					display_value: parseFloat(setpoint#id#.textContent) - step
 				}]);
-				$('#idTempConsigne#id#').trigger('change');
+				triggerChange#id#(setpoint#id#);
 			}
-		})
+		};
 
-		$('#idTempConsigne#id#').on('change', function() {
+		if (setpoint#id#) setpoint#id#.onchange = function() {
 			if (typeof timerHandle#uid# !== 'undefined') {
 				clearTimeout(timerHandle#uid#)
 			}
@@ -547,53 +625,56 @@
 				jeedom.cmd.execute({
 					id: '#consigneSet_id#',
 					value: {
-						slider: $('#idTempConsigne#id#[data-cmd_id="#consigne_id#"]').value().replace("<sup>#consigne_unite#</sup>", "").replace(" ", "")
+						slider: parseFloat(setpoint#id#.textContent)
 					}
 				})
 			}, 1000)
-		})
+		};
 
-		jeedom.cmd.addUpdateFunction('#power_id#', function(_options) {
-			$('#idPower#id#').html(_options.display_value);
-			$('#idPowerPlus#id#').removeClass('disabled').css('opacity', '1');
-			$('#idPowerMoins#id#').removeClass('disabled').css('opacity', '1');
+		addPalazzettiUpdateFunction#id#('#power_id#', function(_options) {
+			setText#id#(byId#id#('idPower#id#'), _options.display_value);
+			setDisabled#id#(byId#id#('idPowerPlus#id#'), false);
+			setDisabled#id#(byId#id#('idPowerMoins#id#'), false);
 			if (parseInt(_options.display_value) == 5) {
-				$('#idPowerPlus#id#').addClass('disabled').css('opacity', '.25');
+				setDisabled#id#(byId#id#('idPowerPlus#id#'), true);
 			} else if (parseInt(_options.display_value) == 1) {
-				$('#idPowerMoins#id#').addClass('disabled').css('opacity', '.25');;
+				setDisabled#id#(byId#id#('idPowerMoins#id#'), true);
 			}
-			$('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#power_id#]').html(_options.display_value);
+			setCommandText#id#('#power_id#', _options.display_value);
 		});
 		jeedom.cmd.refreshValue([{
 			cmd_id: '#power_id#',
-			display_value: '#power#'
+			display_value: #power_js#
 		}]);
 
-		$('#idPowerPlus#id#').off().on('click', function() {
-			var max = ('#power_maxValue#' == '') ? Number.MAX_VALUE : parseFloat('#power_maxValue#')
-			var step = (isNaN(parseFloat('#power_step#'))) ? 1 : parseFloat('#power_step#')
-			if (parseFloat($('#idPower#id#').value()) <= max - step) {
+		var power#id# = byId#id#('idPower#id#');
+		var powerPlus#id# = byId#id#('idPowerPlus#id#');
+		if (powerPlus#id#) powerPlus#id#.onclick = function() {
+			var max = (#power_maxValue_js# === '') ? Number.MAX_VALUE : parseFloat(#power_maxValue_js#)
+			var step = isNaN(parseFloat(#power_step_js#)) ? 1 : parseFloat(#power_step_js#)
+			if (parseFloat(power#id#.textContent) <= max - step) {
 				jeedom.cmd.refreshValue([{
 					cmd_id: '#power_id#',
-					display_value: parseFloat($('#idPower#id#').value()) + step
+					display_value: parseFloat(power#id#.textContent) + step
 				}]);
-				$('#idPower#id#').trigger('change');
+				triggerChange#id#(power#id#);
 			}
-		})
+		};
 
-		$('#idPowerMoins#id#').off().on('click', function() {
-			var min = ('#power_minValue#' == '') ? Number.MIN_VALUE : parseFloat('#power_minValue#')
-			var step = (isNaN(parseFloat('#power_step#'))) ? 1 : parseFloat('#power_step#')
-			if (parseFloat($('#idPower#id#').value()) >= min + step) {
+		var powerMinus#id# = byId#id#('idPowerMoins#id#');
+		if (powerMinus#id#) powerMinus#id#.onclick = function() {
+			var min = (#power_minValue_js# === '') ? -Number.MAX_VALUE : parseFloat(#power_minValue_js#)
+			var step = isNaN(parseFloat(#power_step_js#)) ? 1 : parseFloat(#power_step_js#)
+			if (parseFloat(power#id#.textContent) >= min + step) {
 				jeedom.cmd.refreshValue([{
 					cmd_id: '#power_id#',
-					display_value: parseFloat($('#idPower#id#').value()) - step
+					display_value: parseFloat(power#id#.textContent) - step
 				}]);
-				$('#idPower#id#').trigger('change');
+				triggerChange#id#(power#id#);
 			}
-		})
+		};
 
-		$('#idPower#id#').on('change', function() {
+		if (power#id#) power#id#.onchange = function() {
 			if (typeof timerHandle#uid# !== 'undefined') {
 				clearTimeout(timerHandle#uid#)
 			}
@@ -601,69 +682,73 @@
 				jeedom.cmd.execute({
 					id: '#powerSet_id#',
 					value: {
-						slider: $('#idPower#id#').value()
+						slider: parseFloat(power#id#.textContent)
 					}
 				})
 			}, 1500)
-		})
+		};
 
-		jeedom.cmd.addUpdateFunction('#fan_id#', function(_options) {
-			$('#idVentilationMoins#id#').removeClass('disabled').css('opacity', '1');
-			$('#idVentilationPlus#id#').removeClass('disabled').css('opacity', '1');
+		addPalazzettiUpdateFunction#id#('#fan_id#', function(_options) {
+			var fan = byId#id#('idVentilation#id#');
+			setDisabled#id#(byId#id#('idVentilationMoins#id#'), false);
+			setDisabled#id#(byId#id#('idVentilationPlus#id#'), false);
 			if (_options.display_value == 0) {
-                if ('#invertFanSpeed#'=='1') {
-                    $('#idVentilation#id#').html('AUTO');
-                    $('#idVentilationPlus#id#').addClass('disabled').css('opacity', '.25');
+				if (#invertFanSpeed_js# == '1') {
+					setText#id#(fan, 'AUTO');
+					setDisabled#id#(byId#id#('idVentilationPlus#id#'), true);
                 } else {
-                    $('#idVentilation#id#').html('OFF');
-                    $('#idVentilationMoins#id#').addClass('disabled').css('opacity', '.25');
+					setText#id#(fan, 'OFF');
+					setDisabled#id#(byId#id#('idVentilationMoins#id#'), true);
                 }
 			} else if (_options.display_value == 6) {
-				$('#idVentilation#id#').html('HIGH');
+				setText#id#(fan, 'HIGH');
 			} else if (_options.display_value == 7) {
-                if ('#invertFanSpeed#'=='1') {
-                    $('#idVentilation#id#').html('OFF');
-                    $('#idVentilationMoins#id#').addClass('disabled').css('opacity', '.25');
+				if (#invertFanSpeed_js# == '1') {
+					setText#id#(fan, 'OFF');
+					setDisabled#id#(byId#id#('idVentilationMoins#id#'), true);
                 } else {
-                    $('#idVentilation#id#').html('AUTO');
-                    $('#idVentilationPlus#id#').addClass('disabled').css('opacity', '.25');
+					setText#id#(fan, 'AUTO');
+					setDisabled#id#(byId#id#('idVentilationPlus#id#'), true);
                 }
 			} else {
-				$('#idVentilation#id#').html(_options.display_value);
+				setText#id#(fan, _options.display_value);
 			}
-			$('#idVentilation#id#').data('value', _options.display_value);
-			$('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#fan_id#]').html(_options.display_value);
+			if (fan) fan.dataset.value = _options.display_value;
+			setText#id#(document.querySelector('#idTablePalazzettiInfo#id# .cmd[data-cmd_id="#fan_id#"]'), _options.display_value);
 		});
 		jeedom.cmd.refreshValue([{
 			cmd_id: '#fan_id#',
-			display_value: '#fan#'
+			display_value: #fan_js#
 		}]);
 
-		$('#idVentilationPlus#id#').off().on('click', function() {
-			var max = ('#fan_maxValue#' == '') ? Number.MAX_VALUE : parseFloat('#fan_maxValue#')
-			var step = (isNaN(parseFloat('#fan_step#'))) ? 1 : parseFloat('#fan_step#')
-			if (parseFloat($('#idVentilation#id#').data('value')) <= max - step) {
+		var fan#id# = byId#id#('idVentilation#id#');
+		var fanPlus#id# = byId#id#('idVentilationPlus#id#');
+		if (fanPlus#id#) fanPlus#id#.onclick = function() {
+			var max = (#fan_maxValue_js# === '') ? Number.MAX_VALUE : parseFloat(#fan_maxValue_js#)
+			var step = isNaN(parseFloat(#fan_step_js#)) ? 1 : parseFloat(#fan_step_js#)
+			if (parseFloat(fan#id#.dataset.value) <= max - step) {
 				jeedom.cmd.refreshValue([{
 					cmd_id: '#fan_id#',
-					display_value: parseFloat($('#idVentilation#id#').data('value')) + step
+					display_value: parseFloat(fan#id#.dataset.value) + step
 				}]);
-				$('#idVentilation#id#').trigger('change');
+				triggerChange#id#(fan#id#);
 			}
-		})
+		};
 
-		$('#idVentilationMoins#id#').off().on('click', function() {
-			var min = ('#fan_minValue#' == '') ? Number.MIN_VALUE : parseFloat('#fan_minValue#')
-			var step = (isNaN(parseFloat('#fan_step#'))) ? 1 : parseFloat('#fan_step#')
-			if (parseFloat($('#idVentilation#id#').data('value')) >= min + step) {
+		var fanMinus#id# = byId#id#('idVentilationMoins#id#');
+		if (fanMinus#id#) fanMinus#id#.onclick = function() {
+			var min = (#fan_minValue_js# === '') ? -Number.MAX_VALUE : parseFloat(#fan_minValue_js#)
+			var step = isNaN(parseFloat(#fan_step_js#)) ? 1 : parseFloat(#fan_step_js#)
+			if (parseFloat(fan#id#.dataset.value) >= min + step) {
 				jeedom.cmd.refreshValue([{
 					cmd_id: '#fan_id#',
-					display_value: parseFloat($('#idVentilation#id#').data('value')) - step
+					display_value: parseFloat(fan#id#.dataset.value) - step
 				}]);
-				$('#idVentilation#id#').trigger('change');
+				triggerChange#id#(fan#id#);
 			}
-		})
+		};
 
-		$('#idVentilation#id#').on('change', function() {
+		if (fan#id#) fan#id#.onchange = function() {
 			if (typeof timerHandle#uid# !== 'undefined') {
 				clearTimeout(timerHandle#uid#)
 			}
@@ -671,139 +756,132 @@
 				jeedom.cmd.execute({
 					id: '#fanSet_id#',
 					value: {
-						slider: $('#idVentilation#id#').data('value')
+						slider: fan#id#.dataset.value
 					}
 				})
 			}, 1500)
-		})
+		};
 
-		jeedom.cmd.addUpdateFunction('#nbAll_id#', function(_options) {
-			$('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#nbAll_id#]').html(_options.display_value + ' #nbAll_unit#');
-			$('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#nbAll_id#]').attr('title', '{{Date de collecte}} : ' + _options.collectDate + '<br/>{{Date de valeur}} : ' + _options.valueDate);
+		addPalazzettiUpdateFunction#id#('#nbAll_id#', function(_options) {
+			setInformation#id#('#nbAll_id#', _options.display_value, #nbAll_unit_js#, _options.collectDate, _options.valueDate);
 		});
 		jeedom.cmd.refreshValue([{
 			cmd_id: '#nbAll_id#',
-			display_value: '#nbAll#',
-			collectDate: '#nbAll_collectDate#',
-			valueDate: '#nbAll_valueDate#'
+			display_value: #nbAll_js#,
+			collectDate: #nbAll_collectDate_js#,
+			valueDate: #nbAll_valueDate_js#
 		}]);
 
-		jeedom.cmd.addUpdateFunction('#hae_id#', function(_options) {
-			$('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hae_id#]').html(_options.display_value + ' #hae_unit#');
-			$('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hae_id#]').attr('title', '{{Date de collecte}} : ' + _options.collectDate + '<br/>{{Date de valeur}} : ' + _options.valueDate);
+		addPalazzettiUpdateFunction#id#('#haf_id#', function(_options) {
+			setInformation#id#('#haf_id#', _options.display_value, #haf_unit_js#, _options.collectDate, _options.valueDate);
 		});
 		jeedom.cmd.refreshValue([{
-			cmd_id: '#hae_id#',
-			display_value: '#hae#',
-			collectDate: '#hae_collectDate#',
-			valueDate: '#hae_valueDate#'
+			cmd_id: '#haf_id#',
+			display_value: #haf_js#,
+			collectDate: #haf_collectDate_js#,
+			valueDate: #haf_valueDate_js#
 		}]);
 
-		jeedom.cmd.addUpdateFunction('#hc_id#', function(_options) {
-			$('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hc_id#]').html(_options.display_value + ' #hc_unit#');
-			$('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hc_id#]').attr('title', '{{Date de collecte}} : ' + _options.collectDate + '<br/>{{Date de valeur}} : ' + _options.valueDate);
+		addPalazzettiUpdateFunction#id#('#hc_id#', function(_options) {
+			setInformation#id#('#hc_id#', _options.display_value, #hc_unit_js#, _options.collectDate, _options.valueDate);
 		});
 		jeedom.cmd.refreshValue([{
 			cmd_id: '#hc_id#',
-			display_value: '#hc#',
-			collectDate: '#hc_collectDate#',
-			valueDate: '#hc_valueDate#'
+			display_value: #hc_js#,
+			collectDate: #hc_collectDate_js#,
+			valueDate: #hc_valueDate_js#
 		}]);
 
-		jeedom.cmd.addUpdateFunction('#hsc_id#', function(_options) {
-			$('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hsc_id#]').html(_options.display_value + ' #hsc_unit#');
-			$('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hsc_id#]').attr('title', '{{Date de collecte}} : ' + _options.collectDate + '<br/>{{Date de valeur}} : ' + _options.valueDate);
+		addPalazzettiUpdateFunction#id#('#hsc_id#', function(_options) {
+			setInformation#id#('#hsc_id#', _options.display_value, #hsc_unit_js#, _options.collectDate, _options.valueDate);
 		});
 		jeedom.cmd.refreshValue([{
 			cmd_id: '#hsc_id#',
-			display_value: '#hsc#',
-			collectDate: '#hsc_collectDate#',
-			valueDate: '#hsc_valueDate#'
+			display_value: #hsc_js#,
+			collectDate: #hsc_collectDate_js#,
+			valueDate: #hsc_valueDate_js#
 		}]);
 
-		jeedom.cmd.addUpdateFunction('#hde_id#', function(_options) {
-			$('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hde_id#]').html(_options.display_value + ' #hde_unit#');
-			$('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hde_id#]').attr('title', '{{Date de collecte}} : ' + _options.collectDate + '<br/>{{Date de valeur}} : ' + _options.valueDate);
+		addPalazzettiUpdateFunction#id#('#hde_id#', function(_options) {
+			setInformation#id#('#hde_id#', _options.display_value, #hde_unit_js#, _options.collectDate, _options.valueDate);
 		});
 		jeedom.cmd.refreshValue([{
 			cmd_id: '#hde_id#',
-			display_value: '#hde#',
-			collectDate: '#hde_collectDate#',
-			valueDate: '#hde_valueDate#'
+			display_value: #hde_js#,
+			collectDate: #hde_collectDate_js#,
+			valueDate: #hde_valueDate_js#
 		}]);
 
-		jeedom.cmd.addUpdateFunction('#hae_id#', function(_options) {
-			$('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hae_id#]').html(_options.display_value + ' #hae_unit#');
-			$('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#hae_id#]').attr('title', '{{Date de collecte}} : ' + _options.collectDate + '<br/>{{Date de valeur}} : ' + _options.valueDate);
+		addPalazzettiUpdateFunction#id#('#hae_id#', function(_options) {
+			setInformation#id#('#hae_id#', _options.display_value, #hae_unit_js#, _options.collectDate, _options.valueDate);
 		});
 		jeedom.cmd.refreshValue([{
 			cmd_id: '#hae_id#',
-			display_value: '#hae#',
-			collectDate: '#hae_collectDate#',
-			valueDate: '#hae_valueDate#'
+			display_value: #hae_js#,
+			collectDate: #hae_collectDate_js#,
+			valueDate: #hae_valueDate_js#
 		}]);
 
-		jeedom.cmd.addUpdateFunction('#pqt_id#', function(_options) {
-			$('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#pqt_id#]').html(_options.display_value + ' #pqt_unit#');
-			$('#idTablePalazzettiInfo#id# .cmd[data-cmd_id=#pqt_id#]').attr('title', '{{Date de collecte}} : ' + _options.collectDate + '<br/>{{Date de valeur}} : ' + _options.valueDate);
+		addPalazzettiUpdateFunction#id#('#pqt_id#', function(_options) {
+			setInformation#id#('#pqt_id#', _options.display_value, #pqt_unit_js#, _options.collectDate, _options.valueDate);
 		});
 		jeedom.cmd.refreshValue([{
 			cmd_id: '#pqt_id#',
-			display_value: '#pqt#',
-			collectDate: '#pqt_collectDate#',
-			valueDate: '#pqt_valueDate#'
+			display_value: #pqt_js#,
+			collectDate: #pqt_collectDate_js#,
+			valueDate: #pqt_valueDate_js#
 		}]);
 
-			jeedom.cmd.addUpdateFunction('#network_id#', function(_options) {
-				var network = {};
-				try {
-					network = JSON.parse(_options.display_value);
-				} catch (e) {
-					network = {};
-				}
-				if (!network || typeof network !== 'object') network = {};
-				if (!Array.isArray(network.DNS)) network.DNS = network.DNS ? [network.DNS] : [];
-			$('.cmd[data-cmd_id=#network_id#][data-network="plzbridge"]').html(network.plzbridge);
-			$('.cmd[data-cmd_id=#network_id#][data-network="sendmsg"]').html(network.sendmsg);
-			$('.cmd[data-cmd_id=#network_id#][data-network="SYSTEM"]').html(network.SYSTEM);
-			$('.cmd[data-cmd_id=#network_id#][data-network="VER"]').html(network.VER);
-			$('.cmd[data-cmd_id=#network_id#][data-network="MOD"]').html(network.MOD);
-			$('.cmd[data-cmd_id=#network_id#][data-network="CORE"]').html(network.CORE);
-			$('.cmd[data-cmd_id=#network_id#][data-network="FWDATE"]').html(network.FWDATE);
-				$('.cmd[data-cmd_id=#network_id#][data-network="DNS"]').html(network.DNS[0] || '');
-			$('.cmd[data-cmd_id=#network_id#][data-network="EADR"]').html(network.EADR);
-			$('.cmd[data-cmd_id=#network_id#][data-network="EBCST"]').html(network.EBCST);
-			$('.cmd[data-cmd_id=#network_id#][data-network="EMSK"]').html(network.EMSK);
-			$('.cmd[data-cmd_id=#network_id#][data-network="EMAC"]').html(network.EMAC);
-			$('.cmd[data-cmd_id=#network_id#][data-network="PR"]').html(network.PR);
-			$('.cmd[data-cmd_id=#network_id#][data-network="EGW"]').html(network.EGW);
-			if (network['WLAN0 Data']) {
-				$('.cmd[data-cmd_id=#network_id#][data-network="WLAN0_ADDR"]').html(network['WLAN0 Data']['WLAN0_ADDR'])
-				$('.cmd[data-cmd_id=#network_id#][data-network="WLAN0_BCAST"]').html(network['WLAN0 Data'].WLAN0_BCAST)
-				$('.cmd[data-cmd_id=#network_id#][data-network="WLAN0_MASK"]').html(network['WLAN0 Data'].WLAN0_MASK)
-				$('.cmd[data-cmd_id=#network_id#][data-network="WLAN0_MAC"]').html(network['WLAN0 Data'].WLAN0_MAC)
-				$('.cmd[data-cmd_id=#network_id#][data-network="WLAN0_PROTO"]').html(network['WLAN0 Data'].WLAN0_PROTO)
-				$('.cmd[data-cmd_id=#network_id#][data-network="WLAN0_GW"]').html(network['WLAN0 Data'].WLAN0_GW)
-				$('.cmd[data-cmd_id=#network_id#][data-network="WLAN0_MODE"]').html(network['WLAN0 Data'].WLAN0_MODE)
-				$('.cmd[data-cmd_id=#network_id#][data-network="WLAN0_CH"]').html(network['WLAN0 Data'].WLAN0_CH)
-				$('.cmd[data-cmd_id=#network_id#][data-network="WLAN0_SSID"]').html(network['WLAN0 Data'].WLAN0_SSID)
-				$('.cmd[data-cmd_id=#network_id#][data-network="WLAN0_ENC"]').html(network['WLAN0 Data'].WLAN0_ENC)
-			} else {
-				$('.cmd[data-cmd_id=#network_id#][data-network="WLAN0_ADDR"]').html(network.WADR)
-				$('.cmd[data-cmd_id=#network_id#][data-network="WLAN0_BCAST"]').html(network.WBCST)
-				$('.cmd[data-cmd_id=#network_id#][data-network="WLAN0_MASK"]').html(network.WMSK)
-				$('.cmd[data-cmd_id=#network_id#][data-network="WLAN0_MAC"]').html(network.WMAC)
-				$('.cmd[data-cmd_id=#network_id#][data-network="WLAN0_PROTO"]').html(network.WPR)
-				$('.cmd[data-cmd_id=#network_id#][data-network="WLAN0_GW"]').html(network.WGW)
-				$('.cmd[data-cmd_id=#network_id#][data-network="WLAN0_MODE"]').html(network.WMODE)
-				$('.cmd[data-cmd_id=#network_id#][data-network="WLAN0_CH"]').html(network.WCH)
-				$('.cmd[data-cmd_id=#network_id#][data-network="WLAN0_SSID"]').html(network.WSSID + ' (' + network.WPWR + ')')
-				$('.cmd[data-cmd_id=#network_id#][data-network="WLAN0_ENC"]').html(network.WENC)
+		addPalazzettiUpdateFunction#id#('#network_id#', function(_options) {
+			var network = {};
+			try {
+				network = JSON.parse(_options.display_value);
+			} catch (e) {
+				network = {};
 			}
+			if (!network || typeof network !== 'object') network = {};
+			if (!Array.isArray(network.DNS)) network.DNS = network.DNS ? [network.DNS] : [];
+			var setNetworkValue = function(key, value) {
+				if (!widget#id#) return;
+				widget#id#.querySelectorAll('.cmd[data-cmd_id="#network_id#"][data-network="' + key + '"]').forEach(function(element) {
+					setText#id#(element, value);
+				});
+			};
+			['plzbridge', 'sendmsg', 'SYSTEM', 'VER', 'MOD', 'CORE', 'FWDATE', 'EADR', 'EBCST', 'EMSK', 'EMAC', 'PR', 'EGW'].forEach(function(key) {
+				setNetworkValue(key, network[key]);
+			});
+			setNetworkValue('DNS', network.DNS[0] || '');
+			var wlan = network['WLAN0 Data'];
+			var wlanValues = wlan ? {
+				WLAN0_ADDR: wlan.WLAN0_ADDR,
+				WLAN0_BCAST: wlan.WLAN0_BCAST,
+				WLAN0_MASK: wlan.WLAN0_MASK,
+				WLAN0_MAC: wlan.WLAN0_MAC,
+				WLAN0_PROTO: wlan.WLAN0_PROTO,
+				WLAN0_GW: wlan.WLAN0_GW,
+				WLAN0_MODE: wlan.WLAN0_MODE,
+				WLAN0_CH: wlan.WLAN0_CH,
+				WLAN0_SSID: wlan.WLAN0_SSID,
+				WLAN0_ENC: wlan.WLAN0_ENC
+			} : {
+				WLAN0_ADDR: network.WADR,
+				WLAN0_BCAST: network.WBCST,
+				WLAN0_MASK: network.WMSK,
+				WLAN0_MAC: network.WMAC,
+				WLAN0_PROTO: network.WPR,
+				WLAN0_GW: network.WGW,
+				WLAN0_MODE: network.WMODE,
+				WLAN0_CH: network.WCH,
+				WLAN0_SSID: (network.WSSID || '') + (network.WPWR == null ? '' : ' (' + network.WPWR + ')'),
+				WLAN0_ENC: network.WENC
+			};
+			Object.keys(wlanValues).forEach(function(key) {
+				setNetworkValue(key, wlanValues[key]);
+			});
 		});
 		jeedom.cmd.refreshValue([{
 			cmd_id: '#network_id#',
-			display_value: '#network#'
+			display_value: #network_js#
 		}]);
 
 			(function() {
@@ -816,6 +894,15 @@
 				});
 				widget?.querySelector('.hidden_parameters')?.addEventListener('click', function() {
 					jeeDialog.dialog({id: 'md_palazzettiWidgetHiddenParameters#id#', title: '{{Paramètres cachés du poêle}}', contentUrl: 'index.php?v=d&plugin=Palazzetti&modal=hidden.parametres&id=#id#'});
+				});
+				widget?.querySelector('.heating-history')?.addEventListener('click', function(event) {
+					event.stopPropagation();
+					jeeDialog.dialog({
+						id: 'md_palazzettiWidgetHeatingHistory#id#',
+						title: '{{Historique de chauffe Palazzetti}}',
+						size: 'large',
+						contentUrl: 'index.php?v=d&plugin=Palazzetti&modal=heating.history&id=#id#'
+					});
 				});
 			})();
 

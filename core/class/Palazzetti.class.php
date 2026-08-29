@@ -17,17 +17,219 @@
  */
 
 /* * ***************************Includes********************************* */
-require_once dirname(__FILE__) . '/../../../../core/php/core.inc.php';
+if (!class_exists('eqLogic', false)) {
+    $jeedomCore = dirname(__FILE__) . '/../../../../core/php/core.inc.php';
+    if (is_file($jeedomCore)) {
+        require_once $jeedomCore;
+    }
+    unset($jeedomCore);
+}
 
+/**
+ * Équipement Jeedom représentant une passerelle ou un poêle Palazzetti.
+ */
 class Palazzetti extends eqLogic
 {
-    public static $_pluginVersion = '1.23';
+    public static $_pluginVersion = '2.0.0';
     private const REQUEST_ERROR_LOG_INTERVAL = 3600;
+    private const REDISCOVERY_FAILURE_THRESHOLD = 3;
+    private const REDISCOVERY_COOLDOWN = 3600;
     private const DISCOVERY_PORT = 54549;
     private const DISCOVERY_TIMEOUT = 3;
-    private const DISCOVERY_MESSAGE = 'bridge?';
+    private const DISCOVERY_MESSAGE = 'plzbridge?';
     private const DISCOVERY_MAX_UNICAST_HOSTS = 1024;
+    private const DISCOVERY_MAX_TARGETS = 4096;
+    private const PROTOCOL_MAX_COMMAND_LENGTH = 256;
+    private const DISCOVERY_MAX_TEXT_LENGTH = 120;
+    private const HISTORY_MAX_DAYS = 31;
+    private const HISTORY_MAX_POINTS_PER_SERIES = 3000;
+    private const HISTORY_ACTIVE_STATES = array(2, 3, 4, 5, 6, 9, 10, 11, 12);
+    private const HISTORY_SERIES = array(
+        'status' => array('logicalId' => 'IStatus', 'step' => true),
+        'power' => array('logicalId' => 'IPower', 'step' => true),
+        'fan' => array('logicalId' => 'IFan', 'step' => true),
+        'temperature' => array('logicalId' => 'ITemp', 'step' => false),
+        'setpoint' => array('logicalId' => 'IConsigne', 'step' => true),
+        'temperature2' => array('logicalId' => 'ITemp2', 'step' => false),
+        'temperature3' => array('logicalId' => 'ITemp3', 'step' => false),
+        'pellets' => array('logicalId' => 'IQuantite', 'step' => true),
+        'heatingTime' => array('logicalId' => 'IHeuresChauffe', 'step' => true)
+    );
+    private static $rediscoveryRunning = false;
 
+    /**
+     * Normalise et valide une commande destinée à la passerelle.
+     *
+     * @param mixed $command Commande brute.
+     * @return string Commande normalisée.
+     * @throws InvalidArgumentException Si la commande est invalide.
+     */
+    public static function normalizeCommand($command)
+    {
+        $command = trim((string) $command);
+        if ($command === '' || strlen($command) > self::PROTOCOL_MAX_COMMAND_LENGTH) {
+            throw new InvalidArgumentException('Commande Palazzetti vide ou trop longue.');
+        }
+        if (preg_match('/[\x00-\x1F\x7F&?#$`"\\\\]/u', $command) === 1
+            || preg_match('/(?:^|[+\s])(undefined|null|nan)(?:$|[+\s])/i', $command) === 1) {
+            throw new InvalidArgumentException('Commande Palazzetti invalide.');
+        }
+        if (preg_match('/^[A-Z]{3}\+[A-Z0-9]{2,4}(?:\+.*)?$/u', $command) !== 1) {
+            throw new InvalidArgumentException('Format de commande Palazzetti invalide.');
+        }
+        return $command;
+    }
+
+    /**
+     * Valide un identifiant numérique PARM ou HPAR.
+     *
+     * @param mixed $value Identifiant brut.
+     * @param int $maximum Valeur maximale admise.
+     * @return int Identifiant validé.
+     * @throws InvalidArgumentException Si l'identifiant est invalide.
+     */
+    public static function normalizeParameterId($value, $maximum = 255)
+    {
+        $value = trim((string) $value);
+        if (preg_match('/^\d{1,3}$/', $value) !== 1) {
+            throw new InvalidArgumentException('Identifiant de paramètre invalide.');
+        }
+        $id = (int) $value;
+        if ($id < 0 || $id > (int) $maximum) {
+            throw new InvalidArgumentException('Identifiant de paramètre hors limites.');
+        }
+        return $id;
+    }
+
+    /**
+     * Valide une valeur de paramètre sur un octet.
+     *
+     * @param mixed $value Valeur brute.
+     * @return int Valeur comprise entre 0 et 255.
+     * @throws InvalidArgumentException Si la valeur est invalide.
+     */
+    public static function normalizeParameterValue($value)
+    {
+        $value = trim((string) $value);
+        if (preg_match('/^\d{1,3}$/', $value) !== 1) {
+            throw new InvalidArgumentException('Valeur de paramètre invalide.');
+        }
+        $number = (int) $value;
+        if ($number < 0 || $number > 255) {
+            throw new InvalidArgumentException('La valeur doit être comprise entre 0 et 255.');
+        }
+        return $number;
+    }
+
+    /**
+     * Convertit une durée HH:MM en nombre décimal d'heures.
+     *
+     * @param mixed $value Durée brute.
+     * @return float|null Durée convertie, ou null si le format est invalide.
+     */
+    public static function decimalHours($value)
+    {
+        if (preg_match('/^(\d+):([0-5]\d)$/', trim((string) $value), $matches) !== 1) {
+            return null;
+        }
+        return round((int) $matches[1] + ((int) $matches[2] / 60), 2);
+    }
+
+    /**
+     * Normalise une adresse MAC avec des séparateurs deux-points.
+     *
+     * @param mixed $mac Adresse MAC brute.
+     * @return string Adresse normalisée, ou chaîne vide si elle est invalide.
+     */
+    public static function normalizeMac($mac)
+    {
+        $normalized = preg_replace('/[^0-9A-F]/i', '', (string) $mac);
+        $compact = is_string($normalized) ? strtoupper($normalized) : '';
+        return strlen($compact) === 12 ? implode(':', str_split($compact, 2)) : '';
+    }
+
+    /**
+     * Indique si une adresse appartient à une plage IPv4 privée RFC 1918.
+     *
+     * @param mixed $address Adresse à contrôler.
+     * @return bool Vrai pour une adresse privée valide.
+     */
+    public static function isPrivateIpv4($address)
+    {
+        if (filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) === false) {
+            return false;
+        }
+        $long = ip2long($address);
+        if ($long === false) {
+            return false;
+        }
+        if ($long < 0) {
+            $long += 4294967296;
+        }
+        return ($long >= 167772160 && $long <= 184549375)
+            || ($long >= 2886729728 && $long <= 2887778303)
+            || ($long >= 3232235520 && $long <= 3232301055);
+    }
+
+    /**
+     * Valide une IPv4 privée ou un nom d'hôte local autorisé.
+     *
+     * @param mixed $address Adresse ou nom d'hôte à contrôler.
+     * @return bool Vrai lorsque la cible reste sur le réseau local.
+     */
+    public static function isLocalAddress($address)
+    {
+        $address = trim((string) $address);
+        if (self::isPrivateIpv4($address)) {
+            return true;
+        }
+        if (strlen($address) > 253
+            || preg_match('/^[A-Za-z0-9](?:[A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$/', $address) !== 1) {
+            return false;
+        }
+        if (strpos($address, '.') !== false && substr(strtolower($address), -6) !== '.local') {
+            return false;
+        }
+        if (strtolower($address) === 'localhost' || substr(strtolower($address), -10) === '.localhost') {
+            return false;
+        }
+        foreach (explode('.', $address) as $label) {
+            if ($label === '' || strlen($label) > 63
+                || preg_match('/^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$/', $label) !== 1) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Nettoie un texte reçu lors de la découverte ou de l'interrogation.
+     *
+     * @param mixed $value Valeur brute.
+     * @param int $maximumLength Longueur maximale conservée.
+     * @return string Texte nettoyé.
+     */
+    public static function sanitizeDiscoveryText($value, $maximumLength = self::DISCOVERY_MAX_TEXT_LENGTH)
+    {
+        if (!is_scalar($value)) {
+            return '';
+        }
+        $value = trim(strip_tags((string) $value));
+        $value = preg_replace('/[\x00-\x1F\x7F]/u', '', $value);
+        if (!is_string($value)) {
+            return '';
+        }
+        if (function_exists('mb_substr')) {
+            return mb_substr($value, 0, (int) $maximumLength);
+        }
+        return substr($value, 0, (int) $maximumLength);
+    }
+
+    /**
+     * Exécute le rafraîchissement périodique des équipements actifs.
+     *
+     * @return void
+     */
     public static function pull()
     {
         log::add(__CLASS__, 'debug', __FUNCTION__ . ' : ' . __('Démarrage du cron', __FILE__));
@@ -42,8 +244,12 @@ class Palazzetti extends eqLogic
                             if ($eqLogic->getIsEnable()) {
                                 try {
                                     $eqLogic->getInformations();
-                                    $eqLogic->refreshWidget();
                                 } catch (Exception $exc) {
+                                    log::add(__CLASS__, 'warning', sprintf(
+                                        __('Rafraîchissement impossible pour %s : %s', __FILE__),
+                                        $eqLogic->getHumanName(),
+                                        $exc->getMessage()
+                                    ));
                                 }
                             }
                         }
@@ -60,6 +266,8 @@ class Palazzetti extends eqLogic
 
     /**
      * Crée, met à jour ou désactive la tâche de découverte automatique.
+     *
+     * @return void
      */
     public static function configureAutoDiscoveryCron()
     {
@@ -88,7 +296,20 @@ class Palazzetti extends eqLogic
     }
 
     /**
+     * Réapplique immédiatement l'intervalle lorsque la configuration est sauvée.
+     *
+     * @param mixed $value Nouvelle valeur de configuration.
+     * @return void
+     */
+    public static function postConfig_auto_discovery_interval($value)
+    {
+        self::configureAutoDiscoveryCron();
+    }
+
+    /**
      * Lance la découverte depuis la tâche Jeedom dédiée.
+     *
+     * @return void
      */
     public static function cronAutoDiscover()
     {
@@ -97,7 +318,14 @@ class Palazzetti extends eqLogic
         }
 
         try {
-            self::discover();
+            $result = self::discover('automatic');
+            cache::set(__CLASS__ . '::discoveryCandidates', $result, 0);
+            log::add(__CLASS__, 'info', __FUNCTION__ . ' - ' . sprintf(
+                __('%d passerelle(s) détectée(s), %d équipement(s) actualisé(s), %d appareil(s) inconnu(s) ignoré(s)', __FILE__),
+                $result['found'],
+                $result['updated'],
+                $result['skipped']
+            ));
         } catch (Exception $e) {
             log::add(__CLASS__, 'error', __FUNCTION__ . __(' - échec de la découverte automatique : ', __FILE__) . $e->getMessage());
         }
@@ -105,6 +333,8 @@ class Palazzetti extends eqLogic
 
     /**
      * Retourne les contrôles affichés dans les pages de santé Jeedom.
+     *
+     * @return array<int, array<string, mixed>> Résultats des contrôles.
      */
     public static function health()
     {
@@ -126,31 +356,55 @@ class Palazzetti extends eqLogic
             'state' => $socketAvailable
         );
 
+        $discoverySchedule = trim((string) config::byKey('auto_discovery_interval', __CLASS__, ''));
+        $discoveryCron = cron::byClassAndFunction(__CLASS__, 'cronAutoDiscover');
+        $discoveryCronEnabled = is_object($discoveryCron) && (int) $discoveryCron->getEnable(0) === 1;
+        $discoveryCronHealthy = $discoverySchedule === ''
+            ? !$discoveryCronEnabled
+            : ($discoveryCronEnabled && (string) $discoveryCron->getSchedule() === $discoverySchedule);
+        $return[] = array(
+            'test' => __('Découverte automatique', __FILE__),
+            'result' => $discoverySchedule === '' ? __('Désactivée', __FILE__) : $discoverySchedule,
+            'advice' => $discoveryCronHealthy
+                ? ''
+                : __('Enregistrez à nouveau la configuration du plugin pour resynchroniser la tâche.', __FILE__),
+            'state' => $discoveryCronHealthy
+        );
+
         $eqLogics = eqLogic::byType(__CLASS__);
         $enabled = 0;
-        $offline = 0;
+        $gatewayOffline = 0;
+        $stoveOffline = 0;
         $invalidAddresses = 0;
         foreach ($eqLogics as $eqLogic) {
             if (!$eqLogic->getIsEnable()) {
                 continue;
             }
             $enabled++;
-            if (filter_var($eqLogic->getConfiguration('addressip'), FILTER_VALIDATE_IP) === false
-                && preg_match('/^[A-Za-z0-9.-]+$/', (string) $eqLogic->getConfiguration('addressip')) !== 1) {
+            if (!self::isLocalAddress($eqLogic->getConfiguration('addressip'))) {
                 $invalidAddresses++;
             }
-            if ($eqLogic->getCommunicationHealth()['offline']) {
-                $offline++;
+            $communication = $eqLogic->getCommunicationHealth();
+            if ($communication['offline']) {
+                $gatewayOffline++;
+            } elseif ($communication['stoveOffline']) {
+                $stoveOffline++;
             }
         }
 
-        $equipmentState = $invalidAddresses === 0 && $offline === 0;
+        $equipmentState = $invalidAddresses === 0 && $gatewayOffline === 0 && $stoveOffline === 0;
         $return[] = array(
             'test' => __('Équipements', __FILE__),
-            'result' => sprintf(__('%d configuré(s), %d actif(s), %d hors ligne', __FILE__), count($eqLogics), $enabled, $offline),
+            'result' => sprintf(
+                __('%d configuré(s), %d actif(s), %d passerelle(s) hors ligne, %d poêle(s) indisponible(s)', __FILE__),
+                count($eqLogics),
+                $enabled,
+                $gatewayOffline,
+                $stoveOffline
+            ),
             'advice' => $invalidAddresses > 0
                 ? sprintf(__('%d adresse(s) invalide(s) sont configurées.', __FILE__), $invalidAddresses)
-                : ($offline > 0 ? __('Consultez les équipements en erreur ci-dessous.', __FILE__) : ''),
+                : (($gatewayOffline + $stoveOffline) > 0 ? __('Consultez les équipements en erreur ci-dessous.', __FILE__) : ''),
             'state' => $equipmentState
         );
 
@@ -158,20 +412,485 @@ class Palazzetti extends eqLogic
     }
 
     /**
-     * Recherche les passerelles Palazzetti par broadcast UDP et les enregistre.
+     * Retourne les historiques bornés et leur synthèse pour le chronogramme.
+     *
+     * @param string $dateStart Date de début au format Y-m-d.
+     * @param string $dateEnd Date de fin au format Y-m-d.
+     * @return array<string, mixed> Séries, cycles et statistiques quotidiennes.
+     * @throws InvalidArgumentException Si la période est invalide.
      */
-    public static function discover()
+    public function getHeatingHistory($dateStart, $dateEnd)
     {
+        $range = self::validateHeatingHistoryRange($dateStart, $dateEnd);
+        $series = array();
+        $missing = array();
+        $rawTemperaturePoints = array();
+        $rawStatusPoints = array();
+        $rawPelletPoints = array();
+        $rawHeatingTimePoints = array();
+
+        foreach (self::HISTORY_SERIES as $key => $definition) {
+            $cmd = $this->getCmd('info', $definition['logicalId']);
+            $available = is_object($cmd);
+            $historized = $available && (int) $cmd->getIsHistorized() === 1;
+            $rawPoints = $historized
+                ? self::readHeatingHistoryPoints($cmd, $range['startTimestamp'], $range['endTimestamp'])
+                : array();
+
+            if ($key === 'temperature') {
+                $rawTemperaturePoints = $rawPoints;
+            } elseif ($key === 'status') {
+                $rawStatusPoints = $rawPoints;
+            } elseif ($key === 'pellets') {
+                $rawPelletPoints = $rawPoints;
+            } elseif ($key === 'heatingTime') {
+                $rawHeatingTimePoints = $rawPoints;
+            }
+
+            $points = $definition['step']
+                ? self::compressHeatingHistoryStepPoints($rawPoints, $range['effectiveEndTimestamp'])
+                : self::limitHeatingHistoryPoints($rawPoints);
+            $series[$key] = array(
+                'logicalId' => $definition['logicalId'],
+                'name' => $available ? (string) $cmd->getName() : $definition['logicalId'],
+                'unit' => $available ? (string) $cmd->getUnite() : '',
+                'available' => $available,
+                'historized' => $historized,
+                'points' => $points
+            );
+            if (!$available || !$historized) {
+                $missing[] = $definition['logicalId'];
+            }
+        }
+
+        $sessions = self::buildHeatingSessions(
+            $rawStatusPoints,
+            $range['startTimestamp'] * 1000,
+            $range['effectiveEndTimestamp'] * 1000
+        );
+        $daily = self::buildHeatingDailyStatistics(
+            $range['start'],
+            $range['end'],
+            $sessions,
+            $rawTemperaturePoints,
+            $rawPelletPoints,
+            $rawHeatingTimePoints
+        );
+
+        $totalSeconds = 0;
+        foreach ($sessions as $session) {
+            $totalSeconds += (int) $session['durationSeconds'];
+        }
+        $dailyHeatingMinutes = 0.0;
+        $hasHeatingCounter = false;
+        foreach ($daily as $statistics) {
+            if ($statistics['heatingDurationMinutes'] !== null) {
+                $dailyHeatingMinutes += (float) $statistics['heatingDurationMinutes'];
+                $hasHeatingCounter = true;
+            }
+        }
+        $summaryDurationMinutes = $hasHeatingCounter ? $dailyHeatingMinutes : ($totalSeconds / 60);
+        $object = $this->getObject();
+
+        return array(
+            'equipment' => array(
+                'id' => (int) $this->getId(),
+                'name' => (string) $this->getName(),
+                'objectName' => is_object($object) ? (string) $object->getName() : ''
+            ),
+            'range' => array(
+                'start' => $range['start']->format('Y-m-d'),
+                'end' => $range['end']->format('Y-m-d'),
+                'days' => $range['days'],
+                'maximumDays' => self::HISTORY_MAX_DAYS,
+                'startTimestamp' => $range['startTimestamp'] * 1000,
+                'endTimestamp' => $range['effectiveEndTimestamp'] * 1000
+            ),
+            'series' => $series,
+            'sessions' => $sessions,
+            'daily' => $daily,
+            'summary' => array(
+                'cycleCount' => count($sessions),
+                'durationMinutes' => round($summaryDurationMinutes, 1),
+                'averageDailyMinutes' => round($summaryDurationMinutes / $range['days'], 1)
+            ),
+            'missing' => array_values(array_unique($missing))
+        );
+    }
+
+    /**
+     * Valide les bornes temporelles demandées pour le chronogramme.
+     *
+     * @param mixed $dateStart Date de début brute.
+     * @param mixed $dateEnd Date de fin brute.
+     * @return array<string, mixed> Bornes normalisées et timestamps.
+     * @throws InvalidArgumentException Si la période est invalide.
+     */
+    private static function validateHeatingHistoryRange($dateStart, $dateEnd)
+    {
+        $dateStart = trim((string) $dateStart);
+        $dateEnd = trim((string) $dateEnd);
+        $start = self::parseHeatingHistoryDate($dateStart, __('Date de début invalide.', __FILE__));
+        $end = self::parseHeatingHistoryDate($dateEnd, __('Date de fin invalide.', __FILE__));
+
+        if ($end->getTimestamp() < $start->getTimestamp()) {
+            throw new InvalidArgumentException(__('La date de fin doit être postérieure ou égale à la date de début.', __FILE__));
+        }
+        $days = (int) $start->diff($end)->days + 1;
+        if ($days > self::HISTORY_MAX_DAYS) {
+            throw new InvalidArgumentException(sprintf(
+                __('La période est limitée à %d jours.', __FILE__),
+                self::HISTORY_MAX_DAYS
+            ));
+        }
+
+        $startTimestamp = $start->getTimestamp();
+        $endOfDay = clone $end;
+        $endOfDay->setTime(23, 59, 59);
+        $endTimestamp = $endOfDay->getTimestamp();
+        $effectiveEndTimestamp = min($endTimestamp, time());
+        if ($effectiveEndTimestamp < $startTimestamp) {
+            $effectiveEndTimestamp = $startTimestamp;
+        }
+
+        return array(
+            'start' => $start,
+            'end' => $end,
+            'days' => $days,
+            'startTimestamp' => $startTimestamp,
+            'endTimestamp' => $endTimestamp,
+            'effectiveEndTimestamp' => $effectiveEndTimestamp
+        );
+    }
+
+    /**
+     * Analyse strictement une date de chronogramme.
+     *
+     * @param string $value Date au format Y-m-d.
+     * @param string $errorMessage Message associé à une date invalide.
+     * @return DateTime Date analysée.
+     * @throws InvalidArgumentException Si la date est invalide.
+     */
+    private static function parseHeatingHistoryDate($value, $errorMessage)
+    {
+        $date = DateTime::createFromFormat('!Y-m-d', $value);
+        $errors = DateTime::getLastErrors();
+        if (!$date
+            || ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0))
+            || $date->format('Y-m-d') !== $value) {
+            throw new InvalidArgumentException($errorMessage);
+        }
+        return $date;
+    }
+
+    /**
+     * Lit et normalise les points historisés d'une commande Jeedom.
+     *
+     * @param cmd $cmd Commande historisée.
+     * @param int $startTimestamp Début de période en secondes Unix.
+     * @param int $endTimestamp Fin de période en secondes Unix.
+     * @return array<int, array{0:int, 1:float}> Points triés.
+     */
+    private static function readHeatingHistoryPoints($cmd, $startTimestamp, $endTimestamp)
+    {
+        $pointsByTimestamp = array();
+        $history = $cmd->getHistory(
+            date('Y-m-d H:i:s', $startTimestamp),
+            date('Y-m-d H:i:s', $endTimestamp),
+            null,
+            true
+        );
+        foreach ($history as $entry) {
+            $value = $entry->getValue();
+            if (!is_numeric($value)) {
+                continue;
+            }
+            $timestamp = strtotime((string) $entry->getDatetime());
+            if ($timestamp === false || $timestamp > $endTimestamp) {
+                continue;
+            }
+            $timestamp = max($startTimestamp, $timestamp);
+            $pointsByTimestamp[$timestamp] = array($timestamp * 1000, (float) $value);
+        }
+        ksort($pointsByTimestamp, SORT_NUMERIC);
+        return array_values($pointsByTimestamp);
+    }
+
+    /**
+     * Compresse une série en escalier et la prolonge jusqu'à la borne finale.
+     *
+     * @param array<int, array{0:int, 1:float}> $points Points bruts.
+     * @param int $effectiveEndTimestamp Fin effective en secondes Unix.
+     * @return array<int, array{0:int, 1:float}> Points compressés.
+     */
+    private static function compressHeatingHistoryStepPoints($points, $effectiveEndTimestamp)
+    {
+        $result = array();
+        $previousValue = null;
+        foreach ($points as $point) {
+            if ($previousValue !== null && (float) $previousValue === (float) $point[1]) {
+                continue;
+            }
+            $result[] = $point;
+            $previousValue = $point[1];
+        }
+        if (count($result) > 0) {
+            $endMilliseconds = $effectiveEndTimestamp * 1000;
+            $last = $result[count($result) - 1];
+            if ($last[0] < $endMilliseconds) {
+                $result[] = array($endMilliseconds, $last[1]);
+            }
+        }
+        return self::limitHeatingHistoryPoints($result);
+    }
+
+    /**
+     * Réduit une série tout en conservant ses première et dernière valeurs.
+     *
+     * @param array<int, array{0:int, 1:float}> $points Points à limiter.
+     * @return array<int, array{0:int, 1:float}> Série limitée.
+     */
+    private static function limitHeatingHistoryPoints($points)
+    {
+        $count = count($points);
+        if ($count <= self::HISTORY_MAX_POINTS_PER_SERIES) {
+            return $points;
+        }
+        $stride = (int) ceil(($count - 2) / (self::HISTORY_MAX_POINTS_PER_SERIES - 2));
+        $limited = array($points[0]);
+        for ($index = $stride; $index < $count - 1; $index += $stride) {
+            $limited[] = $points[$index];
+        }
+        $limited[] = $points[$count - 1];
+        return $limited;
+    }
+
+    /**
+     * Construit les cycles de chauffe à partir des transitions d'état.
+     *
+     * @param array<int, array{0:int, 1:float}> $statusPoints Historique des états.
+     * @param int $rangeStartMilliseconds Début en millisecondes Unix.
+     * @param int $rangeEndMilliseconds Fin en millisecondes Unix.
+     * @return array<int, array<string, int|float>> Cycles détectés.
+     */
+    private static function buildHeatingSessions($statusPoints, $rangeStartMilliseconds, $rangeEndMilliseconds)
+    {
+        $sessions = array();
+        $activeStart = null;
+        foreach ($statusPoints as $point) {
+            $timestamp = max($rangeStartMilliseconds, min($rangeEndMilliseconds, (int) $point[0]));
+            $isActive = in_array((int) $point[1], self::HISTORY_ACTIVE_STATES, true);
+            if ($isActive && $activeStart === null) {
+                $activeStart = $timestamp;
+            } elseif (!$isActive && $activeStart !== null) {
+                self::appendHeatingSession($sessions, $activeStart, $timestamp);
+                $activeStart = null;
+            }
+        }
+        if ($activeStart !== null) {
+            self::appendHeatingSession($sessions, $activeStart, $rangeEndMilliseconds);
+        }
+        return $sessions;
+    }
+
+    /**
+     * Ajoute un cycle non vide à la collection.
+     *
+     * @param array<int, array<string, int|float>> $sessions Collection modifiée.
+     * @param int $startMilliseconds Début du cycle.
+     * @param int $endMilliseconds Fin du cycle.
+     * @return void
+     */
+    private static function appendHeatingSession(&$sessions, $startMilliseconds, $endMilliseconds)
+    {
+        if ($endMilliseconds <= $startMilliseconds) {
+            return;
+        }
+        $seconds = (int) round(($endMilliseconds - $startMilliseconds) / 1000);
+        $sessions[] = array(
+            'start' => (int) $startMilliseconds,
+            'end' => (int) $endMilliseconds,
+            'durationSeconds' => $seconds,
+            'durationMinutes' => round($seconds / 60, 1)
+        );
+    }
+
+    /**
+     * Calcule les statistiques de chauffe pour chaque journée demandée.
+     *
+     * @param DateTime $start Première journée.
+     * @param DateTime $end Dernière journée.
+     * @param array<int, array<string, int|float>> $sessions Cycles détectés.
+     * @param array<int, array{0:int, 1:float}> $temperaturePoints Températures.
+     * @param array<int, array{0:int, 1:float}> $pelletPoints Compteur de pellets.
+     * @param array<int, array{0:int, 1:float}> $heatingTimePoints Compteur de chauffe.
+     * @return array<int, array<string, mixed>> Statistiques quotidiennes.
+     */
+    private static function buildHeatingDailyStatistics(
+        $start,
+        $end,
+        $sessions,
+        $temperaturePoints,
+        $pelletPoints,
+        $heatingTimePoints
+    ) {
+        $daily = array();
+        $day = clone $start;
+        while ($day->getTimestamp() <= $end->getTimestamp()) {
+            $key = $day->format('Y-m-d');
+            $daily[$key] = array(
+                'date' => $key,
+                'durationSeconds' => 0,
+                'durationMinutes' => 0,
+                'heatingDurationMinutes' => null,
+                'cycleCount' => 0,
+                'temperatureMin' => null,
+                'temperatureAverage' => null,
+                'temperatureMax' => null,
+                'pelletConsumption' => null,
+                '_temperatureSum' => 0.0,
+                '_temperatureCount' => 0
+            );
+            $day->modify('+1 day');
+        }
+
+        foreach ($sessions as $session) {
+            $sessionStart = (int) floor($session['start'] / 1000);
+            $sessionEnd = (int) ceil($session['end'] / 1000);
+            $startDay = date('Y-m-d', $sessionStart);
+            if (isset($daily[$startDay])) {
+                $daily[$startDay]['cycleCount']++;
+            }
+            foreach ($daily as $key => &$statistics) {
+                $dayStart = strtotime($key . ' 00:00:00');
+                $dayEnd = strtotime($key . ' +1 day');
+                $overlap = max(0, min($sessionEnd, $dayEnd) - max($sessionStart, $dayStart));
+                $statistics['durationSeconds'] += $overlap;
+            }
+            unset($statistics);
+        }
+
+        foreach ($temperaturePoints as $point) {
+            $key = date('Y-m-d', (int) floor($point[0] / 1000));
+            if (!isset($daily[$key])) {
+                continue;
+            }
+            $value = (float) $point[1];
+            $daily[$key]['temperatureMin'] = $daily[$key]['temperatureMin'] === null
+                ? $value
+                : min($daily[$key]['temperatureMin'], $value);
+            $daily[$key]['temperatureMax'] = $daily[$key]['temperatureMax'] === null
+                ? $value
+                : max($daily[$key]['temperatureMax'], $value);
+            $daily[$key]['_temperatureSum'] += $value;
+            $daily[$key]['_temperatureCount']++;
+        }
+
+        self::applyPositiveHeatingCounterDifferences($daily, $pelletPoints, 'pelletConsumption', 1, 3);
+        self::applyPositiveHeatingCounterDifferences($daily, $heatingTimePoints, 'heatingDurationMinutes', 60, 1);
+
+        foreach ($daily as &$statistics) {
+            $statistics['durationMinutes'] = round($statistics['durationSeconds'] / 60, 1);
+            if ($statistics['_temperatureCount'] > 0) {
+                $statistics['temperatureMin'] = round($statistics['temperatureMin'], 2);
+                $statistics['temperatureAverage'] = round(
+                    $statistics['_temperatureSum'] / $statistics['_temperatureCount'],
+                    2
+                );
+                $statistics['temperatureMax'] = round($statistics['temperatureMax'], 2);
+            }
+            if ($statistics['pelletConsumption'] !== null) {
+                $statistics['pelletConsumption'] = round($statistics['pelletConsumption'], 3);
+            }
+            unset($statistics['_temperatureSum'], $statistics['_temperatureCount']);
+        }
+        unset($statistics);
+
+        return array_values($daily);
+    }
+
+    /**
+     * Répartit les hausses d'un compteur cumulatif entre les journées.
+     *
+     * @param array<string, array<string, mixed>> $daily Statistiques modifiées.
+     * @param array<int, array{0:int, 1:float}> $points Valeurs du compteur.
+     * @param string $field Champ quotidien à alimenter.
+     * @param float|int $multiplier Facteur de conversion.
+     * @param int $precision Précision d'arrondi.
+     * @return void
+     */
+    private static function applyPositiveHeatingCounterDifferences(
+        &$daily,
+        $points,
+        $field,
+        $multiplier,
+        $precision
+    ) {
+        if (count($points) === 0) {
+            return;
+        }
+        foreach ($daily as &$statistics) {
+            $statistics[$field] = 0.0;
+        }
+        unset($statistics);
+
+        $previousValue = (float) $points[0][1];
+        for ($index = 1, $count = count($points); $index < $count; $index++) {
+            $currentValue = (float) $points[$index][1];
+            $difference = $currentValue - $previousValue;
+            $key = date('Y-m-d', (int) floor($points[$index][0] / 1000));
+            if ($difference >= 0 && isset($daily[$key])) {
+                $daily[$key][$field] += $difference * $multiplier;
+            }
+            $previousValue = $currentValue;
+        }
+        foreach ($daily as &$statistics) {
+            $statistics[$field] = round($statistics[$field], $precision);
+        }
+        unset($statistics);
+    }
+
+    /**
+     * Recherche les passerelles Palazzetti par broadcast UDP.
+     *
+     * Le mode preview ne modifie rien. Le mode overwrite actualise les
+     * équipements existants et crée les inconnus désactivés. Le mode replace
+     * crée un remplacement et désactive l'ancien. Le mode automatic actualise
+     * uniquement les équipements reconnus, afin de ne jamais les dupliquer.
+     *
+     * @param string|bool $mode Stratégie preview, overwrite, replace ou automatic.
+     * @return array<string, mixed> Résultat détaillé de la découverte.
+     * @throws InvalidArgumentException Si le mode est inconnu.
+     * @throws Exception Si la découverte réseau échoue.
+     */
+    public static function discover($mode = 'preview')
+    {
+        if ($mode === true) {
+            $mode = 'overwrite';
+        } elseif ($mode === false) {
+            $mode = 'preview';
+        }
+        if (!in_array($mode, array('preview', 'overwrite', 'replace', 'automatic'), true)) {
+            throw new InvalidArgumentException(__('Mode de découverte invalide.', __FILE__));
+        }
         if (!function_exists('socket_create')) {
             throw new Exception(__('L\'extension PHP sockets est nécessaire pour la découverte UDP.', __FILE__));
         }
 
-        $socket = @socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
-        if ($socket === false) {
-            throw new Exception(__('Impossible de créer le socket de découverte UDP.', __FILE__));
+        $lockKey = __CLASS__ . '::discoveryLock';
+        $lockTimestamp = (int) cache::byKey($lockKey)->getValue(0);
+        if ($lockTimestamp > 0 && (time() - $lockTimestamp) < 30) {
+            throw new Exception(__('Une découverte Palazzetti est déjà en cours.', __FILE__));
         }
+        cache::set($lockKey, time(), 0);
 
+        $socket = null;
         try {
+            $socket = @socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
+            if ($socket === false) {
+                $socket = null;
+                throw new Exception(__('Impossible de créer le socket de découverte UDP.', __FILE__));
+            }
             if (!@socket_set_option($socket, SOL_SOCKET, SO_BROADCAST, 1)
                 || !@socket_bind($socket, '0.0.0.0', 0)) {
                 throw new Exception(__('Impossible d\'initialiser le socket de découverte UDP : ', __FILE__)
@@ -223,25 +942,47 @@ class Palazzetti extends eqLogic
                 $identity = $device['mac'] !== '' ? $device['mac'] : $device['ip'];
                 $devices[$identity] = $device;
             }
-        } finally {
             socket_close($socket);
-        }
+            $socket = null;
 
-        foreach ($devices as $identity => $device) {
-            $devices[$identity] = self::detectDiscoveredGatewayType($device);
+            foreach ($devices as $identity => $device) {
+                $devices[$identity] = self::detectDiscoveredGatewayType($device);
+            }
+            $deviceList = array_values($devices);
+            $result = $mode === 'preview'
+                ? self::previewDiscoveredDevices($deviceList)
+                : self::saveDiscoveredDevices($deviceList, $mode);
+            $result['mode'] = $mode;
+            $result['applied'] = $mode !== 'preview';
+
+            if ($mode === 'preview') {
+                log::add(__CLASS__, 'info', __FUNCTION__ . ' - ' . sprintf(
+                    __('%d passerelle(s) trouvée(s), en attente de confirmation', __FILE__),
+                    $result['found']
+                ));
+            } else {
+                log::add(__CLASS__, 'info', __FUNCTION__ . ' - ' . sprintf(
+                    __('%d passerelle(s) traitée(s), %d créée(s), %d mise(s) à jour, %d remplacée(s), %d ignorée(s)', __FILE__),
+                    $result['found'],
+                    $result['created'],
+                    $result['updated'],
+                    $result['replaced'],
+                    $result['skipped']
+                ));
+            }
+            return $result;
+        } finally {
+            if ($socket !== null) {
+                @socket_close($socket);
+            }
+            cache::set($lockKey, 0, 0);
         }
-        $result = self::saveDiscoveredDevices(array_values($devices));
-        log::add(__CLASS__, 'info', __FUNCTION__ . ' - ' . sprintf(
-            __('%d passerelle(s) trouvée(s), %d créée(s), %d mise(s) à jour', __FILE__),
-            $result['found'],
-            $result['created'],
-            $result['updated']
-        ));
-        return $result;
     }
 
     /**
      * Construit la liste des adresses de broadcast IPv4 locales.
+     *
+     * @return string[] Adresses de broadcast uniques.
      */
     private static function getDiscoveryBroadcastAddresses()
     {
@@ -286,6 +1027,8 @@ class Palazzetti extends eqLogic
      * Le broadcast dirigé suffit sur les réseaux qui l'autorisent. Pour les
      * environnements Docker/VLAN où il est souvent filtré, les petites plages
      * sont également parcourues en unicast UDP.
+     *
+     * @return string[] Cibles IPv4 de découverte.
      */
     private static function getDiscoveryTargetAddresses()
     {
@@ -294,6 +1037,13 @@ class Palazzetti extends eqLogic
         $networks = array_filter(array_map('trim', preg_split('/[\r\n,;]+/', $rawNetworks)));
 
         foreach ($networks as $cidr) {
+            if (count($targets) >= self::DISCOVERY_MAX_TARGETS) {
+                log::add(__CLASS__, 'warning', sprintf(
+                    __('Limite globale de %d cibles de découverte atteinte.', __FILE__),
+                    self::DISCOVERY_MAX_TARGETS
+                ));
+                break;
+            }
             $range = self::parseDiscoveryCidr($cidr);
             if ($range === null) {
                 log::add(__CLASS__, 'warning', __FUNCTION__ . ' - ' . sprintf(
@@ -314,7 +1064,9 @@ class Palazzetti extends eqLogic
                 continue;
             }
 
-            for ($address = $range['firstHost']; $address <= $range['lastHost']; $address++) {
+            for ($address = $range['firstHost'];
+                $address <= $range['lastHost'] && count($targets) < self::DISCOVERY_MAX_TARGETS;
+                $address++) {
                 $targets[long2ip($address)] = true;
             }
         }
@@ -324,6 +1076,9 @@ class Palazzetti extends eqLogic
 
     /**
      * Valide un CIDR IPv4 privé et retourne ses bornes sous forme d'entiers.
+     *
+     * @param mixed $cidr Sous-réseau au format adresse/préfixe.
+     * @return array<string, int>|null Bornes du réseau, ou null si invalide.
      */
     private static function parseDiscoveryCidr($cidr)
     {
@@ -363,27 +1118,27 @@ class Palazzetti extends eqLogic
         );
     }
 
+    /**
+     * Vérifie qu'une adresse de découverte est une IPv4 privée.
+     *
+     * @param mixed $address Adresse à contrôler.
+     * @return bool Vrai pour une IPv4 privée valide.
+     */
     private static function isPrivateDiscoveryAddress($address)
     {
-        $long = ip2long($address);
-        if ($long === false) {
-            return false;
-        }
-        if ($long < 0) {
-            $long += 4294967296;
-        }
-
-        return ($long >= ip2long('10.0.0.0') && $long <= ip2long('10.255.255.255'))
-            || ($long >= ip2long('172.16.0.0') && $long <= ip2long('172.31.255.255'))
-            || ($long >= ip2long('192.168.0.0') && $long <= ip2long('192.168.255.255'));
+        return self::isPrivateIpv4($address);
     }
 
     /**
      * Valide et normalise une réponse UDP GET STDT.
+     *
+     * @param mixed $payload Charge utile JSON.
+     * @param mixed $sourceAddress Adresse IPv4 émettrice.
+     * @return array<string, mixed>|null Appareil normalisé, ou null si invalide.
      */
     private static function parseDiscoveryResponse($payload, $sourceAddress)
     {
-        if (filter_var($sourceAddress, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) === false) {
+        if (!self::isPrivateDiscoveryAddress($sourceAddress)) {
             return null;
         }
         $response = json_decode(trim((string) $payload), true);
@@ -395,26 +1150,26 @@ class Palazzetti extends eqLogic
         }
 
         $data = $response['DATA'];
-        if (!isset($data['LABEL']) && !isset($data['MAC']) && !isset($data['WMAC']) && !isset($data['SN'])) {
+        if (!array_key_exists('APLCONN', $data)
+            || (!isset($data['LABEL']) && !isset($data['MAC']) && !isset($data['WMAC']) && !isset($data['SN']))) {
             return null;
         }
-        $name = isset($data['LABEL']) ? trim(strip_tags((string) $data['LABEL'])) : '';
-        $cleanName = preg_replace('/[\x00-\x1F\x7F]/', '', $name);
-        $name = is_string($cleanName) ? $cleanName : '';
+        $name = isset($data['LABEL']) ? self::sanitizeDiscoveryText($data['LABEL'], 80) : '';
         if ($name === '') {
             $name = 'Palazzetti ' . $sourceAddress;
         }
-        if (function_exists('mb_substr')) {
-            $name = mb_substr($name, 0, 80);
-        } else {
-            $name = substr($name, 0, 80);
-        }
 
         $mac = self::normalizeMac(isset($data['WMAC']) ? $data['WMAC'] : (isset($data['MAC']) ? $data['MAC'] : ''));
+        $serial = isset($data['SN']) && is_scalar($data['SN'])
+            ? self::sanitizeDiscoveryText($data['SN'], 40)
+            : '';
+        $model = isset($data['MOD']) && is_scalar($data['MOD'])
+            ? self::sanitizeDiscoveryText($data['MOD'], 80)
+            : '';
         $versions = array();
         foreach (array('SYSTEM', 'plzbridge', 'sendmsg') as $versionKey) {
             if (isset($data[$versionKey]) && is_scalar($data[$versionKey]) && trim((string) $data[$versionKey]) !== '') {
-                $versions[] = $versionKey . ': ' . trim((string) $data[$versionKey]);
+                $versions[] = $versionKey . ': ' . self::sanitizeDiscoveryText($data[$versionKey]);
             }
         }
 
@@ -422,18 +1177,22 @@ class Palazzetti extends eqLogic
             'ip' => $sourceAddress,
             'name' => $name,
             'mac' => $mac,
-            'serial' => isset($data['SN']) && is_scalar($data['SN']) ? trim((string) $data['SN']) : '',
-            'model' => isset($data['MOD']) && is_scalar($data['MOD']) ? trim((string) $data['MOD']) : '',
+            'serial' => $serial,
+            'model' => $model,
             'versions' => implode(' | ', $versions),
             'gatewayType' => __('Connection Box / WPalaControl', __FILE__),
             'isWirelessPalaControl' => false,
-            'stoveSerial' => isset($data['SN']) && is_scalar($data['SN']) ? trim((string) $data['SN']) : '',
-            'stoveModel' => isset($data['MOD']) && is_scalar($data['MOD']) ? trim((string) $data['MOD']) : ''
+            'isApplianceConnected' => !empty($data['APLCONN']),
+            'stoveSerial' => $serial,
+            'stoveModel' => $model
         );
     }
 
     /**
      * Identifie WPalaControl grâce à ses points d'état HTTP propres.
+     *
+     * @param array<string, mixed> $device Appareil découvert.
+     * @return array<string, mixed> Appareil enrichi.
      */
     private static function detectDiscoveredGatewayType($device)
     {
@@ -454,7 +1213,7 @@ class Palazzetti extends eqLogic
             }
 
             $model = isset($response[$fields['model']]) && is_scalar($response[$fields['model']])
-                ? trim((string) $response[$fields['model']])
+                ? self::sanitizeDiscoveryText($response[$fields['model']], 80)
                 : '';
             $isWPalaControl = $endpoint === '/ffffffff'
                 || stripos($model, 'palacontrol') !== false
@@ -466,13 +1225,13 @@ class Palazzetti extends eqLogic
             $device['gatewayType'] = 'WPalaControl';
             $device['isWirelessPalaControl'] = true;
             if (isset($response[$fields['serial']]) && is_scalar($response[$fields['serial']])) {
-                $device['serial'] = trim((string) $response[$fields['serial']]);
+                $device['serial'] = self::sanitizeDiscoveryText($response[$fields['serial']], 40);
             }
             if ($model !== '') {
                 $device['model'] = $model;
             }
             if (isset($response[$fields['version']]) && is_scalar($response[$fields['version']])) {
-                $device['versions'] = trim((string) $response[$fields['version']]);
+                $device['versions'] = self::sanitizeDiscoveryText($response[$fields['version']]);
             }
             return $device;
         }
@@ -480,22 +1239,144 @@ class Palazzetti extends eqLogic
         return $device;
     }
 
-    private static function normalizeMac($mac)
+    /**
+     * Prépare un aperçu sans modifier les équipements Jeedom.
+     *
+     * @param array<int, array<string, mixed>> $devices Appareils découverts.
+     * @return array<string, mixed> Aperçu des changements.
+     */
+    private static function previewDiscoveredDevices($devices)
     {
-        $normalized = preg_replace('/[^0-9A-F]/i', '', (string) $mac);
-        $compact = is_string($normalized) ? strtoupper($normalized) : '';
-        return strlen($compact) === 12 ? implode(':', str_split($compact, 2)) : '';
+        $index = self::buildDiscoveryEquipmentIndex();
+
+        $result = array(
+            'found' => count($devices),
+            'created' => 0,
+            'updated' => 0,
+            'unchanged' => 0,
+            'pendingCreate' => 0,
+            'pendingUpdate' => 0,
+            'skipped' => 0,
+            'replaced' => 0,
+            'devices' => array()
+        );
+        foreach ($devices as $device) {
+            $eqLogic = self::matchDiscoveredEquipment($device, $index);
+
+            $action = 'create';
+            if (is_object($eqLogic)) {
+                $action = (string) $eqLogic->getConfiguration('addressip') === (string) $device['ip']
+                    ? 'unchanged'
+                    : 'update';
+            }
+            if ($action === 'create') {
+                $result['pendingCreate']++;
+            } elseif ($action === 'update') {
+                $result['pendingUpdate']++;
+            } else {
+                $result['unchanged']++;
+            }
+            $result['devices'][] = self::formatDiscoveredDevice($device, $eqLogic, $action);
+        }
+        return $result;
     }
 
     /**
-     * Crée les nouveaux équipements et actualise ceux déjà connus.
+     * Applique une découverte selon la stratégie demandée.
+     *
+     * @param array<int, array<string, mixed>> $devices Appareils découverts.
+     * @param string $mode Stratégie d'application.
+     * @return array<string, mixed> Résultat des modifications.
      */
-    private static function saveDiscoveredDevices($devices)
+    private static function saveDiscoveredDevices($devices, $mode)
+    {
+        $index = self::buildDiscoveryEquipmentIndex();
+        $result = array(
+            'found' => count($devices),
+            'created' => 0,
+            'updated' => 0,
+            'unchanged' => 0,
+            'pendingCreate' => 0,
+            'pendingUpdate' => 0,
+            'skipped' => 0,
+            'replaced' => 0,
+            'devices' => array()
+        );
+
+        foreach ($devices as $device) {
+            $existing = self::matchDiscoveredEquipment($device, $index);
+
+            if ($mode === 'automatic' && !is_object($existing)) {
+                $result['skipped']++;
+                $result['devices'][] = self::formatDiscoveredDevice($device, null, 'skipped');
+                continue;
+            }
+
+            if ($mode === 'replace' && is_object($existing)) {
+                $existingName = $existing->getName();
+                $existingEnabled = (int) $existing->getIsEnable();
+                $existingVisible = (int) $existing->getIsVisible();
+                $existingObjectId = method_exists($existing, 'getObject_id') ? $existing->getObject_id() : null;
+
+                $existing->setIsEnable(0);
+                $existing->setConfiguration('discoverySuperseded', 1);
+                $existing->save();
+
+                $eqLogic = self::createDiscoveredEquipment(
+                    $device,
+                    $existingName,
+                    $existingEnabled,
+                    $existingVisible,
+                    $existingObjectId,
+                    true
+                );
+                $result['replaced']++;
+                $details = self::formatDiscoveredDevice($device, $existing, 'replaced');
+                $details['resultId'] = (int) $eqLogic->getId();
+                $result['devices'][] = $details;
+                continue;
+            }
+
+            if (!is_object($existing)) {
+                $eqLogic = self::createDiscoveredEquipment($device, $device['name'], 0, 0);
+                $result['created']++;
+                $details = self::formatDiscoveredDevice($device, null, 'created');
+                $details['resultId'] = (int) $eqLogic->getId();
+                $result['devices'][] = $details;
+                continue;
+            }
+
+            $changed = self::applyDiscoveredConfiguration($existing, $device, false);
+            if ($changed) {
+                $existing->save();
+                $result['updated']++;
+                $action = 'updated';
+            } else {
+                $result['unchanged']++;
+                $action = 'unchanged';
+            }
+            $existing->setStatus('lastDiscovery', date('Y-m-d H:i:s'));
+            $details = self::formatDiscoveredDevice($device, $existing, $action);
+            $details['resultId'] = (int) $existing->getId();
+            $result['devices'][] = $details;
+        }
+        return $result;
+    }
+
+    /**
+     * Indexe les équipements existants par IP, MAC et numéro de série.
+     *
+     * @return array<string, array<string, Palazzetti>> Index des équipements.
+     */
+    private static function buildDiscoveryEquipmentIndex()
     {
         $byIp = array();
         $byMac = array();
         $bySerial = array();
         foreach (eqLogic::byType(__CLASS__) as $eqLogic) {
+            if ((int) $eqLogic->getConfiguration('discoverySuperseded', 0) === 1) {
+                continue;
+            }
             $ip = trim((string) $eqLogic->getConfiguration('addressip'));
             $mac = self::normalizeMac($eqLogic->getConfiguration('discoveryMac'));
             $serial = trim((string) $eqLogic->getConfiguration('serialNumber'));
@@ -509,94 +1390,145 @@ class Palazzetti extends eqLogic
                 $bySerial[$serial] = $eqLogic;
             }
         }
+        return array('ip' => $byIp, 'mac' => $byMac, 'serial' => $bySerial);
+    }
 
-        $result = array('found' => count($devices), 'created' => 0, 'updated' => 0, 'unchanged' => 0, 'devices' => array());
-        foreach ($devices as $device) {
-            $eqLogic = null;
-            if ($device['mac'] !== '' && isset($byMac[$device['mac']])) {
-                $eqLogic = $byMac[$device['mac']];
-            } elseif ($device['serial'] !== '' && isset($bySerial[$device['serial']])) {
-                $eqLogic = $bySerial[$device['serial']];
-            } elseif (isset($byIp[$device['ip']])) {
-                $eqLogic = $byIp[$device['ip']];
-            }
-
-            $isNew = !is_object($eqLogic);
-            if ($isNew) {
-                $eqLogic = new self();
-                $eqLogic->setEqType_name(__CLASS__);
-                $identity = $device['mac'] !== '' ? $device['mac'] : $device['ip'];
-                $eqLogic->setLogicalId('discovered_' . substr(sha1($identity), 0, 24));
-                $eqLogic->setName($device['name']);
-                $eqLogic->setIsEnable(1);
-                $eqLogic->setIsVisible(1);
-            }
-
-            $changed = $isNew;
-            $configuration = array(
-                'addressip' => $device['ip'],
-                'discoveryMac' => $device['mac'],
-                'stoveSerialNumber' => $device['stoveSerial'],
-                'stoveModel' => $device['stoveModel'],
-                'discoveredByUdp' => 1
-            );
-            $knownAsWPalaControl = in_array(
-                $eqLogic->getConfiguration('isWirelessPalaControl'),
-                array(true, 1, '1', 'true'),
-                true
-            );
-            if ($device['isWirelessPalaControl'] || !$knownAsWPalaControl) {
-                $configuration['serialNumber'] = $device['serial'];
-                $configuration['model'] = $device['model'];
-                $configuration['versions'] = $device['versions'];
-                $configuration['gatewayType'] = $device['gatewayType'];
-            }
-            if ($device['isWirelessPalaControl']) {
-                $configuration['isWirelessPalaControl'] = 1;
-            }
-            foreach ($configuration as $key => $value) {
-                if ($value === '' && !$isNew) {
-                    continue;
-                }
-                if ((string) $eqLogic->getConfiguration($key, '') !== (string) $value) {
-                    $eqLogic->setConfiguration($key, $value);
-                    $changed = true;
-                }
-            }
-
-            if ($changed) {
-                $eqLogic->save();
-                if ($isNew) {
-                    $result['created']++;
-                } else {
-                    $result['updated']++;
-                }
-            } else {
-                $result['unchanged']++;
-            }
-
-            $eqLogic->clearRequestFailure();
-            $eqLogic->setStatus('lastCommunication', date('Y-m-d H:i:s'));
-
-            $byIp[$device['ip']] = $eqLogic;
-            if ($device['mac'] !== '') {
-                $byMac[$device['mac']] = $eqLogic;
-            }
-            if ($device['serial'] !== '') {
-                $bySerial[$device['serial']] = $eqLogic;
-            }
-            $result['devices'][] = array(
-                'id' => (int) $eqLogic->getId(),
-                'name' => $eqLogic->getName(),
-                'ip' => $device['ip'],
-                'created' => $isNew
-            );
+    /**
+     * Recherche l'équipement correspondant à un appareil découvert.
+     *
+     * @param array<string, mixed> $device Appareil découvert.
+     * @param array<string, array<string, Palazzetti>> $index Index existant.
+     * @return Palazzetti|null Équipement correspondant.
+     */
+    private static function matchDiscoveredEquipment($device, $index)
+    {
+        if ($device['mac'] !== '' && isset($index['mac'][$device['mac']])) {
+            return $index['mac'][$device['mac']];
         }
-        return $result;
+        if ($device['serial'] !== '' && isset($index['serial'][$device['serial']])) {
+            return $index['serial'][$device['serial']];
+        }
+        if (isset($index['ip'][$device['ip']])) {
+            return $index['ip'][$device['ip']];
+        }
+        return null;
+    }
+
+    /**
+     * Formate un appareil pour la réponse de découverte AJAX.
+     *
+     * @param array<string, mixed> $device Appareil découvert.
+     * @param Palazzetti|null $eqLogic Équipement associé.
+     * @param string $action Action proposée ou appliquée.
+     * @return array<string, mixed> Description sérialisable.
+     */
+    private static function formatDiscoveredDevice($device, $eqLogic, $action)
+    {
+        return array(
+            'id' => is_object($eqLogic) ? (int) $eqLogic->getId() : 0,
+            'name' => $device['name'],
+            'ip' => $device['ip'],
+            'mac' => $device['mac'],
+            'serial' => $device['serial'],
+            'model' => $device['model'],
+            'versions' => $device['versions'],
+            'gatewayType' => $device['gatewayType'],
+            'isApplianceConnected' => !empty($device['isApplianceConnected']),
+            'action' => $action,
+            'existingName' => is_object($eqLogic) ? $eqLogic->getName() : '',
+            'existingIp' => is_object($eqLogic) ? (string) $eqLogic->getConfiguration('addressip') : '',
+            'existingEnabled' => is_object($eqLogic) ? (bool) $eqLogic->getIsEnable() : false
+        );
+    }
+
+    /**
+     * Crée un équipement à partir d'un appareil découvert.
+     *
+     * @param array<string, mixed> $device Appareil découvert.
+     * @param string $name Nom de l'équipement.
+     * @param int|bool $enabled État d'activation.
+     * @param int|bool $visible État de visibilité.
+     * @param int|null $objectId Objet Jeedom associé.
+     * @param bool $replacement Indique la création d'un remplacement.
+     * @return Palazzetti Équipement créé.
+     */
+    private static function createDiscoveredEquipment(
+        $device,
+        $name,
+        $enabled,
+        $visible,
+        $objectId = null,
+        $replacement = false
+    ) {
+        $eqLogic = new self();
+        $eqLogic->setEqType_name(__CLASS__);
+        $identity = $device['mac'] !== '' ? $device['mac'] : $device['ip'];
+        if ($replacement) {
+            $identity .= ':' . uniqid('', true);
+        }
+        $eqLogic->setLogicalId('discovered_' . substr(sha1($identity), 0, 24));
+        $eqLogic->setName($name !== '' ? $name : $device['name']);
+        $eqLogic->setIsEnable((int) $enabled);
+        $eqLogic->setIsVisible((int) $visible);
+        if ($objectId !== null && method_exists($eqLogic, 'setObject_id')) {
+            $eqLogic->setObject_id($objectId);
+        }
+        self::applyDiscoveredConfiguration($eqLogic, $device, true);
+        $eqLogic->save();
+        $eqLogic->setStatus('lastDiscovery', date('Y-m-d H:i:s'));
+        return $eqLogic;
+    }
+
+    /**
+     * Copie les propriétés découvertes dans un équipement.
+     *
+     * @param Palazzetti $eqLogic Équipement à modifier.
+     * @param array<string, mixed> $device Appareil découvert.
+     * @param bool $isNew Indique un nouvel équipement.
+     * @return bool Vrai si une configuration a changé.
+     */
+    private static function applyDiscoveredConfiguration($eqLogic, $device, $isNew)
+    {
+        $changed = false;
+        $configuration = array(
+            'addressip' => $device['ip'],
+            'discoveryMac' => $device['mac'],
+            'stoveSerialNumber' => $device['stoveSerial'],
+            'stoveModel' => $device['stoveModel'],
+            'discoveredByUdp' => 1,
+            'discoverySuperseded' => 0
+        );
+        $knownAsWPalaControl = in_array(
+            $eqLogic->getConfiguration('isWirelessPalaControl'),
+            array(true, 1, '1', 'true'),
+            true
+        );
+        if ($device['isWirelessPalaControl'] || !$knownAsWPalaControl) {
+            $configuration['serialNumber'] = $device['serial'];
+            $configuration['model'] = $device['model'];
+            $configuration['versions'] = $device['versions'];
+            $configuration['gatewayType'] = $device['gatewayType'];
+        }
+        if ($device['isWirelessPalaControl']) {
+            $configuration['isWirelessPalaControl'] = 1;
+        }
+        foreach ($configuration as $key => $value) {
+            if ($value === '' && !$isNew) {
+                continue;
+            }
+            if ((string) $eqLogic->getConfiguration($key, '') !== (string) $value) {
+                $eqLogic->setConfiguration($key, $value);
+                $changed = true;
+            }
+        }
+
+        return $changed;
     }
 
     /**
      * Expose l'état de la dernière communication pour la page Santé.
+     *
+     * @return array<string, mixed> État réseau et protocolaire mémorisé.
      */
     public function getCommunicationHealth()
     {
@@ -606,41 +1538,96 @@ class Palazzetti extends eqLogic
         }
         return array(
             'offline' => !empty($state['offline']),
+            'stoveOffline' => !empty($state['stoveOffline']),
             'error' => isset($state['error']) ? (string) $state['error'] : '',
             'lastFailure' => isset($state['lastFailure']) ? (int) $state['lastFailure'] : 0,
             'failureCount' => isset($state['failureCount']) ? (int) $state['failureCount'] : 0,
-            'lastRediscovery' => isset($state['lastRediscovery']) ? (int) $state['lastRediscovery'] : 0
+            'lastRediscovery' => isset($state['lastRediscovery']) ? (int) $state['lastRediscovery'] : 0,
+            'rediscoveredAddress' => isset($state['rediscoveredAddress']) ? (string) $state['rediscoveredAddress'] : '',
+            'lastSuccess' => isset($state['lastSuccess']) ? (int) $state['lastSuccess'] : 0
         );
     }
 
+    /**
+     * Rend le nom Jeedom avec l'icône d'objet autorisée, sans réinjecter les
+     * noms d'objet ou d'équipement comme HTML.
+     *
+     * @return string Nom humain échappé avec icône autorisée.
+     */
+    public function getSafeHumanNameHtml()
+    {
+        $object = $this->getObject();
+        if (is_object($object)) {
+            $icon = '';
+            $rawIcon = trim((string) $object->getDisplay('icon'));
+            if (preg_match('/^<i\s+class=(["\'])([A-Za-z0-9 _-]+)\1\s*><\/i>$/i', $rawIcon, $matches) === 1) {
+                $icon = '<i class="' . htmlspecialchars(trim($matches[2]), ENT_QUOTES, 'UTF-8') . '"></i> ';
+            }
+            $objectLabel = $icon . htmlspecialchars((string) $object->getName(), ENT_QUOTES, 'UTF-8');
+        } else {
+            $objectLabel = htmlspecialchars(__('Aucun', __FILE__), ENT_QUOTES, 'UTF-8');
+        }
+
+        return '<span class="label labelObjectHuman">' . $objectLabel . '</span><br><strong>'
+            . htmlspecialchars((string) $this->getName(), ENT_QUOTES, 'UTF-8') . '</strong>';
+    }
+
+    /**
+     * Valide l'adresse locale avant l'enregistrement de l'équipement.
+     *
+     * @return void
+     * @throws Exception Si l'adresse n'est pas locale ou valide.
+     */
     public function preUpdate()
     {
         log::add(__CLASS__, 'debug', __('Début', __FILE__) . ' : ' . __FUNCTION__);
 
-        /** refuser si l'adresse est vide lors de l'enregistrement **/
-        if (empty($this->getConfiguration('addressip'))) {
-            throw new Exception(__('L\'adresse IP ne peut pas être vide', __FILE__));
+        $address = trim((string) $this->getConfiguration('addressip'));
+        if (!self::isLocalAddress($address)) {
+            throw new Exception(__('L\'adresse doit être une adresse IPv4 privée ou un nom d\'hôte local valide.', __FILE__));
         }
+        $this->setConfiguration('addressip', $address);
         log::add(__CLASS__, 'debug', __('Fin', __FILE__) . ' : ' . __FUNCTION__);
     }
 
+    /**
+     * Termine la sauvegarde sans déclencher d'accès réseau bloquant.
+     *
+     * @return void
+     */
     public function postUpdate()
     {
         log::add(__CLASS__, 'debug', __('Début', __FILE__) . ' : ' . __FUNCTION__);
 
-        /** si équipement actif, rafraichir les infos de cet équipement **/
-        if ($this->getIsEnable()) {
-            $this->getInformations();
-            $this->refreshWidget();
-        }
+        // Aucun accès réseau pendant une sauvegarde : le cron ou le bouton
+        // Rafraîchir s'en charge sans bloquer l'interface Jeedom.
         log::add(__CLASS__, 'debug', __('Fin', __FILE__) . ' : ' . __FUNCTION__);
     }
 
+    /**
+     * Crée ou met à niveau les commandes après la sauvegarde.
+     *
+     * @return void
+     */
     public function postSave()
     {
         log::add(__CLASS__, 'debug', __('Début', __FILE__) . ' : ' . __FUNCTION__);
         $this->createCmdFromConfig();
         log::add(__CLASS__, 'debug', __('Fin', __FILE__) . ' : ' . __FUNCTION__);
+    }
+
+    /**
+     * Met à niveau les commandes existantes sans recréer les équipements.
+     *
+     * @return void
+     */
+    public static function migrateEquipmentCommands()
+    {
+        foreach (eqLogic::byType(__CLASS__) as $eqLogic) {
+            if ($eqLogic instanceof self) {
+                $eqLogic->createCmdFromConfig();
+            }
+        }
     }
 
     public static $_widgetPossibility = array('custom' => array(
@@ -655,6 +1642,11 @@ class Palazzetti extends eqLogic
         'background-opacity' => true,
     ));
 
+    /**
+     * Crée et met à niveau les commandes définies dans la configuration JSON.
+     *
+     * @return bool|void Faux si la configuration ne peut pas être chargée.
+     */
     private function createCmdFromConfig()
     {
         $cmdConfig = $this->loadCmdFromConf('palazzetti');
@@ -662,9 +1654,10 @@ class Palazzetti extends eqLogic
             return false;
         }
 
+        $existingCommands = $this->getCmd();
         foreach ($cmdConfig as $config) {
             $cmd = null;
-            foreach ($this->getCmd() as $liste_cmd) {
+            foreach ($existingCommands as $liste_cmd) {
                 if ((isset($config['logicalId']) && $liste_cmd->getLogicalId() == $config['logicalId'])
                 || (isset($config['name']) && $liste_cmd->getName() == $config['name'])) {
                     $cmd = $liste_cmd;
@@ -677,18 +1670,73 @@ class Palazzetti extends eqLogic
                 $cmd->setEqLogic_id($this->getId());
                 utils::a2o($cmd, $config);
                 $cmd->save();
+                $existingCommands[] = $cmd;
+                continue;
+            }
+
+            $changed = false;
+            if (isset($config['logicalId']) && $cmd->getLogicalId() !== $config['logicalId']) {
+                $cmd->setLogicalId($config['logicalId']);
+                $changed = true;
+            }
+            if (isset($config['type']) && $cmd->getType() !== $config['type']) {
+                $cmd->setType($config['type']);
+                $changed = true;
+            }
+            if (isset($config['subType']) && $cmd->getSubType() !== $config['subType']) {
+                $cmd->setSubType($config['subType']);
+                $changed = true;
+            }
+            foreach (isset($config['configuration']) ? $config['configuration'] : array() as $key => $value) {
+                if ((string) $cmd->getConfiguration($key, '') !== (string) $value) {
+                    $cmd->setConfiguration($key, $value);
+                    $changed = true;
+                }
+            }
+
+            // Migration ciblée de la correction sémantique OVERTMPERRORS :
+            // il s'agit d'un compteur d'erreurs, pas d'une durée.
+            if (in_array($config['logicalId'], array('IHeuresSurChauffe', 'RHeuresSurChauffe'), true)
+                && $cmd->getName() !== $config['name']) {
+                $cmd->setName($config['name']);
+                $changed = true;
+            }
+            if ($config['logicalId'] === 'IHeuresSurChauffe'
+                && $cmd->getUnite() !== (isset($config['unite']) ? $config['unite'] : '')) {
+                $cmd->setUnite(isset($config['unite']) ? $config['unite'] : '');
+                $changed = true;
+            }
+            // Le chronogramme v2 s'appuie sur les transitions d'état. La
+            // migration n'impose l'historisation qu'à cette commande précise.
+            if ($config['logicalId'] === 'IStatus' && (int) $cmd->getIsHistorized() !== 1) {
+                $cmd->setIsHistorized(1);
+                $changed = true;
+            }
+            if ($changed) {
+                $cmd->save();
             }
         }
     }
 
-    /** méthode de récupération des fichiers de configuration **/
+    /**
+     * Charge un fichier de configuration de commandes autorisé.
+     *
+     * @param mixed $type Nom logique du fichier sans extension.
+     * @return array<int, array<string, mixed>>|false Configuration décodée.
+     */
     public function loadCmdFromConf($type)
     {
-        if (!is_file(dirname(__FILE__) . '/../../core/config/' . $type . '.json')) {
-            log::add(__CLASS__, 'debug', __('Fichier introuvable : ', __FILE__) . dirname(__FILE__) . '/config/' . $type . '.json');
+        $type = trim((string) $type);
+        if (preg_match('/^[A-Za-z0-9_-]+$/', $type) !== 1) {
+            log::add(__CLASS__, 'warning', __('Nom de configuration de commandes invalide.', __FILE__));
             return false;
         }
-        $content = file_get_contents(dirname(__FILE__) . '/../../core/config/' . $type . '.json');
+        $configurationFile = dirname(__FILE__) . '/../../core/config/' . $type . '.json';
+        if (!is_file($configurationFile)) {
+            log::add(__CLASS__, 'debug', __('Fichier introuvable : ', __FILE__) . $configurationFile);
+            return false;
+        }
+        $content = file_get_contents($configurationFile);
         if (!is_json($content)) {
             log::add(__CLASS__, 'debug', __('JSON invalide : ', __FILE__) . $type . '.json');
             return false;
@@ -701,18 +1749,43 @@ class Palazzetti extends eqLogic
         return $device;
     }
 
-    // methode requete
+    /**
+     * Exécute une commande HTTP validée sur la passerelle locale.
+     *
+     * @param mixed $cmd Commande Palazzetti.
+     * @param int $_timeout Délai d'attente en secondes.
+     * @return object|false Réponse JSON décodée, ou faux en cas d'échec.
+     */
     public function makeRequest($cmd, $_timeout = 5)
     {
+        $requestedCommand = (string) $cmd;
+        try {
+            $cmd = self::normalizeCommand($requestedCommand);
+        } catch (InvalidArgumentException $e) {
+            log::add(__CLASS__, 'warning', __FUNCTION__ . ' - ' . $e->getMessage());
+            return false;
+        }
+
         $address = trim((string) $this->getConfiguration('addressip'));
-        if (filter_var($address, FILTER_VALIDATE_IP) === false && preg_match('/^[A-Za-z0-9.-]+$/', $address) !== 1) {
+        if (!self::isLocalAddress($address)) {
             $this->reportRequestFailure($cmd, __('adresse invalide : ', __FILE__) . $address);
             return false;
         }
 
-        $baseUrl = 'http://' . $address . '/cgi-bin/sendmsg.lua?cmd=';
+        $requestAddress = $address;
+        if (!self::isPrivateIpv4($requestAddress)) {
+            $resolvedAddress = @gethostbyname($requestAddress);
+            if (!self::isPrivateIpv4($resolvedAddress)) {
+                $this->reportRequestFailure($cmd, __('nom d\'hôte non résolu vers le réseau privé : ', __FILE__) . $address);
+                return false;
+            }
+            $requestAddress = $resolvedAddress;
+        }
+
+        $baseUrl = 'http://' . $requestAddress . '/cgi-bin/sendmsg.lua?cmd=';
         $commandVariants = array($cmd, rawurlencode($cmd));
         $lastError = '';
+        $gatewayResponded = false;
 
         foreach (array_unique($commandVariants) as $commandVariant) {
             $url = $baseUrl . $commandVariant;
@@ -730,6 +1803,7 @@ class Palazzetti extends eqLogic
                 $lastError = __('réponse vide', __FILE__);
                 continue;
             }
+            $gatewayResponded = true;
 
             $response = json_decode($rawResponse);
             if (!is_object($response)) {
@@ -738,30 +1812,51 @@ class Palazzetti extends eqLogic
             }
 
             if (isset($response->INFO) && is_object($response->INFO) && isset($response->INFO->RSP)) {
+                $rsp = strtoupper(trim((string) $response->INFO->RSP));
+                if ($rsp !== 'OK') {
+                    $this->setStatus('lastGatewayCommunication', date('Y-m-d H:i:s'));
+                    $this->reportProtocolFailure($cmd, __('réponse de la passerelle : ', __FILE__) . $rsp);
+                    return false;
+                }
                 log::add(__CLASS__, 'debug', __FUNCTION__ . __(' - résultat : ', __FILE__) . json_encode($response));
-                $this->clearRequestFailure();
-                $this->setStatus('lastCommunication', date('Y-m-d H:i:s'));
+                $this->markCommunicationSuccess();
                 return $response;
             }
             if (property_exists($response, 'PARM') || property_exists($response, 'HPAR') || property_exists($response, 'DATA')) {
                 log::add(__CLASS__, 'debug', __FUNCTION__ . __(' - résultat données : ', __FILE__) . json_encode($response));
-                $this->clearRequestFailure();
-                $this->setStatus('lastCommunication', date('Y-m-d H:i:s'));
+                $this->markCommunicationSuccess();
                 return $response;
             }
 
             $lastError = __('réponse non reconnue', __FILE__);
         }
 
-        $this->reportRequestFailure($cmd, $lastError);
+        if ($gatewayResponded) {
+            $this->setStatus('lastGatewayCommunication', date('Y-m-d H:i:s'));
+            $this->reportProtocolFailure($cmd, $lastError);
+        } else {
+            $this->reportRequestFailure($cmd, $lastError);
+        }
         return false;
     }
 
+    /**
+     * Retourne la clé de cache de l'état de communication.
+     *
+     * @return string Clé de cache propre à l'équipement.
+     */
     private function getRequestErrorCacheKey()
     {
         return __CLASS__ . '::requestError::' . $this->getId();
     }
 
+    /**
+     * Mémorise un échec réseau et tente une redécouverte si nécessaire.
+     *
+     * @param string $cmd Commande concernée.
+     * @param mixed $error Erreur retournée.
+     * @return void
+     */
     private function reportRequestFailure($cmd, $error)
     {
         $now = time();
@@ -774,7 +1869,9 @@ class Palazzetti extends eqLogic
 
         $lastLog = isset($state['lastLog']) ? intval($state['lastLog']) : 0;
         $lastSignature = isset($state['signature']) ? (string) $state['signature'] : '';
-        $failureCount = isset($state['failureCount']) ? intval($state['failureCount']) + 1 : 1;
+        $failureCount = !empty($state['offline']) && isset($state['failureCount'])
+            ? (int) $state['failureCount'] + 1
+            : 1;
         if ($lastSignature !== $signature || ($now - $lastLog) >= self::REQUEST_ERROR_LOG_INTERVAL) {
             $message = 'makeRequest' . __(' - aucune réponse exploitable pour ', __FILE__) . $cmd;
             if ($error !== '') {
@@ -784,27 +1881,147 @@ class Palazzetti extends eqLogic
             $lastLog = $now;
         }
 
-        cache::set($this->getRequestErrorCacheKey(), array(
+        $state = array_merge($state, array(
             'offline' => 1,
+            'stoveOffline' => 0,
             'lastLog' => $lastLog,
             'signature' => $signature,
             'error' => $error,
             'lastFailure' => $now,
-            'failureCount' => $failureCount,
-            'lastRediscovery' => isset($state['lastRediscovery']) ? intval($state['lastRediscovery']) : 0
-        ), 0);
+            'failureCount' => $failureCount
+        ));
+        cache::set($this->getRequestErrorCacheKey(), $state, 0);
+
+        if ($failureCount >= self::REDISCOVERY_FAILURE_THRESHOLD) {
+            $this->attemptRediscovery($state);
+        }
     }
 
-    private function clearRequestFailure()
+    /**
+     * La passerelle HTTP répond, mais le protocole ou le poêle est indisponible.
+     *
+     * @param string $cmd Commande concernée.
+     * @param mixed $error Erreur protocolaire.
+     * @return void
+     */
+    private function reportProtocolFailure($cmd, $error)
+    {
+        $now = time();
+        $error = trim((string) $error);
+        $signature = sha1('protocol:' . $error);
+        $state = cache::byKey($this->getRequestErrorCacheKey())->getValue(array());
+        if (!is_array($state)) {
+            $state = array();
+        }
+
+        $lastLog = isset($state['lastLog']) ? (int) $state['lastLog'] : 0;
+        $lastSignature = isset($state['signature']) ? (string) $state['signature'] : '';
+        $failureCount = !empty($state['stoveOffline']) && isset($state['failureCount'])
+            ? (int) $state['failureCount'] + 1
+            : 1;
+        if ($lastSignature !== $signature || ($now - $lastLog) >= self::REQUEST_ERROR_LOG_INTERVAL) {
+            log::add(__CLASS__, 'warning', sprintf(
+                __('Passerelle joignable, mais requête %s indisponible : %s', __FILE__),
+                $cmd,
+                $error
+            ));
+            $lastLog = $now;
+        }
+
+        $state = array_merge($state, array(
+            'offline' => 0,
+            'stoveOffline' => 1,
+            'lastLog' => $lastLog,
+            'signature' => $signature,
+            'error' => $error,
+            'lastFailure' => $now,
+            'failureCount' => $failureCount
+        ));
+        cache::set($this->getRequestErrorCacheKey(), $state, 0);
+    }
+
+    /**
+     * Réinitialise les erreurs et enregistre une communication réussie.
+     *
+     * @return void
+     */
+    private function markCommunicationSuccess()
     {
         $state = cache::byKey($this->getRequestErrorCacheKey())->getValue(array());
-        if (is_array($state) && !empty($state['offline'])) {
+        if (is_array($state) && (!empty($state['offline']) || !empty($state['stoveOffline']))) {
             log::add(__CLASS__, 'info', __('Connexion rétablie avec ', __FILE__) . $this->getConfiguration('addressip'));
         }
-        cache::set($this->getRequestErrorCacheKey(), array(), 0);
+        if (!is_array($state)) {
+            $state = array();
+        }
+        $now = time();
+        $state = array_merge($state, array(
+            'offline' => 0,
+            'stoveOffline' => 0,
+            'lastLog' => 0,
+            'signature' => '',
+            'error' => '',
+            'failureCount' => 0,
+            'lastSuccess' => $now
+        ));
+        if (isset($state['rediscoveredAddress'])
+            && (string) $state['rediscoveredAddress'] === (string) $this->getConfiguration('addressip')) {
+            $state['rediscoveredAddress'] = '';
+        }
+        cache::set($this->getRequestErrorCacheKey(), $state, 0);
+        $communicationDate = date('Y-m-d H:i:s', $now);
+        $this->setStatus('lastGatewayCommunication', $communicationDate);
+        $this->setStatus('lastCommunication', $communicationDate);
     }
 
-    // interpretation valeur ventilateur
+    /**
+     * Recherche une nouvelle adresse après plusieurs échecs réseau.
+     *
+     * @param array<string, mixed> $state État courant de communication.
+     * @return void
+     */
+    private function attemptRediscovery($state)
+    {
+        $now = time();
+        $lastRediscovery = isset($state['lastRediscovery']) ? (int) $state['lastRediscovery'] : 0;
+        if (self::$rediscoveryRunning || ($now - $lastRediscovery) < self::REDISCOVERY_COOLDOWN) {
+            return;
+        }
+
+        self::$rediscoveryRunning = true;
+        $state['lastRediscovery'] = $now;
+        cache::set($this->getRequestErrorCacheKey(), $state, 0);
+        try {
+            $previousAddress = (string) $this->getConfiguration('addressip');
+            $result = self::discover('automatic');
+            foreach ($result['devices'] as $device) {
+                if (!isset($device['resultId']) || (int) $device['resultId'] !== (int) $this->getId()) {
+                    continue;
+                }
+                if ((string) $device['ip'] !== $previousAddress) {
+                    $this->setConfiguration('addressip', (string) $device['ip']);
+                    log::add(__CLASS__, 'info', sprintf(
+                        __('Adresse automatiquement actualisée pour %s : %s -> %s.', __FILE__),
+                        $this->getHumanName(),
+                        $previousAddress,
+                        $device['ip']
+                    ));
+                }
+                break;
+            }
+        } catch (Exception $e) {
+            log::add(__CLASS__, 'debug', __FUNCTION__ . ' - ' . $e->getMessage());
+        } finally {
+            self::$rediscoveryRunning = false;
+        }
+    }
+
+    /**
+     * Traduit la vitesse du ventilateur principal selon sa configuration.
+     *
+     * @param mixed $num Valeur brute.
+     * @return mixed Libellé spécial ou valeur d'origine.
+     */
     public function getFanState($num)
     {
         switch ($num) {
@@ -819,6 +2036,12 @@ class Palazzetti extends eqLogic
         }
     }
 
+    /**
+     * Traduit l'état binaire du ventilateur F3L.
+     *
+     * @param mixed $num Valeur brute.
+     * @return mixed Libellé ON/OFF ou valeur d'origine.
+     */
     public static function getFanStateF3L($num)
     {
         switch ($num) {
@@ -831,6 +2054,12 @@ class Palazzetti extends eqLogic
         }
     }
 
+    /**
+     * Traduit l'état binaire du ventilateur F4L.
+     *
+     * @param mixed $num Valeur brute.
+     * @return mixed Libellé ON/OFF ou valeur d'origine.
+     */
     public static function getFanStateF4L($num)
     {
         switch ($num) {
@@ -843,7 +2072,12 @@ class Palazzetti extends eqLogic
         }
     }
 
-    // interpretation valeur status poele
+    /**
+     * Traduit un code d'état du poêle.
+     *
+     * @param mixed $num Code d'état.
+     * @return mixed Libellé traduit ou code d'origine.
+     */
     public static function getStoveState($num)
     {
         $lib = [
@@ -873,7 +2107,12 @@ class Palazzetti extends eqLogic
         return $lib[$num] ?? $num;
     }
 
-    // methode jour de la semaine
+    /**
+     * Traduit un numéro de jour Palazzetti.
+     *
+     * @param mixed $num Numéro de 1 à 7.
+     * @return string Libellé du jour ou libellé générique.
+     */
     public static function getWeekDay($num)
     {
         $lib = [
@@ -889,159 +2128,244 @@ class Palazzetti extends eqLogic
         return $lib[$num] ?? __('Jour #', __FILE__) . $num;
     }
 
-    // methode traitement commande
+    /**
+     * Envoie une commande d'action et met à jour sa commande d'information.
+     *
+     * @param PalazzettiCmd $CMD Commande Jeedom exécutée.
+     * @param mixed $_options Options transmises par Jeedom.
+     * @return string|false Résultat d'exécution.
+     */
     public function sendCommand($CMD, $_options)
     {
-        // requete http
-        $cmdString = $CMD->getConfiguration('actionCmd');
-        // si option value ajout dans la requete
-        if (isset($_options) && $_options != '') {
-            if (is_array($_options)) {
-                // cas ph
-                if (isset($_options['jour']) && isset($_options['tranche']) && isset($_options['programme'])) {
-                    $cmdString = $cmdString . $_options['jour'] . '+' . $_options['tranche'] . '+' . $_options['programme'];
-                } elseif (isset($_options['numero']) && isset($_options['temperature']) && isset($_options['h1']) && isset($_options['m1']) && isset($_options['h2']) && isset($_options['m2'])) {
-                    $cmdString = $cmdString . $_options['numero'] . '+' . $_options['temperature'] . '+' . $_options['h1'] . '+' . $_options['m1'] . '+' . $_options['h2'] . '+' . $_options['m2'];
-                } elseif (isset($_options['slider']) && $_options['slider'] != '') {
-                    $cmdString = $cmdString . $_options['slider'];
-                }
-            } else {
-                $cmdString = $cmdString . $_options;
-            }
-            log::add(__CLASS__, 'debug', '(' . __LINE__ . ') ' . __FUNCTION__ . __(' - commande ', __FILE__) . $cmdString);
-            log::add(__CLASS__, 'debug', '(' . __LINE__ . ') ' . __FUNCTION__ . __(' - commande ', __FILE__) . json_encode($_options));
+        try {
+            $cmdString = $this->buildCommandString($CMD, $_options);
+        } catch (Exception $e) {
+            log::add(__CLASS__, 'warning', sprintf(
+                __('Commande %s refusée : %s', __FILE__),
+                $CMD->getHumanName(),
+                $e->getMessage()
+            ));
+            return 'ERROR';
         }
-        $DATA = $this->makeRequest($cmdString, 6);
 
+        log::add(__CLASS__, 'debug', __FUNCTION__ . __(' - commande ', __FILE__) . $cmdString);
+        $DATA = $this->makeRequest($cmdString, 6);
         if (!$DATA) {
             return 'ERROR';
         }
-        // verification succes du traitement
-        if ($DATA->INFO->RSP != 'OK') {
-            log::add(__CLASS__, 'error', '(' . __LINE__ . ') ' . __FUNCTION__ . __(' - erreur ', __FILE__) . $CMD . ' : ' . $DATA->INFO->RSP);
-            return false;
-        }
-        // definition patern de comparaison
-        $expl = explode('+', $cmdString);
-        $pattern = $expl[0] . '+' . $expl[1];
 
-        // traitement suivant commande
+        $expl = explode('+', $cmdString);
+        if (count($expl) < 2 || !isset($DATA->DATA) || !is_object($DATA->DATA)) {
+            log::add(__CLASS__, 'warning', __FUNCTION__ . __(' - réponse sans données pour ', __FILE__) . $cmdString);
+            return 'ERROR';
+        }
+        $pattern = $expl[0] . '+' . $expl[1];
+        $value = null;
+
         switch ($pattern) {
             case 'CMD+ON':
-                // allumage
             case 'CMD+OFF':
-                // extinction
             case 'GET+STAT':
-                // status
-                //"DATA":{"STATUS":0,"LSTATUS":0}}
-                $value = $DATA->DATA->STATUS;
+                $value = $this->responseValue($DATA->DATA, 'STATUS');
                 break;
-                // nom poele
-           case 'GET+ALLS':
-                // mise à jour force du feu
-                //"DATA":{"MBTYPE":0,"MAC":"XX:XX:XX:XX:XX:XX","MOD":318,"VER":47,"CORE":129,"FWDATE":"2017-05-03","APLTS":"2000-01-07 11:25:14","APLWDAY":7,"CHRSTATUS":0,"STATUS":0,"LSTATUS":0,"SETP":22,"PUMP":0,"PQT":2872,"F1V":0,"F1RPM":0,"F2L":0,"F2LF":0,"FANLMINMAX":[0,5,0,1,0,1],"F2V":0,"PWR":1,"FDR":0,"DPT":0,"DP":67,"IN":13,"OUT":0,"T1":18.5,"T2":22.39999962,"T3":20,"T4":0,"T5":0,"EFLAGS":0}
-                $this->checkAndUpdateCmd('IPower', $DATA->DATA->PWR);
-                $this->checkAndUpdateCmd('IConsigne', $DATA->DATA->SETP);
-                $this->checkAndUpdateCmd('IFan', $DATA->DATA->F2L);
-                $this->checkAndUpdateCmd('IFanF3L', $DATA->DATA->F3L);
-                $this->checkAndUpdateCmd('IFanF4L', $DATA->DATA->F4L);
-                $this->checkAndUpdateCmd('ITemp', round($DATA->DATA->T1, 1));
-                $this->checkAndUpdateCmd('ITemp2', round($DATA->DATA->T2, 1));
-                $this->checkAndUpdateCmd('ITemp3', round($DATA->DATA->T3, 1));
-                $this->checkAndUpdateCmd('IStatus', $DATA->DATA->STATUS);
-                $this->checkAndUpdateCmd('IQuantite', $DATA->DATA->PQT);
-                $this->checkAndUpdateCmd('ISnap', json_encode($DATA));
+            case 'GET+ALLS':
+                $this->updateAllsData($DATA->DATA, $DATA);
+                $value = json_encode($DATA->DATA);
                 break;
             case 'GET+LABL':
-                // nom du palazzeti
             case 'SET+LABL':
-                $value = $DATA->DATA->LABEL;
+                $value = $this->responseValue($DATA->DATA, 'LABEL');
                 break;
             case 'GET+POWR':
-                // force du feu
-                //"DATA":{"PWR":1,"FDR":0}
             case 'SET+POWR':
-                //"DATA":{"PWR":1,"F2L":0,"FANLMINMAX":[0,5,0,1,0,1]}}
-                $this->checkAndUpdateCmd('IFan', $DATA->DATA->F2L);
-                $value = $DATA->DATA->PWR;
+                $this->updateCommandIfPresent('IFan', $DATA->DATA, 'F2L');
+                $value = $this->responseValue($DATA->DATA, 'PWR');
                 break;
             case 'GET+SETP':
-                // température de consigne
             case 'SET+SETP':
-                //"DATA":{"SETP":22}}
-                $value = $DATA->DATA->SETP;
+                $value = $this->responseValue($DATA->DATA, 'SETP');
                 break;
             case 'GET+FAND':
-                // force du ventilateur
-                //"DATA":{"F1V":0,"F2V":0,"F1RPM":0,"F2L":0,"F2LF":0}}
-                $value = $DATA->DATA->F2L;
+                $value = $this->responseValue($DATA->DATA, 'F2L');
                 break;
             case 'SET+RFAN':
-                //"DATA":{"PWR":1,"F2L":1,"F2LF":0}
-                $this->checkAndUpdateCmd('IPower', $DATA->DATA->PWR);
-                $value = $DATA->DATA->F2L;
+                $this->updateCommandIfPresent('IPower', $DATA->DATA, 'PWR');
+                $value = $this->responseValue($DATA->DATA, 'F2L');
                 break;
             case 'SET+FN3L':
-                // force ventilateur F3L
-                $value = $DATA->DATA->F3L;
+                $value = $this->responseValue($DATA->DATA, 'F3L');
                 break;
             case 'SET+FN4L':
-                // force ventilateur F4L
-                $value = $DATA->DATA->F4L;
+                $value = $this->responseValue($DATA->DATA, 'F4L');
                 break;
             case 'GET+TMPS':
-                // toutes les températures
-                $value = $DATA->DATA->T1; //"DATA":{"T1":16.79999924,"T2":17.89999962,"T3":18,"T4":0,"T5":0}}
-                $this->checkAndUpdateCmd('ITemp2', $DATA->DATA->T2);
-                $this->checkAndUpdateCmd('ITemp3', $DATA->DATA->T3);
+                $value = $this->responseValue($DATA->DATA, 'T1');
+                $this->updateCommandIfPresent('ITemp2', $DATA->DATA, 'T2');
+                $this->updateCommandIfPresent('ITemp3', $DATA->DATA, 'T3');
                 break;
             case 'GET+CHRD':
-                // programmes horaires
                 $value = json_encode($DATA->DATA);
                 break;
             case 'GET+CNTR':
-                // tous les compteurs
-                //"DATA":{"IGN":263,"POWERTIME":"7280:48","HEATTIME":"1144:20","SERVICETIME":"1144:20","ONTIME":"0:00","OVERTMPERRORS":0,"IGNERRORS":0,"PQT":2371}}%
-                $this->checkAndUpdateCmd('INbAllumage', $DATA->DATA->IGN);
-                $this->checkAndUpdateCmd('INbAllumageFailed', $DATA->DATA->IGNERRORS);
-                $this->checkAndUpdateCmd('IHeuresAlimElec', self::convertTimeToDec($DATA->DATA->POWERTIME));
-                $this->checkAndUpdateCmd('IHeuresChauffe', self::convertTimeToDec($DATA->DATA->HEATTIME));
-                $this->checkAndUpdateCmd('IHeuresSurChauffe', self::convertTimeToDec($DATA->DATA->OVERTMPERRORS));
-                $this->checkAndUpdateCmd('IHeuresDepuisEntretien', self::convertTimeToDec($DATA->DATA->SERVICETIME));
-                $this->checkAndUpdateCmd('IQuantite', $DATA->DATA->PQT);
-                // programmes horaires
-            case 'SET+CSST':
+                $this->updateCounters($DATA->DATA);
+                $value = json_encode($DATA->DATA);
                 break;
-                // affectation programme
-                // options +JOUR+TRANCHE+PH
-            case 'SET+CDAY':
-                break;
-                // informations automate
             case 'EXT+ADRD':
-                $value = $DATA->DATA->{'ADDR_' . $expl[2]};
-                log::add(__CLASS__, 'debug', '(' . __LINE__ . ') ' . __FUNCTION__ . ' - ' . 'reponse ' . $value);
+                $property = isset($expl[2]) ? 'ADDR_' . $expl[2] : '';
+                $value = $property !== '' ? $this->responseValue($DATA->DATA, $property) : null;
                 break;
             default:
                 $value = json_encode($DATA->DATA);
                 break;
         }
 
-        // mise a jour variables info
-        if ($updateLogicalId = $CMD->getConfiguration('updateLogicalId')) {
+        $updateLogicalId = $CMD->getConfiguration('updateLogicalId');
+        if ($value !== null && $updateLogicalId !== '') {
             $INFO = $this->getCmd('info', $updateLogicalId);
             if (is_object($INFO)) {
                 $INFO->event($value);
-                $INFO->save();
             }
-            log::add(__CLASS__, 'debug', '(' . __LINE__ . ') ' . __FUNCTION__ . ' - ' . 'response ' . $value);
-            log::add(__CLASS__, 'debug', '(' . __LINE__ . ') ' . __FUNCTION__ . ' - ' . 'updatelogicalId ' .  $updateLogicalId . ' = ' . $value);
         }
-        // mise à jour lastvalue commande
-        $CMD->setConfiguration('lastCmdValue', $value);
-        $CMD->save();
         return 'OK';
     }
 
+    /**
+     * Construit une commande d'action à partir d'options strictement validées.
+     *
+     * @param PalazzettiCmd $cmd Commande Jeedom.
+     * @param mixed $options Options d'exécution.
+     * @return string Commande Palazzetti validée.
+     * @throws Exception Si les options sont invalides.
+     */
+    private function buildCommandString($cmd, $options)
+    {
+        $base = trim((string) $cmd->getConfiguration('actionCmd'));
+        if ($base === '') {
+            throw new Exception(__('commande vide', __FILE__));
+        }
+
+        $suffix = '';
+        if (is_array($options)) {
+            if (isset($options['jour'], $options['tranche'], $options['programme'])) {
+                $suffix = implode('+', array(
+                    $this->validatedInteger($options['jour'], 1, 7, 'jour'),
+                    $this->validatedInteger($options['tranche'], 1, 3, 'tranche'),
+                    $this->validatedInteger($options['programme'], 0, 6, 'programme')
+                ));
+            } elseif (isset($options['numero'], $options['temperature'], $options['h1'], $options['m1'], $options['h2'], $options['m2'])) {
+                if (!is_numeric($options['temperature']) || (float) $options['temperature'] < 0 || (float) $options['temperature'] > 40) {
+                    throw new Exception(__('température hors limites', __FILE__));
+                }
+                $suffix = implode('+', array(
+                    $this->validatedInteger($options['numero'], 1, 6, 'numero'),
+                    (string) (float) $options['temperature'],
+                    $this->validatedInteger($options['h1'], 0, 23, 'h1'),
+                    $this->validatedInteger($options['m1'], 0, 59, 'm1'),
+                    $this->validatedInteger($options['h2'], 0, 23, 'h2'),
+                    $this->validatedInteger($options['m2'], 0, 59, 'm2')
+                ));
+            } elseif (array_key_exists('slider', $options)) {
+                $minimum = is_numeric($cmd->getConfiguration('minValue')) ? (float) $cmd->getConfiguration('minValue') : 0;
+                $maximum = is_numeric($cmd->getConfiguration('maxValue')) ? (float) $cmd->getConfiguration('maxValue') : 255;
+                if (!is_numeric($options['slider'])
+                    || (float) $options['slider'] < $minimum
+                    || (float) $options['slider'] > $maximum) {
+                    throw new Exception(__('valeur hors limites', __FILE__));
+                }
+                $suffix = (string) (float) $options['slider'];
+            } elseif ($options !== array()) {
+                throw new Exception(__('options non reconnues', __FILE__));
+            }
+        } elseif ($options !== null && $options !== '') {
+            if (strpos($base, 'SET+LABL+') !== 0) {
+                throw new Exception(__('valeur texte non autorisée', __FILE__));
+            }
+            $suffix = self::sanitizeDiscoveryText($options, 40);
+            if ($suffix === '' || strpos($suffix, '+') !== false) {
+                throw new Exception(__('libellé invalide', __FILE__));
+            }
+        }
+
+        $command = self::normalizeCommand($base . $suffix);
+        if ($command === null) {
+            throw new Exception(__('format de commande invalide', __FILE__));
+        }
+        return $command;
+    }
+
+    /**
+     * Valide un entier inclus dans une plage fermée.
+     *
+     * @param mixed $value Valeur brute.
+     * @param int $minimum Borne minimale.
+     * @param int $maximum Borne maximale.
+     * @param string $name Nom utilisé dans le message d'erreur.
+     * @return int Entier validé.
+     * @throws Exception Si la valeur est hors limites.
+     */
+    private function validatedInteger($value, $minimum, $maximum, $name)
+    {
+        $validated = filter_var($value, FILTER_VALIDATE_INT);
+        if ($validated === false || $validated < $minimum || $validated > $maximum) {
+            throw new Exception(sprintf(__('%s hors limites', __FILE__), $name));
+        }
+        return $validated;
+    }
+
+    /**
+     * Lit une propriété dans un objet de réponse.
+     *
+     * @param mixed $data Objet de données.
+     * @param string $property Propriété recherchée.
+     * @return mixed|null Valeur trouvée.
+     */
+    private function responseValue($data, $property)
+    {
+        return is_object($data) && property_exists($data, $property) ? $data->{$property} : null;
+    }
+
+    /**
+     * Met à jour une commande lorsque la propriété source existe.
+     *
+     * @param string $logicalId Identifiant logique Jeedom.
+     * @param mixed $data Objet de données.
+     * @param string $property Propriété source.
+     * @param int|null $round Nombre de décimales éventuel.
+     * @return void
+     */
+    private function updateCommandIfPresent($logicalId, $data, $property, $round = null)
+    {
+        $value = $this->responseValue($data, $property);
+        if ($value === null) {
+            return;
+        }
+        if ($round !== null && is_numeric($value)) {
+            $value = round((float) $value, $round);
+        }
+        $this->checkAndUpdateCmd($logicalId, $value);
+    }
+
+    /**
+     * Encode une valeur destinée à être insérée comme littéral JavaScript.
+     *
+     * @param mixed $value Valeur à encoder.
+     * @return string Littéral JSON sûr.
+     */
+    private static function encodeInlineJavaScriptValue($value)
+    {
+        $encoded = json_encode(
+            (string) $value,
+            JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+        );
+        return is_string($encoded) ? $encoded : '""';
+    }
+
+    /**
+     * Génère le widget personnalisé ou délègue au rendu Jeedom standard.
+     *
+     * @param string $_version Version dashboard, mobile ou scénario.
+     * @return string HTML du widget.
+     */
     public function toHtml($_version = 'dashboard')
     {
         if ($this->getConfiguration('widgetTemplate') != 1) {
@@ -1059,6 +2383,7 @@ class Palazzetti extends eqLogic
         $heure = $this->getCmd('info', 'ITime');
         $replace['#heure#'] = is_object($heure) ? $heure->execCmd() : '';
         $replace['#heure_id#'] = is_object($heure) ? $heure->getId() : '';
+        $replace['#heure_display#'] = (is_object($heure) && $heure->getIsVisible()) ? '' : 'none';
 
         $temps = $this->getCmd('info', 'ITemp');
         $replace['#temperature#'] = is_object($temps) ? $temps->execCmd() : '';
@@ -1066,7 +2391,7 @@ class Palazzetti extends eqLogic
         $replace['#temperature_valueDate#'] = is_object($temps) ? $temps->getValueDate() : '';
         $replace['#temperature_collectDate#'] = is_object($temps) ? $temps->getCollectDate() : '';
         $replace['#temperature_unite#'] = is_object($temps) ? $temps->getUnite() : '';
-        $replace['#temperature_display#'] = (is_object($temps) && $temps->getIsVisible()) ? '#temperature_display#' : 'none';
+        $replace['#temperature_display#'] = (is_object($temps) && $temps->getIsVisible()) ? '' : 'none';
 
         $temps2 = $this->getCmd('info', 'ITemp2');
         $replace['#temperature2#'] = is_object($temps2) ? $temps2->execCmd() : '';
@@ -1074,7 +2399,7 @@ class Palazzetti extends eqLogic
         $replace['#temperature2_valueDate#'] = is_object($temps2) ? $temps2->getValueDate() : '';
         $replace['#temperature2_collectDate#'] = is_object($temps2) ? $temps2->getCollectDate() : '';
         $replace['#temperature2_unite#'] = is_object($temps2) ? $temps2->getUnite() : '';
-        $replace['#temperature2_display#'] = (is_object($temps) && $temps2->getIsVisible()) ? '#temperature2_display#' : 'none';
+        $replace['#temperature2_display#'] = (is_object($temps2) && $temps2->getIsVisible()) ? '' : 'none';
 
         $temps3 = $this->getCmd('info', 'ITemp3');
         $replace['#temperature3#'] = is_object($temps3) ? $temps3->execCmd() : '';
@@ -1082,11 +2407,12 @@ class Palazzetti extends eqLogic
         $replace['#temperature3_valueDate#'] = is_object($temps3) ? $temps3->getValueDate() : '';
         $replace['#temperature3_collectDate#'] = is_object($temps3) ? $temps3->getCollectDate() : '';
         $replace['#temperature3_unite#'] = is_object($temps3) ? $temps3->getUnite() : '';
-        $replace['#temperature3_display#'] = (is_object($temps) && $temps3->getIsVisible()) ? '#temperature3_display#' : 'none';
+        $replace['#temperature3_display#'] = (is_object($temps3) && $temps3->getIsVisible()) ? '' : 'none';
 
         $status = $this->getCmd('info', 'IStatus');
         $replace['#status#'] = is_object($status) ? $status->execCmd() : '';
         $replace['#status_id#'] = is_object($status) ? $status->getId() : '';
+        $replace['#status_display#'] = (is_object($status) && $status->getIsVisible()) ? '' : 'none';
 
         $consigne = $this->getCmd('info', 'IConsigne');
         $replace['#consigne#'] = is_object($consigne) ? $consigne->execCmd() : '';
@@ -1096,9 +2422,10 @@ class Palazzetti extends eqLogic
         $replace['#consigne_unite#'] = is_object($consigne) ? $consigne->getUnite() : '';
         $replace['#consigne_minValue#'] = is_object($consigne) ? $consigne->getConfiguration('minValue') : '';
         $replace['#consigne_maxValue#'] = is_object($consigne) ? $consigne->getConfiguration('maxValue') : '';
-        $replace['#consigne_display#'] = (is_object($consigne) && $consigne->getIsVisible()) ? '#consigne_display#' : 'none';
+        $replace['#consigne_display#'] = (is_object($consigne) && $consigne->getIsVisible()) ? '' : 'none';
         $Wconsigne = $this->getCmd('action', 'WConsigne');
         $replace['#consigneSet_id#'] = is_object($Wconsigne) ? $Wconsigne->getId() : '';
+        $replace['#consigne_step#'] = 1;
         if (is_object($Wconsigne)) {
             if (is_array($Wconsigne->getDisplay('parameters'))) {
                 foreach ($Wconsigne->getDisplay('parameters') as $key => $value) {
@@ -1114,9 +2441,10 @@ class Palazzetti extends eqLogic
         $replace['#power_collectDate#'] = is_object($power) ? $power->getCollectDate() : '';
         $replace['#power_minValue#'] = is_object($power) ? $power->getConfiguration('minValue') : '';
         $replace['#power_maxValue#'] = is_object($power) ? $power->getConfiguration('maxValue') : '';
-        $replace['#power_display#'] = (is_object($power) && $power->getIsVisible()) ? '#power_display#' : 'none';
-        $Wpower = $this->getCmd('action', 'Wpower');
+        $replace['#power_display#'] = (is_object($power) && $power->getIsVisible()) ? '' : 'none';
+        $Wpower = $this->getCmd('action', 'WPower');
         $replace['#powerSet_id#'] = is_object($Wpower) ? $Wpower->getId() : '';
+        $replace['#power_step#'] = 1;
         if (is_object($Wpower)) {
             if (is_array($Wpower->getDisplay('parameters'))) {
                 foreach ($Wpower->getDisplay('parameters') as $key => $value) {
@@ -1132,9 +2460,10 @@ class Palazzetti extends eqLogic
         $replace['#fan_collectDate#'] = is_object($fan) ? $fan->getCollectDate() : '';
         $replace['#fan_minValue#'] = is_object($fan) ? $fan->getConfiguration('minValue') : '';
         $replace['#fan_maxValue#'] = is_object($fan) ? $fan->getConfiguration('maxValue') : '';
-        $replace['#fan_display#'] = (is_object($fan) && $fan->getIsVisible()) ? '#fan_display#' : 'none';
+        $replace['#fan_display#'] = (is_object($fan) && $fan->getIsVisible()) ? '' : 'none';
         $Wfan = $this->getCmd('action', 'WFan');
         $replace['#fanSet_id#'] = is_object($Wfan) ? $Wfan->getId() : '';
+        $replace['#fan_step#'] = 1;
         if (is_object($Wfan)) {
             if (is_array($Wfan->getDisplay('parameters'))) {
                 foreach ($Wfan->getDisplay('parameters') as $key => $value) {
@@ -1149,7 +2478,7 @@ class Palazzetti extends eqLogic
         $replace['#nbAll_unit#'] = is_object($nbAll) ? $nbAll->getUnite() : '';
         $replace['#nbAll_valueDate#'] = is_object($nbAll) ? $nbAll->getValueDate() : '';
         $replace['#nbAll_collectDate#'] = is_object($nbAll) ? $nbAll->getCollectDate() : '';
-        $replace['#nbAll_display#'] = (is_object($nbAll) && $nbAll->getIsVisible()) ? '#nbAll_display#' : 'none';
+        $replace['#nbAll_display#'] = (is_object($nbAll) && $nbAll->getIsVisible()) ? '' : 'none';
 
         $hae = $this->getCmd('info', 'IHeuresAlimElec');
         $replace['#hae#'] = is_object($hae) ? $hae->execCmd() : '';
@@ -1157,7 +2486,7 @@ class Palazzetti extends eqLogic
         $replace['#hae_unit#'] = is_object($hae) ? $hae->getUnite() : '';
         $replace['#hae_valueDate#'] = is_object($hae) ? $hae->getValueDate() : '';
         $replace['#hae_collectDate#'] = is_object($hae) ? $hae->getCollectDate() : '';
-        $replace['#hae_display#'] = (is_object($hae) && $hae->getIsVisible()) ? '#hae_display#' : 'none';
+        $replace['#hae_display#'] = (is_object($hae) && $hae->getIsVisible()) ? '' : 'none';
 
         $hc = $this->getCmd('info', 'IHeuresChauffe');
         $replace['#hc#'] = is_object($hc) ? $hc->execCmd() : '';
@@ -1165,7 +2494,7 @@ class Palazzetti extends eqLogic
         $replace['#hc_unit#'] = is_object($hc) ? $hc->getUnite() : '';
         $replace['#hc_valueDate#'] = is_object($hc) ? $hc->getValueDate() : '';
         $replace['#hc_collectDate#'] = is_object($hc) ? $hc->getCollectDate() : '';
-        $replace['#hc_display#'] = (is_object($hc) && $hc->getIsVisible()) ? '#hc_display#' : 'none';
+        $replace['#hc_display#'] = (is_object($hc) && $hc->getIsVisible()) ? '' : 'none';
 
         $hsc = $this->getCmd('info', 'IHeuresSurChauffe');
         $replace['#hsc#'] = is_object($hsc) ? $hsc->execCmd() : '';
@@ -1173,7 +2502,7 @@ class Palazzetti extends eqLogic
         $replace['#hsc_unit#'] = is_object($hsc) ? $hsc->getUnite() : '';
         $replace['#hsc_valueDate#'] = is_object($hsc) ? $hsc->getValueDate() : '';
         $replace['#hsc_collectDate#'] = is_object($hsc) ? $hsc->getCollectDate() : '';
-        $replace['#hsc_display#'] = (is_object($hsc) && $hsc->getIsVisible()) ? '#hsc_display#' : 'none';
+        $replace['#hsc_display#'] = (is_object($hsc) && $hsc->getIsVisible()) ? '' : 'none';
 
         $hde = $this->getCmd('info', 'IHeuresDepuisEntretien');
         $replace['#hde#'] = is_object($hde) ? $hde->execCmd() : '';
@@ -1181,7 +2510,7 @@ class Palazzetti extends eqLogic
         $replace['#hde_unit#'] = is_object($hde) ? $hde->getUnite() : '';
         $replace['#hde_valueDate#'] = is_object($hde) ? $hde->getValueDate() : '';
         $replace['#hde_collectDate#'] = is_object($hde) ? $hde->getCollectDate() : '';
-        $replace['#hde_display#'] = (is_object($hde) && $hde->getIsVisible()) ? '#hde_display#' : 'none';
+        $replace['#hde_display#'] = (is_object($hde) && $hde->getIsVisible()) ? '' : 'none';
 
         $haf = $this->getCmd('info', 'INbAllumageFailed');
         $replace['#haf#'] = is_object($haf) ? $haf->execCmd() : '';
@@ -1189,7 +2518,7 @@ class Palazzetti extends eqLogic
         $replace['#haf_unit#'] = is_object($haf) ? $haf->getUnite() : '';
         $replace['#haf_valueDate#'] = is_object($haf) ? $haf->getValueDate() : '';
         $replace['#haf_collectDate#'] = is_object($haf) ? $haf->getCollectDate() : '';
-        $replace['#haf_display#'] = (is_object($haf) && $haf->getIsVisible()) ? '#haf_display#' : 'none';
+        $replace['#haf_display#'] = (is_object($haf) && $haf->getIsVisible()) ? '' : 'none';
 
         $pqt = $this->getCmd('info', 'IQuantite');
         $replace['#pqt#'] = is_object($pqt) ? $pqt->execCmd() : '';
@@ -1197,12 +2526,12 @@ class Palazzetti extends eqLogic
         $replace['#pqt_unit#'] = is_object($pqt) ? $pqt->getUnite() : '';
         $replace['#pqt_valueDate#'] = is_object($pqt) ? $pqt->getValueDate() : '';
         $replace['#pqt_collectDate#'] = is_object($pqt) ? $pqt->getCollectDate() : '';
-        $replace['#pqt_display#'] = (is_object($pqt) && $pqt->getIsVisible()) ? '#pqt_display#' : 'none';
+        $replace['#pqt_display#'] = (is_object($pqt) && $pqt->getIsVisible()) ? '' : 'none';
 
         $network = $this->getCmd('info', 'INetwork');
         $replace['#network#'] = is_object($network) ? $network->execCmd() : '';
         $replace['#network_id#'] = is_object($network) ? $network->getId() : '';
-        $replace['#network_display#'] = (is_object($network) && $network->getIsVisible()) ? '#network_display#' : 'none';
+        $replace['#network_display#'] = (is_object($network) && $network->getIsVisible()) ? '' : 'none';
 
         $WOn = $this->getCmd('action', 'WOn');
         $replace['#on_id#'] = is_object($WOn) ? $WOn->getId() : '';
@@ -1210,208 +2539,299 @@ class Palazzetti extends eqLogic
         $replace['#off_id#'] = is_object($WOff) ? $WOff->getId() : '';
 
         $fanF3L = $this->getCmd('info', 'IFanF3L');
-        $replace['#fanF3L#'] = $this->getFanStateF3L($fanF3L->execCmd());
+        $replace['#fanF3L#'] = is_object($fanF3L) ? $this->getFanStateF3L($fanF3L->execCmd()) : '';
         $WfanF3L = $this->getCmd('action', 'WFanF3L');
         $replace['#fanF3L_id#'] = is_object($WfanF3L) ? $WfanF3L->getId() : '';
 
         $fanF4L = $this->getCmd('info', 'IFanF4L');
-        $replace['#fanF4L#'] = $this->getFanStateF4L($fanF4L->execCmd());
+        $replace['#fanF4L#'] = is_object($fanF4L) ? $this->getFanStateF4L($fanF4L->execCmd()) : '';
         $WfanF4L = $this->getCmd('action', 'WFanF4L');
         $replace['#fanF4L_id#'] = is_object($WfanF4L) ? $WfanF4L->getId() : '';
 
         $snap = $this->getCmd('info', 'ISnap');
         $replace['#snap_id#'] = is_object($snap) ? $snap->getId() : '';
-        $replace['#snap_display#'] = (is_object($snap) && $snap->getIsVisible()) ? '#snap_display#' : 'none';
+        $replace['#snap_display#'] = (is_object($snap) && $snap->getIsVisible()) ? '' : 'none';
 
         $refresh = $this->getCmd('action', 'refresh');
         $replace['#refresh_id#'] = is_object($refresh) ? $refresh->getId() : '';
 
+        // template_replace ne protège pas le contexte JavaScript. Les valeurs
+        // du poêle et les paramètres d'affichage sont donc encodés avant leur
+        // insertion dans le bloc <script> du widget.
+        $javascriptPlaceholders = array(
+            'invertFanSpeed',
+            'heure',
+            'status',
+            'temperature', 'temperature_valueDate', 'temperature_collectDate', 'temperature_unite',
+            'temperature2', 'temperature2_valueDate', 'temperature2_collectDate', 'temperature2_unite',
+            'temperature3', 'temperature3_valueDate', 'temperature3_collectDate', 'temperature3_unite',
+            'consigne', 'consigne_valueDate', 'consigne_collectDate', 'consigne_unite',
+            'consigne_minValue', 'consigne_maxValue', 'consigne_step',
+            'power', 'power_minValue', 'power_maxValue', 'power_step',
+            'fan', 'fan_minValue', 'fan_maxValue', 'fan_step',
+            'nbAll', 'nbAll_unit', 'nbAll_valueDate', 'nbAll_collectDate',
+            'hae', 'hae_unit', 'hae_valueDate', 'hae_collectDate',
+            'hc', 'hc_unit', 'hc_valueDate', 'hc_collectDate',
+            'hsc', 'hsc_unit', 'hsc_valueDate', 'hsc_collectDate',
+            'hde', 'hde_unit', 'hde_valueDate', 'hde_collectDate',
+            'haf', 'haf_unit', 'haf_valueDate', 'haf_collectDate',
+            'pqt', 'pqt_unit', 'pqt_valueDate', 'pqt_collectDate',
+            'network'
+        );
+        foreach ($javascriptPlaceholders as $placeholder) {
+            $sourceKey = '#' . $placeholder . '#';
+            $replace['#' . $placeholder . '_js#'] = self::encodeInlineJavaScriptValue(
+                isset($replace[$sourceKey]) ? $replace[$sourceKey] : ''
+            );
+        }
+
         $html = template_replace($replace, getTemplate('core', $version, __CLASS__, __CLASS__));
         $html = translate::exec($html, 'plugins/' . __CLASS__ . '/core/template/' . $version . '/' . __CLASS__ . '.html');
-        cache::set('PalazzettiWidget' . $_version . $this->getId(), $html, 0);
         return $html;
     }
 
+    /**
+     * Actualise quotidiennement les métadonnées statiques des équipements.
+     *
+     * @return int Nombre d'équipements actualisés.
+     */
     public static function cronDaily()
     {
-        $eqLogics = eqLogic::byType(__CLASS__);
-
-        foreach ($eqLogics as $eqLogic) {
-            if ($eqLogic->getIsEnable()) {
-                // old WirelessPalaControl version
-                try {
-                    $request_http = new com_http('http://' . $eqLogic->getConfiguration('addressip') . '/ffffffff');
-                    $return = $request_http->exec(6, 2);
-                } catch (Exception $e) {
-                    if ($e->getCode() == 404) {
-                        log::add(__CLASS__, 'debug', __FUNCTION__.' - '. $e->getCode() . __(' erreur de connexion : ', __FILE__) . $e->getMessage());
-                        //throw $e;
-                    }
-                    return false;
+        $refreshed = 0;
+        foreach (eqLogic::byType(__CLASS__) as $eqLogic) {
+            if (!$eqLogic->getIsEnable()) {
+                continue;
+            }
+            try {
+                if ($eqLogic->refreshStaticData(true)) {
+                    $refreshed++;
                 }
-
-                $toSave = false;
-                $return = json_decode($return);
-                log::add(__CLASS__, 'debug', __FUNCTION__ . __(' - resultat : ', __FILE__) . json_encode($return));
-                if ($return->sn) {
-                    $eqLogic->setConfiguration('serialNumber', $return->sn);
-                    $toSave = true;
-                }
-                if ($return->m) {
-                    $eqLogic->setConfiguration('model', $return->m);
-                    $toSave = true;
-                }
-                if ($return->v) {
-                    $eqLogic->setConfiguration('versions', $return->v);
-                    $toSave = true;
-                }
-                if ($toSave) {
-                    $eqLogic->setConfiguration('isWirelessPalaControl', true);
-                    $eqLogic->save();
-                    return true;
-                }
-
-                // new WirelessPalaControl version
-                try {
-                    $request_http = new com_http('http://' . $eqLogic->getConfiguration('addressip') . '/gs0');
-                    $return = $request_http->exec(6, 2);
-                } catch (Exception $e) {
-                    if ($e->getCode() == 404) {
-                        log::add(__CLASS__, 'debug', __FUNCTION__.' - '. $e->getCode() . __(' erreur de connexion : ', __FILE__) . $e->getMessage());
-                        //throw $e;
-                    }
-                    return false;
-                }
-
-                $toSave = false;
-                $return = json_decode($return);
-                log::add(__CLASS__, 'debug', __FUNCTION__ . __(' - resultat : ', __FILE__) . json_encode($return));
-                if ($return->sn) {
-                    $eqLogic->setConfiguration('serialNumber', $return->sn);
-                    $toSave = true;
-                }
-                if ($return->model) {
-                    $eqLogic->setConfiguration('model', $return->model);
-                    $toSave = true;
-                }
-                if ($return->version) {
-                    $eqLogic->setConfiguration('versions', $return->version);
-                    $toSave = true;
-                }
-                if ($toSave) {
-                    $eqLogic->setConfiguration('isWirelessPalaControl', true);
-                    $eqLogic->save();
-                    return true;
-                }
+            } catch (Exception $e) {
+                log::add(__CLASS__, 'warning', sprintf(
+                    __('Actualisation quotidienne impossible pour %s : %s', __FILE__),
+                    $eqLogic->getHumanName(),
+                    $e->getMessage()
+                ));
             }
         }
+        return $refreshed;
     }
-    // recuperation automatique des informations
+
+    /**
+     * Interroge la passerelle et actualise toutes les commandes d'information.
+     *
+     * @return bool Vrai lorsque le cycle dynamique est complet.
+     */
     public function getInformations()
     {
         log::add(__CLASS__, 'debug', __('Début', __FILE__) . ' : ' . __FUNCTION__);
 
-        // recuperation de l'heure
-        $DATA = $this->makeRequest('GET+TIME');
-        if (!$DATA) {
+        // GET TIME sert aussi de test de disponibilité. En cas d'échec, le
+        // cycle est interrompu afin de ne pas cumuler plusieurs timeouts.
+        $time = $this->makeRequest('GET+TIME');
+        if (!$time) {
             log::add(__CLASS__, 'debug', __FUNCTION__ . __(' - cycle interrompu, équipement injoignable', __FILE__));
             return false;
         }
-        $this->checkAndUpdateCmd('ITime', json_encode($DATA->DATA));
-
-        // recuperation de toutes les informations réseau
-        $DATA = $this->makeRequest('GET+STDT');
-        if ($DATA) {
-            $this->checkAndUpdateCmd('IName', $DATA->DATA->LABEL);
-            $this->checkAndUpdateCmd('INetwork', json_encode($DATA->DATA));
+        if (isset($time->DATA) && is_object($time->DATA)) {
+            $this->checkAndUpdateCmd('ITime', json_encode($time->DATA));
         }
 
-        // recuperation des programmes horaires
-        $DATA = $this->makeRequest('GET+CHRD', 6);
-        if ($DATA) {
-            $this->checkAndUpdateCmd('IPH', json_encode($DATA->DATA));
+        // Ces données sont utilisées par les pages d'informations et de
+        // planning : elles sont donc relues à chaque cycle configuré.
+        $this->refreshStaticData(false);
+
+        $schedule = $this->makeRequest('GET+CHRD', 6);
+        if ($schedule && isset($schedule->DATA) && is_object($schedule->DATA)) {
+            $this->checkAndUpdateCmd('IPH', json_encode($schedule->DATA));
         }
-        sleep(1);
-        // recuperation des infos compteurs
-        $DATA = $this->makeRequest('GET+CNTR', 6);
-        if ($DATA) {
-            $this->checkAndUpdateCmd('INbAllumage', $DATA->DATA->IGN);
-            $this->checkAndUpdateCmd('INbAllumageFailed', $DATA->DATA->IGNERRORS);
-            $this->checkAndUpdateCmd('IHeuresAlimElec', self::convertTimeToDec($DATA->DATA->POWERTIME));
-            $this->checkAndUpdateCmd('IHeuresChauffe', self::convertTimeToDec($DATA->DATA->HEATTIME));
-            $this->checkAndUpdateCmd('IHeuresSurChauffe', self::convertTimeToDec($DATA->DATA->OVERTMPERRORS));
-            $this->checkAndUpdateCmd('IHeuresDepuisEntretien', self::convertTimeToDec($DATA->DATA->SERVICETIME));
-            $this->checkAndUpdateCmd('IQuantite', $DATA->DATA->PQT);
+
+        $counters = $this->makeRequest('GET+CNTR', 6);
+        if ($counters && isset($counters->DATA) && is_object($counters->DATA)) {
+            $this->updateCounters($counters->DATA);
         } else {
-            $DATA = $this->makeRequest('EXT+ADRD+2066+1');
-            if ($DATA) {
-                $this->checkAndUpdateCmd('INbAllumage', $DATA->DATA->ADDR_2066);
-            }
-            $DATA = $this->makeRequest('EXT+ADRD+207C+1');
-            if ($DATA) {
-                $this->checkAndUpdateCmd('INbAllumageFailed', $DATA->DATA->ADDR_207C);
-            }
-            $DATA = $this->makeRequest('EXT+ADRD+206A+1');
-            if ($DATA) {
-                $this->checkAndUpdateCmd('IHeuresAlimElec', self::convertTimeToDec($DATA->DATA->ADDR_206A));
-            }
-            $DATA = $this->makeRequest('EXT+ADRD+2070+1');
-            if ($DATA) {
-                $this->checkAndUpdateCmd('IHeuresChauffe', self::convertTimeToDec($DATA->DATA->ADDR_2070));
-            }
-            $DATA = $this->makeRequest('EXT+ADRD+207A+1');
-            if ($DATA) {
-                $this->checkAndUpdateCmd('IHeuresSurChauffe', self::convertTimeToDec($DATA->DATA->ADDR_207A));
-            }
-            $DATA = $this->makeRequest('EXT+ADRD+2076+1');
-            if ($DATA) {
-                $this->checkAndUpdateCmd('IHeuresDepuisEntretien', self::convertTimeToDec($DATA->DATA->ADDR_2076));
-            }
+            $this->refreshLegacyCounters();
         }
 
-        // recuperation de toutes les informations
-        $DATA = $this->makeRequest('GET+ALLS', 6);
-        if ($DATA) {
-            // mise à jour force du feu
-            if (isset($DATA->DATA->PWR)) {
-                $this->checkAndUpdateCmd('IPower', $DATA->DATA->PWR);
-            }
-            if (isset($DATA->DATA->SETP)) {
-                $this->checkAndUpdateCmd('IConsigne', $DATA->DATA->SETP);
-            }
-            if (isset($DATA->DATA->F2L)) {
-                $this->checkAndUpdateCmd('IFan', $DATA->DATA->F2L);
-            }
-            if (isset($DATA->DATA->F3L)) {
-                $this->checkAndUpdateCmd('IFanF3L', $DATA->DATA->F3L);
-            }
-            if (isset($DATA->DATA->F4L)) {
-                $this->checkAndUpdateCmd('IFanF4L', $DATA->DATA->F4L);
-            }
-            if (isset($DATA->DATA->T1)) {
-                $this->checkAndUpdateCmd('ITemp', round($DATA->DATA->T1, 2));
-            }
-            if (isset($DATA->DATA->T2)) {
-                $this->checkAndUpdateCmd('ITemp2', round($DATA->DATA->T2, 2));
-            }
-            if (isset($DATA->DATA->T3)) {
-                $this->checkAndUpdateCmd('ITemp3', round($DATA->DATA->T3, 2));
-            }
-            if (isset($DATA->DATA->STATUS)) {
-                $this->checkAndUpdateCmd('IStatus', $DATA->DATA->STATUS);
-            }
-            $this->checkAndUpdateCmd('ISnap', json_encode($DATA));
+        $all = $this->makeRequest('GET+ALLS', 6);
+        if (!$all || !isset($all->DATA) || !is_object($all->DATA)) {
+            log::add(__CLASS__, 'debug', __FUNCTION__ . __(' - données dynamiques indisponibles', __FILE__));
+            return false;
         }
+        $this->updateAllsData($all->DATA, $all);
+
         log::add(__CLASS__, 'debug', __('Fin', __FILE__) . ' : ' . __FUNCTION__);
         return true;
     }
 
-    public static function convertTimeToDec($_time) {
-        $time = explode(':', $_time);
-        return floatval($time[0] .'.'. round($time[1]/0.60));
+    /**
+     * Applique les données agrégées retournées par GET ALLS.
+     *
+     * @param object $data Données de la réponse.
+     * @param object|null $fullResponse Réponse complète pour l'instantané.
+     * @return void
+     */
+    private function updateAllsData($data, $fullResponse = null)
+    {
+        $map = array(
+            'IPower' => array('PWR', null),
+            'IConsigne' => array('SETP', null),
+            'IFan' => array('F2L', null),
+            'IFanF3L' => array('F3L', null),
+            'IFanF4L' => array('F4L', null),
+            'ITemp' => array('T1', 2),
+            'ITemp2' => array('T2', 2),
+            'ITemp3' => array('T3', 2),
+            'IStatus' => array('STATUS', null),
+            'IQuantite' => array('PQT', null)
+        );
+        foreach ($map as $logicalId => $definition) {
+            $this->updateCommandIfPresent($logicalId, $data, $definition[0], $definition[1]);
+        }
+
+        $date = $this->responseValue($data, 'STOVE_DATETIME');
+        $weekday = $this->responseValue($data, 'STOVE_WDAY');
+        if ($date === null) {
+            $date = $this->responseValue($data, 'APLTS');
+        }
+        if ($weekday === null) {
+            $weekday = $this->responseValue($data, 'APLWDAY');
+        }
+        if ($date !== null || $weekday !== null) {
+            $this->checkAndUpdateCmd('ITime', json_encode(array(
+                'STOVE_DATETIME' => $date,
+                'STOVE_WDAY' => $weekday
+            )));
+        }
+        $this->checkAndUpdateCmd('ISnap', json_encode($fullResponse !== null ? $fullResponse : $data));
+    }
+
+    /**
+     * Applique les compteurs retournés par GET CNTR.
+     *
+     * @param object $data Données de compteurs.
+     * @return void
+     */
+    private function updateCounters($data)
+    {
+        $this->updateCommandIfPresent('INbAllumage', $data, 'IGN');
+        $this->updateCommandIfPresent('INbAllumageFailed', $data, 'IGNERRORS');
+        $this->updateDurationIfPresent('IHeuresAlimElec', $data, 'POWERTIME');
+        $this->updateDurationIfPresent('IHeuresChauffe', $data, 'HEATTIME');
+        $this->updateCommandIfPresent('IHeuresSurChauffe', $data, 'OVERTMPERRORS');
+        $this->updateDurationIfPresent('IHeuresDepuisEntretien', $data, 'SERVICETIME');
+        $this->updateCommandIfPresent('IQuantite', $data, 'PQT');
+    }
+
+    /**
+     * Convertit et met à jour une durée présente dans une réponse.
+     *
+     * @param string $logicalId Identifiant logique Jeedom.
+     * @param object $data Données de réponse.
+     * @param string $property Propriété contenant la durée.
+     * @return void
+     */
+    private function updateDurationIfPresent($logicalId, $data, $property)
+    {
+        $rawValue = $this->responseValue($data, $property);
+        if ($rawValue === null) {
+            return;
+        }
+        $value = self::convertTimeToDec($rawValue);
+        if ($value !== null) {
+            $this->checkAndUpdateCmd($logicalId, $value);
+        }
+    }
+
+    /**
+     * Relit les compteurs via EXT ADRD lorsque GET CNTR est indisponible.
+     *
+     * @return void
+     */
+    private function refreshLegacyCounters()
+    {
+        $definitions = array(
+            array('EXT+ADRD+2066+1', 'ADDR_2066', 'INbAllumage', false),
+            array('EXT+ADRD+207C+1', 'ADDR_207C', 'INbAllumageFailed', false),
+            array('EXT+ADRD+206A+1', 'ADDR_206A', 'IHeuresAlimElec', true),
+            array('EXT+ADRD+2070+1', 'ADDR_2070', 'IHeuresChauffe', true),
+            array('EXT+ADRD+207A+1', 'ADDR_207A', 'IHeuresSurChauffe', false),
+            array('EXT+ADRD+2076+1', 'ADDR_2076', 'IHeuresDepuisEntretien', true)
+        );
+        foreach ($definitions as $definition) {
+            $response = $this->makeRequest($definition[0], 6);
+            if (!$response || !isset($response->DATA) || !is_object($response->DATA)) {
+                continue;
+            }
+            if ($definition[3]) {
+                $this->updateDurationIfPresent($definition[2], $response->DATA, $definition[1]);
+            } else {
+                $this->updateCommandIfPresent($definition[2], $response->DATA, $definition[1]);
+            }
+        }
+    }
+
+    /**
+     * Actualise les données réseau et éventuellement les métadonnées Jeedom.
+     *
+     * @param bool $saveMetadata Enregistre les métadonnées si elles changent.
+     * @return bool Vrai lorsque GET STDT a répondu correctement.
+     */
+    private function refreshStaticData($saveMetadata)
+    {
+        $response = $this->makeRequest('GET+STDT', 6);
+        if (!$response || !isset($response->DATA) || !is_object($response->DATA)) {
+            return false;
+        }
+        $data = $response->DATA;
+        $this->updateCommandIfPresent('IName', $data, 'LABEL');
+        $this->checkAndUpdateCmd('INetwork', json_encode($data));
+
+        if (!$saveMetadata) {
+            return true;
+        }
+        $changed = false;
+        foreach (array('serialNumber' => 'SN', 'model' => 'MOD') as $configuration => $property) {
+            $value = $this->responseValue($data, $property);
+            if ($value !== null && $value !== ''
+                && (string) $this->getConfiguration($configuration, '') !== (string) $value) {
+                $this->setConfiguration($configuration, self::sanitizeDiscoveryText($value, 80));
+                $changed = true;
+            }
+        }
+        $versions = array();
+        foreach (array('SYSTEM', 'plzbridge', 'sendmsg') as $property) {
+            $value = $this->responseValue($data, $property);
+            if ($value !== null && $value !== '') {
+                $versions[] = $property . ': ' . self::sanitizeDiscoveryText($value, 80);
+            }
+        }
+        $versions = implode(' | ', $versions);
+        if ($versions !== '' && (string) $this->getConfiguration('versions', '') !== $versions) {
+            $this->setConfiguration('versions', $versions);
+            $changed = true;
+        }
+        if ($changed) {
+            $this->save();
+        }
+        return true;
+    }
+
+    /**
+     * Convertit une durée Palazzetti HH:MM en heures décimales.
+     *
+     * @param mixed $_time Durée brute.
+     * @return float|null Durée convertie.
+     */
+    public static function convertTimeToDec($_time)
+    {
+        return self::decimalHours($_time);
     }
 }
 
+/**
+ * Commande Jeedom associée à un équipement Palazzetti.
+ */
 class PalazzettiCmd extends cmd
 {
     /*     * *************************Attributs******************************
@@ -1419,6 +2839,12 @@ class PalazzettiCmd extends cmd
 
     /*     * *********************Methode d'instance************************* */
 
+    /**
+     * Exécute un rafraîchissement ou transmet une action au poêle.
+     *
+     * @param mixed $_options Options fournies par Jeedom.
+     * @return void
+     */
     public function execute($_options = null)
     {
         $eqLogic = $this->getEqLogic();
@@ -1427,7 +2853,6 @@ class PalazzettiCmd extends cmd
         log::add('Palazzetti', 'debug', __FUNCTION__ . ' $options ' . json_encode($_options));
         if ($this->getLogicalId('') == 'refresh') {
             $eqLogic->getInformations();
-            $eqLogic->refreshWidget();
         } else {
             $return = $eqLogic->sendCommand($this, $_options);
             log::add('Palazzetti', 'debug', __FUNCTION__ . __(' resultat ', __FILE__) . $return);

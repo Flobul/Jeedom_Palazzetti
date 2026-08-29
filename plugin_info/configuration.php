@@ -1,4 +1,5 @@
 <?php
+
 /* This file is part of Jeedom.
  *
  * Jeedom is free software: you can redistribute it and/or modify
@@ -14,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
  */
+
 
 require_once dirname(__FILE__) . '/../../../core/php/core.inc.php';
 include_file('core', 'authentification', 'php');
@@ -31,20 +33,20 @@ $update = $plugin->getUpdate();
 		<div class="form-group">
 			<div class="col-lg-4">
 				<?php if (is_object($update)) { ?>
-					<div><label>{{Branche}} :</label> <span class="label label-info"><?php echo htmlspecialchars($update->getConfiguration('version', 'stable')); ?></span></div>
-					<div><label>{{Source}} :</label> <?php echo htmlspecialchars($update->getSource()); ?></div>
-					<div><label>{{Version}} :</label> <?php echo htmlspecialchars($update->getLocalVersion()); ?></div>
+					<div><label>{{Branche}} :</label> <span class="label label-info"><?php echo htmlspecialchars((string) $update->getConfiguration('version', 'stable'), ENT_QUOTES, 'UTF-8'); ?></span></div>
+					<div><label>{{Source}} :</label> <?php echo htmlspecialchars((string) $update->getSource(), ENT_QUOTES, 'UTF-8'); ?></div>
+					<div><label>{{Version}} :</label> <?php echo htmlspecialchars((string) $update->getLocalVersion(), ENT_QUOTES, 'UTF-8'); ?></div>
 				<?php } ?>
 			</div>
 			<div class="col-lg-6">
-				<a class="btn btn-success btn-sm" target="_blank" rel="noopener noreferrer" href="<?php echo htmlspecialchars($plugin->getDocumentation()); ?>"><i class="fas fa-book"></i> {{Documentation}}</a>
-				<a class="btn btn-default btn-sm" target="_blank" rel="noopener noreferrer" href="<?php echo htmlspecialchars($plugin->getChangelog()); ?>"><i class="fas fa-list"></i> {{Changelog}}</a>
+				<a class="btn btn-success btn-sm" target="_blank" rel="noopener noreferrer" href="<?php echo htmlspecialchars((string) $plugin->getDocumentation(), ENT_QUOTES, 'UTF-8'); ?>"><i class="fas fa-book"></i> {{Documentation}}</a>
+				<a class="btn btn-default btn-sm" target="_blank" rel="noopener noreferrer" href="<?php echo htmlspecialchars((string) $plugin->getChangelog(), ENT_QUOTES, 'UTF-8'); ?>"><i class="fas fa-list"></i> {{Changelog}}</a>
 			</div>
 		</div>
 		<legend><i class="fas fa-clock"></i> {{Rafraîchissement}}</legend>
 		<div class="form-group">
 			<label class="col-lg-4 control-label">{{Intervalle de rafraîchissement des informations (cron)}}<sup>
-				<i class="fa fa-question-circle tooltips" title="{{Sélectionnez l'intervalle de récupération des informations}}.</br>{{Par défaut : 15 minutes.}}"></i>
+				<i class="fa fa-question-circle tooltips" title="{{Sélectionnez l'intervalle de récupération des informations}}.</br>{{Par défaut : 5 minutes.}}"></i>
 						</sup></label>
 			<div class="col-lg-4">
 				<select class="configKey form-control" data-l1key="autorefresh" >
@@ -58,6 +60,14 @@ $update = $plugin->getUpdate();
 					<option value="*/45 * * * *">{{Toutes les 45 minutes}}</option>
 					<option value="">{{Jamais}}</option>
 				</select>
+			</div>
+		</div>
+		<legend><i class="fas fa-shield-alt"></i> {{Sécurité}}</legend>
+		<div class="form-group">
+			<label class="col-lg-4 control-label">{{Activer les commandes de modification PARM et HPAR (mode expert)}}</label>
+			<div class="col-lg-4">
+				<input type="checkbox" class="configKey" data-l1key="allow_parameter_writes">
+				<small class="help-block">{{Cette option affiche et autorise les boutons de modification ; elle n'élargit pas la plage des paramètres. Faute de schéma fiable par modèle, les écritures restent limitées de 0 à 255, tandis que les valeurs plus larges peuvent être consultées. Chaque écriture est journalisée.}}</small>
 			</div>
 		</div>
 		<legend><i class="fas fa-network-wired"></i> {{Découverte réseau}}</legend>
@@ -75,7 +85,7 @@ $update = $plugin->getUpdate();
 					<option value="0 */6 * * *">{{Toutes les 6 heures}}</option>
 					<option value="0 3 * * *">{{Tous les jours à 3 h}}</option>
 				</select>
-				<small class="help-block">{{La découverte crée les nouvelles passerelles et actualise l'adresse IP et l'adresse MAC des équipements déjà connus.}}</small>
+				<small class="help-block">{{La recherche automatique actualise en place les équipements reconnus par leur MAC, leur numéro de série ou leur IP. Elle ignore les appareils inconnus et n'en crée jamais, afin d'éviter les doublons.}}</small>
 			</div>
 		</div>
 		<div class="form-group">
