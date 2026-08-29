@@ -24,4 +24,4 @@
 
 - Activation de l'historisation sans lissage des commandes nécessaires au calcul des cycles et des consommations quotidiennes.
 - Découverte automatique désactivée par défaut après migration ; elle doit être réactivée explicitement si elle est souhaitée.
-- Ajout de tests automatisés, d'un workflow de qualité et du PHPDoc sur le code PHP.
+- Ajout d'un workflow de contrôle qualité et du PHPDoc sur le code PHP.

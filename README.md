@@ -22,5 +22,3 @@ Lors du passage en `2.0.0`, l'historisation de l'état `IStatus` est activée sa
 - La santé distingue une passerelle réseau hors ligne d'un poêle indisponible derrière une passerelle joignable.
 - La découverte automatique actualise uniquement les équipements reconnus et ignore les appareils inconnus : elle ne crée donc aucun doublon. La découverte manuelle affiche les informations détectées et propose la mise à jour en place ou la création d'un remplacement avec désactivation de l'ancien.
 - Les commandes et adresses sont validées côté serveur. Les écritures PARM/HPAR sont désactivées par défaut, limitées à `0…255` faute de schéma fiable par modèle, et journalisées lorsqu'elles sont activées en mode expert.
-
-Les tests autonomes se lancent avec `php tests/PalazzettiProtocolTest.php` et `php tests/PalazzettiHistoryTest.php`.

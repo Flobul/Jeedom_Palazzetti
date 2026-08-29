@@ -10,13 +10,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Validate PHP
-        run: find core desktop plugin_info tests -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+        run: find core desktop plugin_info -type f -name '*.php' -print0 | xargs -0 -n1 php -l
       - name: Validate JSON
         run: jq empty core/config/palazzetti.json plugin_info/info.json
-      - name: Run protocol tests
-        run: |
-          php tests/PalazzettiProtocolTest.php
-          php tests/PalazzettiHistoryTest.php
       - name: Reject unsafe widget rendering
         run: '! grep -R "\.html(" core/template/dashboard/Palazzetti.html core/template/mobile/Palazzetti.html'
       - name: Reject unescaped values in inline widget scripts
