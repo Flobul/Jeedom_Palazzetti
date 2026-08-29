@@ -466,7 +466,7 @@
         "minutes": "Protokoll",
         "ms": "ms",
         "secondes": "Sekunden",
-        "Écriture autorisée de 0 à 255": "Zulässiger Eintrag: 0 bis 255",
+        "Écriture autorisée de 0 à 255": "Zulässiger Schreibbereich von 0 bis 255",
         "Êtes-vous sûr de vouloir modifier le paramètre": "Sind Sie sicher, dass Sie die Einstellung",
         "à": "bis"
     },
