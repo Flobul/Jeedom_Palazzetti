@@ -137,6 +137,7 @@
 	}
 
 	function showPalazzettiDiscoveryDialog(result) {
+	    destroyPalazzettiDiscoveryDialog();
 	    palazzettiDiscoveryResult = result;
 	    palazzettiDiscoveryHasChanges = false;
 	    jeeDialog.dialog({
@@ -152,6 +153,13 @@
 	            }
 	        }
 	    });
+	}
+
+	function destroyPalazzettiDiscoveryDialog() {
+	    const dialog = document.getElementById('md_palazzettiDiscovery');
+	    if (dialog) {
+	        jeeDialog.get(dialog).destroy();
+	    }
 	}
 
 	function refreshPalazzettiDiscoveryDialog() {

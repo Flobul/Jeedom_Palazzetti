@@ -30,7 +30,7 @@ if (!class_exists('eqLogic', false)) {
  */
 class Palazzetti extends eqLogic
 {
-    public static $_pluginVersion = '2.0.1';
+    public static $_pluginVersion = '2.0.2';
     private const REQUEST_ERROR_LOG_INTERVAL = 3600;
     private const REDISCOVERY_FAILURE_THRESHOLD = 3;
     private const REDISCOVERY_COOLDOWN = 3600;
@@ -884,7 +884,7 @@ class Palazzetti extends eqLogic
         if ($lockTimestamp > 0 && (time() - $lockTimestamp) < 30) {
             throw new Exception(__('Une découverte Palazzetti est déjà en cours.', __FILE__));
         }
-        cache::set($lockKey, time(), 0);
+        cache::set($lockKey, time(), 60);
 
         $socket = null;
         try {
@@ -985,7 +985,7 @@ class Palazzetti extends eqLogic
             if ($socket !== null) {
                 @socket_close($socket);
             }
-            cache::set($lockKey, 0, 0);
+            cache::delete($lockKey);
         }
     }
 

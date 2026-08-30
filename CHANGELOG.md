@@ -5,6 +5,8 @@
 - Découverte manuelle traitée appareil par appareil grâce à des actions placées directement dans chaque ligne du tableau.
 - La fenêtre reste ouverte pour créer ou actualiser plusieurs équipements successivement, puis recharge la page à sa fermeture si nécessaire.
 - Suppression des actions globales ambiguës et ciblage sécurisé de chaque passerelle par son adresse MAC ou, à défaut, son adresse IP.
+- Correction de la fenêtre de découverte vide lors de sa réouverture.
+- Correction du verrou de découverte qui pouvait rester actif après la fin de la recherche.
 
 ## 2.0.0
 
